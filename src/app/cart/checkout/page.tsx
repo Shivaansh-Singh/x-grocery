@@ -63,47 +63,51 @@ export default function CheckoutPage() {
     setSubmitting(true);
 
     try {
-      // 1. Save Address via API
-      const addressRes = await fetch("/api/addresses", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: user?.id || "guest-user-session",
-          buildingColony: address.buildingColony,
-          flatRoomNo: address.flatRoomNo,
-          landmark: address.landmark,
-          phone: address.phone,
-        }),
-      });
-
-      const addressData = await addressRes.json();
-      const savedAddressString = `${address.flatRoomNo}, ${address.buildingColony}${
+      const formattedAddress = `${address.flatRoomNo}, ${address.buildingColony}${
         address.landmark ? ` (Landmark: ${address.landmark})` : ""
       } • Phone: ${address.phone}`;
 
-      console.log("Saved address:", addressData, savedAddressString);
+      // Prepare frozen item snapshots
+      const orderItems = items.map((item) => ({
+        productId: item.product.id,
+        productName: item.product.name,
+        unitPrice: item.product.price,
+        quantity: item.quantity,
+        subtotal: item.product.price * item.quantity,
+      }));
 
-      // Store temporary pending order details in localStorage for Phase 4 tracking
-      const tempOrder = {
-        orderNumber: `XG-${Math.floor(100000 + Math.random() * 900000)}`,
-        status: "PENDING",
-        paymentMethod,
-        paymentStatus: "PENDING",
-        totalAmount,
-        deliveryAddress: savedAddressString,
-        items,
-        createdAt: new Date().toISOString(),
-      };
-      localStorage.setItem("x_grocery_last_order", JSON.stringify(tempOrder));
+      // Submit Order API
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customerId: user?.id || "guest-user-session",
+          deliveryAddress: formattedAddress,
+          paymentMethod,
+          items: orderItems,
+        }),
+      });
 
-      // Clear cart
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
+        throw new Error(data.error || "Order placement failed");
+      }
+
+      // Save order to localStorage backup for tracking fallback
+      if (data.order) {
+        localStorage.setItem("x_grocery_last_order", JSON.stringify(data.order));
+      }
+
+      // Clear cart & navigate to live tracking
       clearCart();
-
-      // Redirect to Order History / Order Status Tracking page
-      router.push("/orders?newOrder=true");
+      const targetOrderId = data.order?.id || "latest";
+      router.push(`/orders/${targetOrderId}?newOrder=true`);
     } catch (err) {
       console.error("Order submission error:", err);
-      setErrorMessage("Failed to place order. Please try again.");
+      setErrorMessage(
+        err instanceof Error ? err.message : "Failed to place order. Please try again."
+      );
     } finally {
       setSubmitting(false);
     }
