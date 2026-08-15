@@ -40,9 +40,9 @@
 - [x] **CART-03**: Order checkout supporting Cash on Delivery (COD) and UPI on Delivery (QR Code)
 
 ### Order Lifecycle & Live Tracking (ORD)
-- [ ] **ORD-01**: Order creation with initial `pending` state and immediate notification to Store X
-- [ ] **ORD-02**: Customer order history view
-- [ ] **ORD-03**: Realtime order status tracking UI (Pending → Accepted → Preparing → Assigned → Out for Delivery → Delivered / Cancelled / Rejected)
+- [x] **ORD-01**: Order creation with initial `pending` state and immediate notification to Store X
+- [x] **ORD-02**: Customer order history view
+- [x] **ORD-03**: Realtime order status tracking UI (Pending → Accepted → Preparing → Assigned → Out for Delivery → Delivered / Cancelled / Rejected)
 
 ### Store Admin Dashboard (ADMIN)
 - [ ] **ADMIN-01**: Catalog CRUD — add, edit, remove products, manage categories, update prices
@@ -79,7 +79,7 @@
 | DB-01, DB-02 | Phase 1 | Completed |
 | CAT-01, CAT-02, CAT-03 | Phase 2 | Completed |
 | CART-01, CART-02, CART-03 | Phase 3 | Completed |
-| ORD-01, ORD-02, ORD-03 | Phase 4 | Planned |
+| ORD-01, ORD-02, ORD-03 | Phase 4 | Completed |
 | ADMIN-01, ADMIN-02, ADMIN-03, ADMIN-04 | Phase 5 | Planned |
 | DEL-01, DEL-02 | Phase 6 | Planned |
 

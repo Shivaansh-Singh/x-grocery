@@ -79,8 +79,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 04-01: Order creation API endpoints, inventory reservation lock, and Order History view
-- [ ] 04-02: Live realtime order status tracking page with progress timeline UI
+- [x] 04-01: Order creation API endpoints, inventory reservation lock, and Order History view
+- [x] 04-02: Live realtime order status tracking page with progress timeline UI
 
 ---
 
@@ -126,7 +126,7 @@ Plans:
 | 1. Foundation & Data Architecture | 2/2 | Complete | 2026-08-15 |
 | 2. Product Catalog & Search Experience | 2/2 | Complete | 2026-08-15 |
 | 3. Shopping Cart & Off-Campus Checkout | 2/2 | Complete | 2026-08-15 |
-| 4. Order Lifecycle & Live Customer Tracking | 0/2 | Not started | - |
+| 4. Order Lifecycle & Live Customer Tracking | 2/2 | Complete | 2026-08-15 |
 | 5. Store Admin Dashboard & Inventory Operations | 0/3 | Not started | - |
 | 6. Mobile Delivery Partner Portal (`/delivery`) | 0/2 | Not started | - |
 
