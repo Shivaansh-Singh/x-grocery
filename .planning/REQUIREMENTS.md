@@ -51,8 +51,8 @@
 - [x] **ADMIN-04**: Delivery assignment — assign accepted orders to X's registered delivery partners
 
 ### Delivery Partner Interface (DEL)
-- [ ] **DEL-01**: Mobile-optimized `/delivery` view for staff — list assigned active deliveries, customer address, contact, and item list
-- [ ] **DEL-02**: Delivery status updates — mark orders as "Out for Delivery" and "Delivered"
+- [x] **DEL-01**: Mobile-optimized `/delivery` view for staff — list assigned active deliveries, customer address, contact, and item list
+- [x] **DEL-02**: Delivery status updates — mark orders as "Out for Delivery" and "Delivered"
 
 ### Architecture & Database (DB)
 - [x] **DB-01**: Relational PostgreSQL database schema using Prisma ORM with `store_id` multi-store structural abstraction
@@ -81,7 +81,7 @@
 | CART-01, CART-02, CART-03 | Phase 3 | Completed |
 | ORD-01, ORD-02, ORD-03 | Phase 4 | Completed |
 | ADMIN-01, ADMIN-02, ADMIN-03, ADMIN-04 | Phase 5 | Completed |
-| DEL-01, DEL-02 | Phase 6 | Planned |
+| DEL-01, DEL-02 | Phase 6 | Completed |
 
 ---
 *Last updated: 2026-08-15*

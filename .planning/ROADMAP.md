@@ -11,7 +11,7 @@
 - [x] **Phase 3: Shopping Cart & Off-Campus Checkout** — Persistent cart, off-campus delivery address validation, COD & UPI checkout
 - [x] **Phase 4: Order Lifecycle & Live Customer Tracking** — Order creation flow, order history, and realtime tracking timeline
 - [x] **Phase 5: Store Admin Dashboard & Inventory Operations** — Catalog CRUD, stock management, order processing, delivery assignment
-- [ ] **Phase 6: Mobile Delivery Partner Portal (`/delivery`)** — Staff mobile order view, customer delivery details, and delivery status updates
+- [x] **Phase 6: Mobile Delivery Partner Portal (`/delivery`)** — Staff mobile order view, customer delivery details, and delivery status updates
 
 ---
 
@@ -104,18 +104,19 @@ Plans:
 ---
 
 ### Phase 6: Mobile Delivery Partner Portal (`/delivery`)
-**Goal**: Build a mobile-optimized portal for X's delivery staff to receive assigned orders, access customer address details, and update delivery progress.
+**Goal**: Build a mobile-first portal for Store X delivery staff riders (Ramesh Kumar, Suresh Singh) to view assigned active deliveries, inspect customer off-campus address details, call the student customer, scan/confirm doorstep payment (COD / UPI), and update order delivery status (`OUT_FOR_DELIVERY` → `DELIVERED`).
 **Mode**: mvp
 **Depends on**: Phase 5
 **Requirements**: DEL-01, DEL-02
 **Success Criteria**:
-  1. Delivery partner can view assigned active orders with customer contact and address details.
-  2. Delivery partner can update order status to "Out for Delivery" and "Delivered", reflecting immediately on customer tracking UI.
+  1. Delivery staff can view assigned active deliveries with student contact & off-campus address.
+  2. Delivery staff can trigger direct phone call to student customer.
+  3. Delivery staff can verify doorstep payment collection and update status from Out for Delivery to Delivered.
 **Plans**: 2 plans
 
 Plans:
-- [ ] 06-01: Mobile delivery dashboard (`/delivery`) with assigned order queue and customer contact view
-- [ ] 06-02: Delivery status action buttons ("Out for Delivery", "Delivered") with instant realtime sync
+- [x] 06-01: Mobile delivery partner portal view with assigned orders & customer details
+- [x] 06-02: Delivery status transition controls and doorstep payment collection verification
 
 ---
 
@@ -128,7 +129,7 @@ Plans:
 | 3. Shopping Cart & Off-Campus Checkout | 2/2 | Complete | 2026-08-15 |
 | 4. Order Lifecycle & Live Customer Tracking | 2/2 | Complete | 2026-08-15 |
 | 5. Store Admin Dashboard & Inventory Operations | 3/3 | Complete | 2026-08-15 |
-| 6. Mobile Delivery Partner Portal (`/delivery`) | 0/2 | Not started | - |
+| 6. Mobile Delivery Partner Portal (`/delivery`) | 2/2 | Complete | 2026-08-15 |
 
 ---
 *Last updated: 2026-08-15*
