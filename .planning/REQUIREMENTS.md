@@ -35,9 +35,9 @@
 - [x] **CAT-03**: Product detail modal/page with images, description, price, unit size, and stock availability
 
 ### Cart & Checkout (CART)
-- [ ] **CART-01**: Shopping cart management (add, edit quantities, remove, persistent state)
-- [ ] **CART-02**: Delivery address selection/input tailored for off-campus VIT Bhopal residential areas (flats, rooms, PGs)
-- [ ] **CART-03**: Order checkout supporting Cash on Delivery (COD) and UPI on Delivery (QR Code)
+- [x] **CART-01**: Shopping cart management (add, edit quantities, remove, persistent state)
+- [x] **CART-02**: Delivery address selection/input tailored for off-campus VIT Bhopal residential areas (flats, rooms, PGs)
+- [x] **CART-03**: Order checkout supporting Cash on Delivery (COD) and UPI on Delivery (QR Code)
 
 ### Order Lifecycle & Live Tracking (ORD)
 - [ ] **ORD-01**: Order creation with initial `pending` state and immediate notification to Store X
@@ -78,7 +78,7 @@
 | AUTH-01, AUTH-02 | Phase 1 | Completed |
 | DB-01, DB-02 | Phase 1 | Completed |
 | CAT-01, CAT-02, CAT-03 | Phase 2 | Completed |
-| CART-01, CART-02, CART-03 | Phase 3 | Planned |
+| CART-01, CART-02, CART-03 | Phase 3 | Completed |
 | ORD-01, ORD-02, ORD-03 | Phase 4 | Planned |
 | ADMIN-01, ADMIN-02, ADMIN-03, ADMIN-04 | Phase 5 | Planned |
 | DEL-01, DEL-02 | Phase 6 | Planned |

@@ -62,8 +62,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 03-01: Persistent shopping cart state & drawer UI with stock limit checks
-- [ ] 03-02: Off-campus delivery address selector and checkout flow (COD & UPI options)
+- [x] 03-01: Persistent shopping cart state & drawer UI with stock limit checks
+- [x] 03-02: Off-campus delivery address selector and checkout flow (COD & UPI options)
 
 ---
 
@@ -125,7 +125,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Foundation & Data Architecture | 2/2 | Complete | 2026-08-15 |
 | 2. Product Catalog & Search Experience | 2/2 | Complete | 2026-08-15 |
-| 3. Shopping Cart & Off-Campus Checkout | 0/2 | Not started | - |
+| 3. Shopping Cart & Off-Campus Checkout | 2/2 | Complete | 2026-08-15 |
 | 4. Order Lifecycle & Live Customer Tracking | 0/2 | Not started | - |
 | 5. Store Admin Dashboard & Inventory Operations | 0/3 | Not started | - |
 | 6. Mobile Delivery Partner Portal (`/delivery`) | 0/2 | Not started | - |
