@@ -26,8 +26,8 @@
 ## v1 Requirements
 
 ### Authentication & Authorization (AUTH)
-- [ ] **AUTH-01**: User authentication (Supabase Auth — Customer, Store Admin, Delivery Partner)
-- [ ] **AUTH-02**: Role-based access control (RBAC) with protected routes (`/admin`, `/delivery`, customer routes)
+- [x] **AUTH-01**: User authentication (Supabase Auth — Customer, Store Admin, Delivery Partner)
+- [x] **AUTH-02**: Role-based access control (RBAC) with protected routes (`/admin`, `/delivery`, customer routes)
 
 ### Product Catalog & Search (CAT)
 - [ ] **CAT-01**: Customer category browsing and product listing
@@ -55,8 +55,8 @@
 - [ ] **DEL-02**: Delivery status updates — mark orders as "Out for Delivery" and "Delivered"
 
 ### Architecture & Database (DB)
-- [ ] **DB-01**: Relational PostgreSQL database schema using Prisma ORM with `store_id` multi-store structural abstraction
-- [ ] **DB-02**: Inventory transaction consistency to prevent overselling beyond current stock
+- [x] **DB-01**: Relational PostgreSQL database schema using Prisma ORM with `store_id` multi-store structural abstraction
+- [x] **DB-02**: Inventory transaction consistency to prevent overselling beyond current stock
 
 ---
 
@@ -75,8 +75,8 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUTH-01, AUTH-02 | Phase 1 | Planned |
-| DB-01, DB-02 | Phase 1 | Planned |
+| AUTH-01, AUTH-02 | Phase 1 | Completed |
+| DB-01, DB-02 | Phase 1 | Completed |
 | CAT-01, CAT-02, CAT-03 | Phase 2 | Planned |
 | CART-01, CART-02, CART-03 | Phase 3 | Planned |
 | ORD-01, ORD-02, ORD-03 | Phase 4 | Planned |

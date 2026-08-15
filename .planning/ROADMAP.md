@@ -6,7 +6,7 @@
 
 ## Phases
 
-- [ ] **Phase 1: Foundation & Data Architecture** — Supabase PostgreSQL schema, Prisma ORM, role-based auth & protected routes
+- [x] **Phase 1: Foundation & Data Architecture** — Supabase PostgreSQL schema, Prisma ORM, role-based auth & protected routes
 - [ ] **Phase 2: Product Catalog & Search Experience** — Customer category browsing, search, item details, and stock badges
 - [ ] **Phase 3: Shopping Cart & Off-Campus Checkout** — Persistent cart, off-campus delivery address validation, COD & UPI checkout
 - [ ] **Phase 4: Order Lifecycle & Live Customer Tracking** — Order creation flow, order history, and realtime tracking timeline
@@ -29,8 +29,8 @@
 **Plans**: 2 plans
 
 Plans:
-- [ ] 01-01: Prisma ORM database schema definition, Supabase client configuration, and seed script for Store X
-- [ ] 01-02: Authentication flow, session state, RBAC middleware, and base application shell layout
+- [x] 01-01: Prisma ORM database schema definition, Supabase client configuration, and seed script for Store X
+- [x] 01-02: Authentication flow, session state, RBAC middleware, and base application shell layout
 
 ---
 
@@ -123,7 +123,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Data Architecture | 0/2 | Not started | - |
+| 1. Foundation & Data Architecture | 2/2 | Complete | 2026-08-15 |
 | 2. Product Catalog & Search Experience | 0/2 | Not started | - |
 | 3. Shopping Cart & Off-Campus Checkout | 0/2 | Not started | - |
 | 4. Order Lifecycle & Live Customer Tracking | 0/2 | Not started | - |
