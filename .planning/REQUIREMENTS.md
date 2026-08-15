@@ -45,10 +45,10 @@
 - [x] **ORD-03**: Realtime order status tracking UI (Pending → Accepted → Preparing → Assigned → Out for Delivery → Delivered / Cancelled / Rejected)
 
 ### Store Admin Dashboard (ADMIN)
-- [ ] **ADMIN-01**: Catalog CRUD — add, edit, remove products, manage categories, update prices
-- [ ] **ADMIN-02**: Inventory management — manual stock overrides and automated stock decrement upon fulfillment
-- [ ] **ADMIN-03**: Realtime order management dashboard — view incoming orders, accept/reject, update statuses
-- [ ] **ADMIN-04**: Delivery assignment — assign accepted orders to X's registered delivery partners
+- [x] **ADMIN-01**: Catalog CRUD — add, edit, remove products, manage categories, update prices
+- [x] **ADMIN-02**: Inventory management — manual stock overrides and automated stock decrement upon fulfillment
+- [x] **ADMIN-03**: Realtime order management dashboard — view incoming orders, accept/reject, update statuses
+- [x] **ADMIN-04**: Delivery assignment — assign accepted orders to X's registered delivery partners
 
 ### Delivery Partner Interface (DEL)
 - [ ] **DEL-01**: Mobile-optimized `/delivery` view for staff — list assigned active deliveries, customer address, contact, and item list
@@ -80,7 +80,7 @@
 | CAT-01, CAT-02, CAT-03 | Phase 2 | Completed |
 | CART-01, CART-02, CART-03 | Phase 3 | Completed |
 | ORD-01, ORD-02, ORD-03 | Phase 4 | Completed |
-| ADMIN-01, ADMIN-02, ADMIN-03, ADMIN-04 | Phase 5 | Planned |
+| ADMIN-01, ADMIN-02, ADMIN-03, ADMIN-04 | Phase 5 | Completed |
 | DEL-01, DEL-02 | Phase 6 | Planned |
 
 ---

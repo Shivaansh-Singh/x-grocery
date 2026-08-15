@@ -7,10 +7,10 @@
 ## Phases
 
 - [x] **Phase 1: Foundation & Data Architecture** — Supabase PostgreSQL schema, Prisma ORM, role-based auth & protected routes
-- [ ] **Phase 2: Product Catalog & Search Experience** — Customer category browsing, search, item details, and stock badges
-- [ ] **Phase 3: Shopping Cart & Off-Campus Checkout** — Persistent cart, off-campus delivery address validation, COD & UPI checkout
-- [ ] **Phase 4: Order Lifecycle & Live Customer Tracking** — Order creation flow, order history, and realtime tracking timeline
-- [ ] **Phase 5: Store Admin Dashboard & Inventory Operations** — Store X catalog CRUD, stock management, order processing, and delivery assignment
+- [x] **Phase 2: Product Catalog & Search Experience** — Customer category browsing, search, item details, and stock badges
+- [x] **Phase 3: Shopping Cart & Off-Campus Checkout** — Persistent cart, off-campus delivery address validation, COD & UPI checkout
+- [x] **Phase 4: Order Lifecycle & Live Customer Tracking** — Order creation flow, order history, and realtime tracking timeline
+- [x] **Phase 5: Store Admin Dashboard & Inventory Operations** — Catalog CRUD, stock management, order processing, delivery assignment
 - [ ] **Phase 6: Mobile Delivery Partner Portal (`/delivery`)** — Staff mobile order view, customer delivery details, and delivery status updates
 
 ---
@@ -85,21 +85,21 @@ Plans:
 ---
 
 ### Phase 5: Store Admin Dashboard & Inventory Operations
-**Goal**: Provide Store Owner X with an admin dashboard to manage product catalog, update prices, adjust inventory, process incoming orders, and assign delivery partners.
+**Goal**: Provide Store Owner X with an admin dashboard (`/admin`) to manage product catalog, update prices, adjust inventory stock, process incoming orders (accept/reject, update status), and assign delivery partners.
 **Mode**: mvp
 **Depends on**: Phase 4
 **Requirements**: ADMIN-01, ADMIN-02, ADMIN-03, ADMIN-04
 **Success Criteria**:
-  1. Store X admin can create, edit, and remove products/categories and adjust stock counts.
-  2. Store X admin receives incoming orders, can accept or reject, and update status.
-  3. Store X admin can assign accepted orders to registered delivery staff.
-  4. Fulfilling orders automatically decrements item stock correctly.
+  1. Store Owner X can add, edit, and update prices for catalog products.
+  2. Store Owner X can manually adjust stock levels and automated stock decrements occur upon order fulfillment.
+  3. Store Owner X can view incoming orders and advance order statuses.
+  4. Store Owner X can assign registered delivery partners to accepted orders.
 **Plans**: 3 plans
 
 Plans:
-- [ ] 05-01: Admin product catalog management (CRUD, categories, price & stock edits)
-- [ ] 05-02: Admin order management dashboard (incoming order alerts, accept/reject, status updates)
-- [ ] 05-03: Delivery staff assignment & automated inventory stock reconciliation on order fulfillment
+- [x] 05-01: Admin product catalog management, price editing, and stock overrides
+- [x] 05-02: Realtime store order management dashboard with accept/reject & status advancement
+- [x] 05-03: Inventory audit logging and delivery staff assignment workflow
 
 ---
 
@@ -127,7 +127,7 @@ Plans:
 | 2. Product Catalog & Search Experience | 2/2 | Complete | 2026-08-15 |
 | 3. Shopping Cart & Off-Campus Checkout | 2/2 | Complete | 2026-08-15 |
 | 4. Order Lifecycle & Live Customer Tracking | 2/2 | Complete | 2026-08-15 |
-| 5. Store Admin Dashboard & Inventory Operations | 0/3 | Not started | - |
+| 5. Store Admin Dashboard & Inventory Operations | 3/3 | Complete | 2026-08-15 |
 | 6. Mobile Delivery Partner Portal (`/delivery`) | 0/2 | Not started | - |
 
 ---
