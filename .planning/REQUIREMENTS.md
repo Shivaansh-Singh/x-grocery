@@ -30,9 +30,9 @@
 - [x] **AUTH-02**: Role-based access control (RBAC) with protected routes (`/admin`, `/delivery`, customer routes)
 
 ### Product Catalog & Search (CAT)
-- [ ] **CAT-01**: Customer category browsing and product listing
-- [ ] **CAT-02**: Search and category filtering for grocery items
-- [ ] **CAT-03**: Product detail modal/page with images, description, price, unit size, and stock availability
+- [x] **CAT-01**: Customer category browsing and product listing
+- [x] **CAT-02**: Search and category filtering for grocery items
+- [x] **CAT-03**: Product detail modal/page with images, description, price, unit size, and stock availability
 
 ### Cart & Checkout (CART)
 - [ ] **CART-01**: Shopping cart management (add, edit quantities, remove, persistent state)
@@ -77,7 +77,7 @@
 |-------------|-------|--------|
 | AUTH-01, AUTH-02 | Phase 1 | Completed |
 | DB-01, DB-02 | Phase 1 | Completed |
-| CAT-01, CAT-02, CAT-03 | Phase 2 | Planned |
+| CAT-01, CAT-02, CAT-03 | Phase 2 | Completed |
 | CART-01, CART-02, CART-03 | Phase 3 | Planned |
 | ORD-01, ORD-02, ORD-03 | Phase 4 | Planned |
 | ADMIN-01, ADMIN-02, ADMIN-03, ADMIN-04 | Phase 5 | Planned |
