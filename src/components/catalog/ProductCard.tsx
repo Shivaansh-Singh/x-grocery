@@ -11,8 +11,13 @@ export interface ProductItem {
   price: number;
   imageUrl?: string | null;
   unitDisplay: string;
+  unit?: string;
   stock: number;
+  categoryId?: string;
+  isActive?: boolean;
+  isAvailable?: boolean;
   category?: {
+    id?: string;
     name: string;
     slug: string;
   };
