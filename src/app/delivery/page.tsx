@@ -6,6 +6,7 @@ import { RiderProfileSelector, DeliveryRiderStaff } from "@/components/delivery/
 import { DeliveryTaskCard } from "@/components/delivery/DeliveryTaskCard";
 import { DoorstepPaymentModal } from "@/components/delivery/DoorstepPaymentModal";
 import type { OrderRecord } from "@/components/orders/OrderCard";
+import { RushDLogo } from "@/components/ui/RushDLogo";
 
 export default function DeliveryPartnerPage() {
   const [activeRider, setActiveRider] = useState<DeliveryRiderStaff | null>(null);
@@ -102,13 +103,16 @@ export default function DeliveryPartnerPage() {
     <div className="space-y-4 pt-1 pb-8">
       {/* Header Bar */}
       <div className="flex items-center justify-between border-b border-[#D9D7D2] pb-2">
-        <div>
-          <h1 className="text-xl font-bold text-[#111315]">
-            Delivery Partner Portal
-          </h1>
-          <p className="text-xs text-[#666A70]">
-            RushD Mobile Rider Operations
-          </p>
+        <div className="flex items-center gap-2">
+          <RushDLogo size="sm" href="/delivery" />
+          <div className="border-l border-[#D9D7D2] pl-2">
+            <h1 className="text-sm font-bold text-[#111315]">
+              Rider Portal
+            </h1>
+            <p className="text-[10px] text-[#666A70]">
+              Mobile Rider Operations
+            </p>
+          </div>
         </div>
         <Link
           href="/"

@@ -8,6 +8,7 @@ import { CategoryPills, CategoryItem } from "@/components/catalog/CategoryPills"
 import { ProductGrid } from "@/components/catalog/ProductGrid";
 import { ProductItem } from "@/components/catalog/ProductCard";
 import { ProductDetailModal } from "@/components/catalog/ProductDetailModal";
+import { RushDLogo } from "@/components/ui/RushDLogo";
 
 function CustomerHomeContent() {
   const searchParams = useSearchParams();
@@ -110,15 +111,13 @@ function CustomerHomeContent() {
       {/* Brand Hero Banner */}
       <div className="bg-[#111315] text-white rounded-2xl p-4 shadow-sm border border-[#1646C7]/30 flex flex-col justify-between">
         <div className="flex items-center justify-between">
-          <span className="text-[11px] font-bold text-[#FF5A1F] uppercase tracking-wider">
-            RushD Instant Delivery
-          </span>
-          <span className="text-[10px] text-zinc-400 font-semibold px-2 py-0.5 rounded bg-white/10">
+          <RushDLogo size="md" />
+          <span className="text-[10px] text-zinc-300 font-bold px-2.5 py-1 rounded-lg bg-white/10 border border-white/10">
             {appConfig.deliveryTargetMins} mins
           </span>
         </div>
 
-        <div className="mt-2">
+        <div className="mt-3">
           <h1 className="text-xl font-black text-white tracking-tight">
             Your essentials. On the way.
           </h1>

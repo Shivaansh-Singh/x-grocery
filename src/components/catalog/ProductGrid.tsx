@@ -19,30 +19,31 @@ export function ProductGrid({
   onSelectProduct,
   searchQuery = "",
 }: ProductGridProps) {
+  const safeProducts = Array.isArray(products) ? products : [];
+
   if (loading) {
     return (
       <div className="grid grid-cols-2 gap-3 animate-pulse">
         {[1, 2, 3, 4, 5, 6].map((i) => (
           <div
             key={i}
-            className="h-56 bg-zinc-200 dark:bg-zinc-800 rounded-2xl"
+            className="h-56 bg-zinc-200 rounded-2xl"
           />
         ))}
       </div>
     );
   }
 
-  if (products.length === 0) {
+  if (safeProducts.length === 0) {
     return (
-      <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 border border-zinc-200 dark:border-zinc-800 text-center space-y-3 my-4 shadow-xs">
-        <span className="text-4xl block">🔍</span>
-        <h3 className="font-bold text-sm text-zinc-800 dark:text-zinc-200">
+      <div className="bg-[#FFFFFF] rounded-2xl p-8 border border-[#D9D7D2] text-center space-y-2 my-4 shadow-2xs">
+        <h3 className="font-bold text-sm text-[#111315]">
           No products found
         </h3>
-        <p className="text-xs text-zinc-500 max-w-xs mx-auto">
+        <p className="text-xs text-[#666A70] max-w-xs mx-auto">
           {searchQuery
             ? `We couldn't find any grocery items matching "${searchQuery}".`
-            : "No active products in this category at Store X."}
+            : "No active products in this category at RushD."}
         </p>
       </div>
     );
@@ -50,7 +51,7 @@ export function ProductGrid({
 
   return (
     <div className="grid grid-cols-2 gap-3">
-      {products.map((product) => (
+      {safeProducts.map((product) => (
         <ProductCard
           key={product.id}
           product={product}
