@@ -27,17 +27,16 @@ export default function CheckoutPage() {
   if (itemCount === 0) {
     return (
       <div className="space-y-6 pt-6 text-center">
-        <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 border border-zinc-200 dark:border-zinc-800 shadow-xs space-y-4">
-          <span className="text-4xl block">🛒</span>
-          <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
+        <div className="bg-[#FFFFFF] rounded-2xl p-8 border border-[#D9D7D2] shadow-2xs space-y-4 max-w-md mx-auto">
+          <h2 className="text-lg font-bold text-[#111315]">
             No items in cart for checkout
           </h2>
-          <p className="text-xs text-zinc-500 max-w-xs mx-auto">
+          <p className="text-xs text-[#666A70] max-w-xs mx-auto">
             Please add grocery items to your cart before proceeding to checkout.
           </p>
           <Link
             href="/"
-            className="inline-block px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold text-xs shadow-md transition-colors"
+            className="inline-block px-6 py-3 bg-[#FF5A1F] hover:bg-[#111315] text-white rounded-xl font-bold text-xs shadow-2xs transition-colors"
           >
             Browse Products
           </Link>
@@ -116,23 +115,23 @@ export default function CheckoutPage() {
   return (
     <form onSubmit={handlePlaceOrder} className="space-y-4 pb-6 pt-1">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between border-b border-[#D9D7D2] pb-2">
         <div>
-          <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
+          <h1 className="text-xl font-bold text-[#111315]">
             Off-Campus Checkout
           </h1>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            Store X Local Instant Grocery Delivery
+          <p className="text-xs text-[#666A70]">
+            RushD Express Delivery
           </p>
         </div>
-        <Link href="/cart" className="text-xs text-emerald-600 dark:text-emerald-400 font-medium hover:underline">
+        <Link href="/cart" className="text-xs font-semibold text-[#FF5A1F] hover:underline">
           ← Back to Cart
         </Link>
       </div>
 
       {errorMessage && (
-        <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 dark:bg-rose-950/60 dark:border-rose-900 dark:text-rose-300 rounded-2xl text-xs font-semibold">
-          ⚠️ {errorMessage}
+        <div className="p-3 bg-[#F5F3EE] border border-[#C63D3D] text-[#C63D3D] rounded-xl text-xs font-semibold">
+          {errorMessage}
         </div>
       )}
 
@@ -143,8 +142,8 @@ export default function CheckoutPage() {
       <PaymentMethodSelector selectedMethod={paymentMethod} onChange={setPaymentMethod} />
 
       {/* Step 3: Order Summary & Bill Breakdown */}
-      <div className="bg-white dark:bg-zinc-900 p-4 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-xs space-y-3">
-        <h3 className="font-bold text-xs text-zinc-800 dark:text-zinc-200 uppercase tracking-wider">
+      <div className="bg-[#FFFFFF] p-4 rounded-2xl border border-[#D9D7D2] shadow-2xs space-y-3">
+        <h3 className="font-bold text-xs text-[#111315] uppercase tracking-wider">
           Order Summary ({itemCount} {itemCount === 1 ? "Item" : "Items"})
         </h3>
 
@@ -153,38 +152,38 @@ export default function CheckoutPage() {
           {items.map(({ product, quantity }) => (
             <div
               key={product.id}
-              className="flex items-center gap-2 bg-zinc-50 dark:bg-zinc-800/60 p-2 rounded-xl border border-zinc-200/60 dark:border-zinc-800 text-xs shrink-0"
+              className="flex items-center gap-2 bg-[#F5F3EE] p-2 rounded-lg border border-[#D9D7D2] text-xs shrink-0"
             >
-              <span className="font-bold text-zinc-900 dark:text-zinc-100 truncate max-w-[120px]">
+              <span className="font-bold text-[#111315] truncate max-w-[120px]">
                 {product.name}
               </span>
-              <span className="bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 font-bold px-1.5 py-0.5 rounded-md text-[10px]">
+              <span className="bg-[#FF5A1F] text-white font-bold px-1.5 py-0.5 rounded text-[10px]">
                 x{quantity}
               </span>
             </div>
           ))}
         </div>
 
-        <div className="border-t border-zinc-100 dark:border-zinc-800 pt-3 space-y-2 text-xs">
-          <div className="flex items-center justify-between text-zinc-600 dark:text-zinc-400">
+        <div className="border-t border-[#D9D7D2] pt-3 space-y-2 text-xs">
+          <div className="flex items-center justify-between text-[#666A70]">
             <span>Items Subtotal</span>
-            <span>₹{subtotal.toFixed(0)}</span>
+            <span className="font-medium text-[#111315]">₹{subtotal.toFixed(0)}</span>
           </div>
 
-          <div className="flex items-center justify-between text-zinc-600 dark:text-zinc-400">
+          <div className="flex items-center justify-between text-[#666A70]">
             <span>Delivery Fee</span>
             <span>
               {deliveryFee === 0 ? (
-                <span className="font-bold text-emerald-600 dark:text-emerald-400">FREE</span>
+                <span className="font-bold text-[#168A5B]">FREE</span>
               ) : (
                 <span>₹15</span>
               )}
             </span>
           </div>
 
-          <div className="border-t border-zinc-100 dark:border-zinc-800 pt-2 flex items-center justify-between font-extrabold text-sm text-zinc-900 dark:text-zinc-100">
+          <div className="border-t border-[#D9D7D2] pt-2 flex items-center justify-between font-extrabold text-sm text-[#111315]">
             <span>Total Payable</span>
-            <span className="text-emerald-600 dark:text-emerald-400 text-base">
+            <span className="text-[#FF5A1F] text-base">
               ₹{totalAmount.toFixed(0)}
             </span>
           </div>
@@ -196,7 +195,7 @@ export default function CheckoutPage() {
         <button
           type="submit"
           disabled={submitting}
-          className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold text-xs shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+          className="w-full py-3.5 bg-[#FF5A1F] hover:bg-[#111315] text-white rounded-xl font-bold text-xs shadow-2xs transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
         >
           {submitting ? (
             <span>Placing Order...</span>

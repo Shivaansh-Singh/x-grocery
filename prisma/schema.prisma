@@ -1,0 +1,176 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  CUSTOMER
+  STORE_ADMIN
+  DELIVERY_PARTNER
+}
+
+enum UnitType {
+  KG
+  GRAM
+  PIECE
+  PACK
+  LITER
+  ML
+}
+
+enum OrderStatus {
+  PENDING
+  ACCEPTED
+  PREPARING
+  ASSIGNED
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+  REJECTED
+}
+
+enum PaymentMethod {
+  COD
+  UPI_ON_DELIVERY
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  phone     String?
+  role      Role     @default(CUSTOMER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  addresses       CustomerAddress[]
+  customerOrders  Order[]           @relation("CustomerOrders")
+  assignedOrders  Order[]           @relation("DeliveryPartnerOrders")
+  inventoryLogs   InventoryLog[]
+}
+
+model CustomerAddress {
+  id             String   @id @default(uuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  buildingColony String
+  flatRoomNo     String
+  landmark       String?
+  phone          String
+  isDefault      Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Store {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  address   String
+  phone     String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  categories Category[]
+  products   Product[]
+  orders     Order[]
+}
+
+model Category {
+  id        String   @id @default(uuid())
+  storeId   String
+  store     Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  name      String
+  slug      String
+  icon      String?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  products Product[]
+
+  @@unique([storeId, slug])
+}
+
+model Product {
+  id           String   @id @default(uuid())
+  storeId      String
+  store        Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  categoryId   String
+  category     Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  name         String
+  slug         String
+  description  String?
+  price        Float
+  imageUrl     String?
+  unitType     UnitType @default(PIECE)
+  unitQuantity Float    @default(1)
+  unitDisplay  String
+  stock        Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  inventoryLogs InventoryLog[]
+  orderItems    OrderItem[]
+
+  @@unique([storeId, slug])
+}
+
+model InventoryLog {
+  id             String   @id @default(uuid())
+  productId      String
+  product        Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  previousStock  Int
+  newStock       Int
+  changeQuantity Int
+  reason         String
+  updatedById    String?
+  updatedBy      User?    @relation(fields: [updatedById], references: [id])
+  createdAt      DateTime @default(now())
+}
+
+model Order {
+  id                String        @id @default(uuid())
+  orderNumber       String        @unique
+  storeId           String
+  store             Store         @relation(fields: [storeId], references: [id])
+  customerId        String
+  customer          User          @relation("CustomerOrders", fields: [customerId], references: [id])
+  deliveryPartnerId String?
+  deliveryPartner   User?         @relation("DeliveryPartnerOrders", fields: [deliveryPartnerId], references: [id])
+  status            OrderStatus   @default(PENDING)
+  paymentMethod     PaymentMethod @default(COD)
+  paymentStatus     PaymentStatus @default(PENDING)
+  totalAmount       Float
+  deliveryAddress   String
+  notes             String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  items OrderItem[]
+}
+
+model OrderItem {
+  id          String  @id @default(uuid())
+  orderId     String
+  order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product @relation(fields: [productId], references: [id])
+  productName String
+  unitPrice   Float
+  quantity    Int
+  subtotal    Float
+}

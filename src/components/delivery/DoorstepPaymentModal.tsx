@@ -27,51 +27,43 @@ export function DoorstepPaymentModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 p-6 max-w-md w-full shadow-2xl space-y-4">
+      <div className="bg-[#FFFFFF] rounded-2xl border border-[#D9D7D2] p-6 max-w-md w-full shadow-2xl space-y-4">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-3">
-          <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5">
-            <span>🎉</span>
-            <span>Complete Order #{order.orderNumber}</span>
+        <div className="flex items-center justify-between border-b border-[#D9D7D2] pb-3">
+          <h3 className="font-bold text-base text-[#111315]">
+            Complete Order #{order.orderNumber}
           </h3>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-500 font-bold text-xs"
+            className="w-8 h-8 rounded-full bg-[#ECEAE5] flex items-center justify-center text-[#666A70] font-bold text-xs"
           >
             ✕
           </button>
         </div>
 
         {/* Doorstep Payment Banner */}
-        <div
-          className={`p-4 rounded-2xl border text-center space-y-2 ${
-            isCOD
-              ? "bg-amber-50 dark:bg-amber-950/60 border-amber-300 dark:border-amber-900 text-amber-900 dark:text-amber-200"
-              : "bg-teal-50 dark:bg-teal-950/60 border-teal-300 dark:border-teal-900 text-teal-900 dark:text-teal-200"
-          }`}
-        >
-          <span className="text-3xl block">{isCOD ? "💵" : "📲"}</span>
-          <span className="text-xs font-bold uppercase tracking-wider block">
+        <div className="p-4 rounded-xl border border-[#D9D7D2] bg-[#F5F3EE] text-[#111315] text-center space-y-2">
+          <span className="text-xs font-bold uppercase tracking-wider block text-[#FF5A1F]">
             {isCOD ? "Cash on Delivery Collection" : "Pay via UPI on Delivery (Scan QR)"}
           </span>
-          <div className="text-2xl font-black">₹{order.totalAmount.toFixed(0)}</div>
-          <p className="text-[11px] opacity-80">
+          <div className="text-3xl font-black text-[#111315]">₹{order.totalAmount.toFixed(0)}</div>
+          <p className="text-[11px] text-[#666A70]">
             {isCOD
               ? "Collect cash payment from the student before completing delivery."
-              : "Ask student to scan Store X UPI QR Code on your smartphone or receipt."}
+              : "Ask student to scan RushD UPI QR Code on your smartphone or receipt."}
           </p>
         </div>
 
         {/* Checkbox confirmation */}
-        <div className="bg-zinc-50 dark:bg-zinc-800/40 p-3 rounded-2xl border border-zinc-200 dark:border-zinc-800 flex items-start gap-3">
+        <div className="bg-[#F5F3EE] p-3 rounded-xl border border-[#D9D7D2] flex items-start gap-3">
           <input
             type="checkbox"
             id="paymentCheck"
             checked={confirmed}
             onChange={(e) => setConfirmed(e.target.checked)}
-            className="w-5 h-5 text-emerald-600 rounded-md mt-0.5"
+            className="w-5 h-5 text-[#168A5B] rounded mt-0.5"
           />
-          <label htmlFor="paymentCheck" className="text-xs font-semibold text-zinc-800 dark:text-zinc-200 leading-snug cursor-pointer">
+          <label htmlFor="paymentCheck" className="text-xs font-semibold text-[#111315] leading-snug cursor-pointer">
             I confirm that ₹{order.totalAmount.toFixed(0)} payment has been collected from the student at the doorstep.
           </label>
         </div>
@@ -81,7 +73,7 @@ export function DoorstepPaymentModal({
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 py-3 rounded-2xl border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 font-bold text-xs"
+            className="flex-1 py-3 rounded-xl border border-[#D9D7D2] bg-[#FFFFFF] text-[#111315] font-bold text-xs hover:bg-[#ECEAE5]"
           >
             Cancel
           </button>
@@ -89,7 +81,7 @@ export function DoorstepPaymentModal({
             type="button"
             disabled={!confirmed || submitting}
             onClick={handleConfirm}
-            className="flex-1 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-lg transition-all disabled:opacity-40"
+            className="flex-1 py-3 rounded-xl bg-[#168A5B] hover:bg-[#111315] text-white font-bold text-xs shadow-2xs transition-colors disabled:opacity-40"
           >
             {submitting ? "Completing..." : "Confirm Delivery ✓"}
           </button>

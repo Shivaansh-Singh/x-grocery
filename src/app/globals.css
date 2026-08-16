@@ -1,26 +1,52 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --rushd-orange: #FF5A1F;
+  --rushd-cobalt: #1646C7;
+  --rushd-ink: #111315;
+  --rushd-paper: #F5F3EE;
+  --rushd-white: #FFFFFF;
+  --rushd-muted: #666A70;
+  --rushd-border: #D9D7D2;
+  --rushd-surface: #FFFFFF;
+  --rushd-surface-muted: #ECEAE5;
+  --rushd-success: #168A5B;
+  --rushd-warning: #D9822B;
+  --rushd-error: #C63D3D;
+
+  --background: #F5F3EE;
+  --foreground: #111315;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-rushd-orange: #FF5A1F;
+  --color-rushd-cobalt: #1646C7;
+  --color-rushd-ink: #111315;
+  --color-rushd-paper: #F5F3EE;
+  --color-rushd-muted: #666A70;
+  --color-rushd-border: #D9D7D2;
+  --color-rushd-surface: #FFFFFF;
+  --color-rushd-surface-muted: #ECEAE5;
+  --color-rushd-success: #168A5B;
+  --color-rushd-warning: #D9822B;
+  --color-rushd-error: #C63D3D;
+  --font-sans: var(--font-geist-sans), Inter, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), monospace;
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom scrollbar utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

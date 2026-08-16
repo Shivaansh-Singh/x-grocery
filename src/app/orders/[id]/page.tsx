@@ -73,9 +73,9 @@ function OrderTrackingContent({ id }: { id: string }) {
   if (loading) {
     return (
       <div className="space-y-4 pt-4 animate-pulse">
-        <div className="h-10 bg-zinc-200 dark:bg-zinc-800 rounded-2xl" />
-        <div className="h-64 bg-zinc-200 dark:bg-zinc-800 rounded-3xl" />
-        <div className="h-32 bg-zinc-200 dark:bg-zinc-800 rounded-3xl" />
+        <div className="h-10 bg-zinc-200 rounded-xl" />
+        <div className="h-64 bg-zinc-200 rounded-2xl" />
+        <div className="h-32 bg-zinc-200 rounded-2xl" />
       </div>
     );
   }
@@ -83,17 +83,16 @@ function OrderTrackingContent({ id }: { id: string }) {
   if (!order) {
     return (
       <div className="space-y-6 pt-6 text-center">
-        <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 border border-zinc-200 dark:border-zinc-800 shadow-xs space-y-4">
-          <span className="text-4xl block">🔍</span>
-          <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
+        <div className="bg-[#FFFFFF] rounded-2xl p-8 border border-[#D9D7D2] shadow-2xs space-y-4 max-w-md mx-auto">
+          <h2 className="text-lg font-bold text-[#111315]">
             Order Not Found
           </h2>
-          <p className="text-xs text-zinc-500 max-w-xs mx-auto">
+          <p className="text-xs text-[#666A70] max-w-xs mx-auto">
             We couldn&apos;t find order details for #{id}.
           </p>
           <Link
             href="/orders"
-            className="inline-block px-5 py-2.5 bg-emerald-600 text-white rounded-2xl font-bold text-xs shadow-xs hover:bg-emerald-700 transition-colors"
+            className="inline-block px-5 py-2.5 bg-[#FF5A1F] text-white rounded-xl font-bold text-xs shadow-2xs hover:bg-[#111315] transition-colors"
           >
             View Order History
           </Link>
@@ -108,27 +107,27 @@ function OrderTrackingContent({ id }: { id: string }) {
   return (
     <div className="space-y-4 pt-1 pb-8">
       {/* Header Bar */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between border-b border-[#D9D7D2] pb-2">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
+            <h1 className="text-xl font-bold text-[#111315]">
               #{order.orderNumber}
             </h1>
             <button
               onClick={handleManualRefresh}
               disabled={refreshing}
-              className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold hover:underline"
+              className="text-xs text-[#FF5A1F] font-semibold hover:underline"
             >
-              {refreshing ? "Refreshing..." : "🔄 Refresh"}
+              {refreshing ? "Refreshing..." : "Refresh"}
             </button>
           </div>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            Store X Instant Delivery Tracking
+          <p className="text-xs text-[#666A70]">
+            RushD Instant Delivery Tracking
           </p>
         </div>
         <Link
           href="/orders"
-          className="text-xs text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 font-medium"
+          className="text-xs text-[#666A70] hover:text-[#111315] font-semibold"
         >
           ← All Orders
         </Link>
@@ -146,23 +145,22 @@ function OrderTrackingContent({ id }: { id: string }) {
       )}
 
       {/* Delivery Address Summary */}
-      <div className="bg-white dark:bg-zinc-900 p-4 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-xs space-y-2">
-        <h3 className="font-bold text-xs text-zinc-800 dark:text-zinc-200 uppercase tracking-wider">
+      <div className="bg-[#FFFFFF] p-4 rounded-2xl border border-[#D9D7D2] shadow-2xs space-y-2">
+        <h3 className="font-bold text-xs text-[#111315] uppercase tracking-wider">
           Delivery Address
         </h3>
-        <div className="text-xs text-zinc-700 dark:text-zinc-300 font-medium flex items-start gap-2">
-          <span>📍</span>
-          <span>{order.deliveryAddress}</span>
+        <div className="text-xs text-[#666A70] font-medium leading-relaxed">
+          {order.deliveryAddress}
         </div>
       </div>
 
       {/* Itemized Order Receipt */}
-      <div className="bg-white dark:bg-zinc-900 p-4 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-xs space-y-3">
-        <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-2">
-          <h3 className="font-bold text-xs text-zinc-800 dark:text-zinc-200 uppercase tracking-wider">
+      <div className="bg-[#FFFFFF] p-4 rounded-2xl border border-[#D9D7D2] shadow-2xs space-y-3">
+        <div className="flex items-center justify-between border-b border-[#D9D7D2] pb-2">
+          <h3 className="font-bold text-xs text-[#111315] uppercase tracking-wider">
             Order Items ({order.items?.length || 0})
           </h3>
-          <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+          <span className="text-xs font-semibold text-[#FF5A1F]">
             {order.paymentMethod === "COD" ? "Cash on Delivery" : "UPI on Delivery"}
           </span>
         </div>
@@ -170,18 +168,18 @@ function OrderTrackingContent({ id }: { id: string }) {
         <div className="space-y-2 text-xs">
           {order.items?.map((item) => (
             <div key={item.id} className="flex items-center justify-between">
-              <span className="text-zinc-800 dark:text-zinc-200 font-medium truncate max-w-[220px]">
+              <span className="text-[#111315] font-medium truncate max-w-[220px]">
                 {item.productName}
               </span>
-              <span className="text-zinc-500 font-bold">
+              <span className="text-[#666A70] font-bold">
                 x{item.quantity} • ₹{item.subtotal.toFixed(0)}
               </span>
             </div>
           ))}
 
-          <div className="border-t border-zinc-100 dark:border-zinc-800 pt-2.5 flex items-center justify-between font-extrabold text-sm text-zinc-900 dark:text-zinc-100">
+          <div className="border-t border-[#D9D7D2] pt-2.5 flex items-center justify-between font-extrabold text-sm text-[#111315]">
             <span>Total Amount</span>
-            <span className="text-emerald-600 dark:text-emerald-400">
+            <span className="text-[#FF5A1F]">
               ₹{order.totalAmount.toFixed(0)}
             </span>
           </div>
@@ -201,8 +199,8 @@ export default function OrderTrackingPage({
     <Suspense
       fallback={
         <div className="space-y-4 pt-4 animate-pulse">
-          <div className="h-10 bg-zinc-200 dark:bg-zinc-800 rounded-2xl" />
-          <div className="h-64 bg-zinc-200 dark:bg-zinc-800 rounded-3xl" />
+          <div className="h-10 bg-zinc-200 rounded-xl" />
+          <div className="h-64 bg-zinc-200 rounded-2xl" />
         </div>
       }
     >

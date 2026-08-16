@@ -85,25 +85,25 @@ export default function AdminProductsPage() {
   return (
     <div className="space-y-4 pt-1 pb-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between border-b border-[#D9D7D2] pb-2">
         <div>
-          <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
+          <h1 className="text-xl font-bold text-[#111315]">
             Catalog & Stock Operations
           </h1>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            Store X inventory management & price control
+          <p className="text-xs text-[#666A70]">
+            Inventory management & price control
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Link
             href="/admin"
-            className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400"
+            className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-[#D9D7D2] text-[#666A70] hover:text-[#111315]"
           >
             ← Admin Hub
           </Link>
           <button
             onClick={() => setIsCreateOpen(true)}
-            className="px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-xs transition-colors"
+            className="px-3.5 py-1.5 rounded-xl bg-[#FF5A1F] hover:bg-[#111315] text-white font-bold text-xs shadow-2xs transition-colors"
           >
             + Add Product
           </button>
@@ -117,16 +117,16 @@ export default function AdminProductsPage() {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search product name or unit..."
-          className="w-full px-3.5 py-2 text-xs rounded-2xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-purple-500"
+          className="w-full px-3.5 py-2 text-xs rounded-xl border border-[#D9D7D2] bg-[#FFFFFF] text-[#111315] focus:outline-none focus:border-[#FF5A1F] focus:ring-1 focus:ring-[#FF5A1F]"
         />
 
         <div className="flex gap-1.5 overflow-x-auto py-1 no-scrollbar">
           <button
             onClick={() => setSelectedCategory("ALL")}
-            className={`px-3 py-1 rounded-xl text-xs font-bold transition-all shrink-0 ${
+            className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors shrink-0 ${
               selectedCategory === "ALL"
-                ? "bg-purple-600 text-white"
-                : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
+                ? "bg-[#111315] text-white"
+                : "bg-[#FFFFFF] border border-[#D9D7D2] text-[#666A70] hover:text-[#111315]"
             }`}
           >
             All Products ({products.length})
@@ -135,10 +135,10 @@ export default function AdminProductsPage() {
             <button
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id)}
-              className={`px-3 py-1 rounded-xl text-xs font-bold transition-all shrink-0 ${
+              className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors shrink-0 ${
                 selectedCategory === cat.id
-                  ? "bg-purple-600 text-white"
-                  : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
+                  ? "bg-[#111315] text-white"
+                  : "bg-[#FFFFFF] border border-[#D9D7D2] text-[#666A70] hover:text-[#111315]"
               }`}
             >
               {cat.name}
@@ -151,17 +151,16 @@ export default function AdminProductsPage() {
       {loading ? (
         <div className="space-y-3 animate-pulse">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-20 bg-zinc-200 dark:bg-zinc-800 rounded-2xl" />
+            <div key={i} className="h-20 bg-zinc-200 rounded-2xl" />
           ))}
         </div>
       ) : filteredProducts.length === 0 ? (
-        <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 border border-zinc-200 dark:border-zinc-800 text-center space-y-2">
-          <span className="text-3xl block">📦</span>
-          <h3 className="font-bold text-sm text-zinc-800 dark:text-zinc-200">
+        <div className="bg-[#FFFFFF] rounded-2xl p-8 border border-[#D9D7D2] text-center space-y-2">
+          <h3 className="font-bold text-sm text-[#111315]">
             No products found
           </h3>
-          <p className="text-xs text-zinc-500">
-            Try adjusting your search query or add a new product to Store X catalog.
+          <p className="text-xs text-[#666A70]">
+            Try adjusting your search query or add a new product to catalog.
           </p>
         </div>
       ) : (
@@ -169,18 +168,18 @@ export default function AdminProductsPage() {
           {filteredProducts.map((product) => (
             <div
               key={product.id}
-              className="bg-white dark:bg-zinc-900 p-3.5 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 shadow-xs flex items-center justify-between gap-3"
+              className="bg-[#FFFFFF] p-3.5 rounded-2xl border border-[#D9D7D2] shadow-2xs flex items-center justify-between gap-3"
             >
               {/* Info */}
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-12 h-12 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700/60 flex items-center justify-center shrink-0 overflow-hidden">
-                  <span className="text-xl">🛒</span>
+                <div className="w-10 h-10 rounded-xl bg-[#F5F3EE] border border-[#D9D7D2] flex items-center justify-center shrink-0 overflow-hidden font-bold text-xs text-[#111315]">
+                  P
                 </div>
                 <div className="min-w-0">
-                  <h4 className="font-bold text-xs text-zinc-900 dark:text-zinc-100 truncate">
+                  <h4 className="font-bold text-xs text-[#111315] truncate">
                     {product.name}
                   </h4>
-                  <span className="text-[11px] text-zinc-500 block">
+                  <span className="text-[11px] text-[#666A70] block">
                     {product.unitDisplay || product.unit} • ₹{product.price}
                   </span>
                 </div>
@@ -189,25 +188,25 @@ export default function AdminProductsPage() {
               {/* Controls */}
               <div className="flex items-center gap-3 shrink-0">
                 {/* Inline Stock Stepper */}
-                <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 p-1 rounded-xl border border-zinc-200 dark:border-zinc-700">
+                <div className="flex items-center gap-1 bg-[#F5F3EE] p-1 rounded-xl border border-[#D9D7D2]">
                   <button
                     onClick={() => handleStockAdjust(product.id, product.stock, -1)}
-                    className="w-6 h-6 rounded-lg bg-white dark:bg-zinc-700 font-bold text-xs text-zinc-700 dark:text-zinc-200 shadow-xs hover:bg-zinc-50"
+                    className="w-6 h-6 rounded-lg bg-[#FFFFFF] font-bold text-xs text-[#111315] shadow-2xs hover:bg-[#ECEAE5]"
                   >
                     -
                   </button>
                   <span
                     className={`text-xs font-bold px-2 ${
                       product.stock <= 5
-                        ? "text-rose-600 dark:text-rose-400 font-extrabold"
-                        : "text-zinc-900 dark:text-zinc-100"
+                        ? "text-[#C63D3D] font-black"
+                        : "text-[#111315]"
                     }`}
                   >
                     {product.stock}
                   </span>
                   <button
                     onClick={() => handleStockAdjust(product.id, product.stock, 1)}
-                    className="w-6 h-6 rounded-lg bg-white dark:bg-zinc-700 font-bold text-xs text-zinc-700 dark:text-zinc-200 shadow-xs hover:bg-zinc-50"
+                    className="w-6 h-6 rounded-lg bg-[#FFFFFF] font-bold text-xs text-[#111315] shadow-2xs hover:bg-[#ECEAE5]"
                   >
                     +
                   </button>
@@ -216,7 +215,7 @@ export default function AdminProductsPage() {
                 {/* Edit Button */}
                 <button
                   onClick={() => setEditingProduct(product)}
-                  className="px-3 py-1.5 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 font-bold text-xs rounded-xl transition-colors"
+                  className="px-3 py-1.5 bg-[#ECEAE5] hover:bg-[#D9D7D2] text-[#111315] font-bold text-xs rounded-xl transition-colors"
                 >
                   Edit
                 </button>

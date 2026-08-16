@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { RushDLogo } from "@/components/ui/RushDLogo";
 
 interface AdminHeaderProps {
   pendingOrdersCount?: number;
@@ -11,39 +12,36 @@ export function AdminHeader({ pendingOrdersCount = 0 }: AdminHeaderProps) {
   const pathname = usePathname();
 
   const navLinks = [
-    { href: "/admin", label: "Dashboard", icon: "📊" },
-    { href: "/admin/products", label: "Catalog & Stock", icon: "📦" },
+    { href: "/admin", label: "Dashboard" },
+    { href: "/admin/products", label: "Catalog & Stock" },
     {
       href: "/admin/orders",
       label: "Orders",
-      icon: "📋",
       badge: pendingOrdersCount > 0 ? pendingOrdersCount : null,
     },
-    { href: "/admin/delivery-staff", label: "Riders", icon: "🛵" },
+    { href: "/admin/delivery-staff", label: "Riders" },
   ];
 
   return (
-    <header className="bg-zinc-900 text-white rounded-3xl p-4 shadow-lg border border-zinc-800 space-y-3 mb-4">
+    <header className="bg-[#111315] text-white rounded-2xl p-4 shadow-2xs border border-[#1646C7]/30 space-y-3 mb-4">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-purple-600 flex items-center justify-center font-bold text-sm">
-            X
-          </div>
-          <div>
-            <h2 className="font-extrabold text-sm leading-tight text-zinc-100">
-              Store Owner X Portal
+        <div className="flex items-center gap-2.5">
+          <RushDLogo size="sm" href="/admin" />
+          <div className="border-l border-white/20 pl-2.5">
+            <h2 className="font-bold text-xs leading-tight text-white">
+              Admin Hub
             </h2>
-            <p className="text-[10px] text-purple-400 font-medium">
-              VIT Bhopal Off-Campus Fulfillment Hub
+            <p className="text-[10px] text-[#666A70] font-medium">
+              Fulfillment & Staff Portal
             </p>
           </div>
         </div>
 
         <Link
           href="/"
-          className="text-xs text-zinc-400 hover:text-white transition-colors bg-zinc-800 px-3 py-1.5 rounded-xl font-medium"
+          className="text-xs text-zinc-300 hover:text-white transition-colors bg-white/10 px-3 py-1.5 rounded-xl font-semibold border border-white/10"
         >
-          Customer View ↗
+          Customer App ↗
         </Link>
       </div>
 
@@ -54,16 +52,15 @@ export function AdminHeader({ pendingOrdersCount = 0 }: AdminHeaderProps) {
             <Link
               key={link.href}
               href={link.href}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 shrink-0 ${
                 isActive
-                  ? "bg-purple-600 text-white shadow-xs"
-                  : "bg-zinc-800/80 text-zinc-300 hover:bg-zinc-800 hover:text-white"
+                  ? "bg-[#1646C7] text-white shadow-2xs"
+                  : "bg-white/10 text-zinc-300 hover:bg-white/20 hover:text-white"
               }`}
             >
-              <span>{link.icon}</span>
               <span>{link.label}</span>
               {link.badge && (
-                <span className="px-1.5 py-0.2 rounded-full bg-amber-500 text-white text-[10px] font-extrabold animate-pulse">
+                <span className="px-1.5 py-0.2 rounded bg-[#FF5A1F] text-white text-[10px] font-extrabold">
                   {link.badge}
                 </span>
               )}

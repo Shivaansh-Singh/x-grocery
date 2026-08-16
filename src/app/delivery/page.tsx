@@ -101,18 +101,18 @@ export default function DeliveryPartnerPage() {
   return (
     <div className="space-y-4 pt-1 pb-8">
       {/* Header Bar */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between border-b border-[#D9D7D2] pb-2">
         <div>
-          <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
+          <h1 className="text-xl font-bold text-[#111315]">
             Delivery Partner Portal
           </h1>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            Store X Mobile Rider View
+          <p className="text-xs text-[#666A70]">
+            RushD Mobile Rider Operations
           </p>
         </div>
         <Link
           href="/"
-          className="text-xs text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 font-medium"
+          className="text-xs font-semibold text-[#FF5A1F] hover:underline"
         >
           Customer App ↗
         </Link>
@@ -128,31 +128,31 @@ export default function DeliveryPartnerPage() {
       />
 
       {/* Tabs */}
-      <div className="flex rounded-2xl bg-zinc-200/60 dark:bg-zinc-800/60 p-1">
+      <div className="flex rounded-xl bg-[#ECEAE5] p-1">
         <button
           onClick={() => setActiveTab("active")}
-          className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all relative ${
+          className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors relative ${
             activeTab === "active"
-              ? "bg-white dark:bg-zinc-900 text-teal-600 dark:text-teal-400 shadow-xs"
-              : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-800"
+              ? "bg-[#111315] text-white shadow-2xs"
+              : "text-[#666A70] hover:text-[#111315]"
           }`}
         >
           Active Deliveries ({activeDeliveries.length})
           {activeDeliveries.length > 0 && (
-            <span className="ml-1 px-1.5 py-0.2 text-[10px] bg-teal-500 text-white rounded-full font-extrabold animate-pulse">
+            <span className="ml-1.5 px-1.5 py-0.2 text-[10px] bg-[#FF5A1F] text-white rounded font-extrabold">
               LIVE
             </span>
           )}
         </button>
         <button
           onClick={() => setActiveTab("completed")}
-          className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
+          className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${
             activeTab === "completed"
-              ? "bg-white dark:bg-zinc-900 text-teal-600 dark:text-teal-400 shadow-xs"
-              : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-800"
+              ? "bg-[#111315] text-white shadow-2xs"
+              : "text-[#666A70] hover:text-[#111315]"
           }`}
         >
-          Completed ({completedToday.length})
+          Completed Today ({completedToday.length})
         </button>
       </div>
 
@@ -160,16 +160,15 @@ export default function DeliveryPartnerPage() {
       {loading ? (
         <div className="space-y-3 animate-pulse">
           {[1, 2].map((i) => (
-            <div key={i} className="h-44 bg-zinc-200 dark:bg-zinc-800 rounded-3xl" />
+            <div key={i} className="h-44 bg-zinc-200 rounded-2xl" />
           ))}
         </div>
       ) : currentList.length === 0 ? (
-        <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 border border-zinc-200 dark:border-zinc-800 text-center space-y-2 shadow-xs">
-          <span className="text-4xl block">🛵</span>
-          <h3 className="font-bold text-sm text-zinc-800 dark:text-zinc-200">
+        <div className="bg-[#FFFFFF] rounded-2xl p-8 border border-[#D9D7D2] text-center space-y-2 shadow-2xs">
+          <h3 className="font-bold text-sm text-[#111315]">
             No {activeTab} delivery tasks
           </h3>
-          <p className="text-xs text-zinc-500 max-w-xs mx-auto">
+          <p className="text-xs text-[#666A70] max-w-xs mx-auto">
             {activeTab === "active"
               ? "No active deliveries currently assigned to your rider profile."
               : "No delivered orders recorded for today's shift yet."}

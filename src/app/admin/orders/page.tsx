@@ -117,56 +117,56 @@ export default function AdminOrdersPage() {
   return (
     <div className="space-y-4 pt-1 pb-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between border-b border-[#D9D7D2] pb-2">
         <div>
-          <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
+          <h1 className="text-xl font-bold text-[#111315]">
             Incoming Orders Board
           </h1>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            Store X live fulfillment & rider assignment
+          <p className="text-xs text-[#666A70]">
+            Live fulfillment & rider assignment
           </p>
         </div>
         <Link
           href="/admin"
-          className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400"
+          className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-[#D9D7D2] text-[#666A70] hover:text-[#111315]"
         >
           ← Admin Hub
         </Link>
       </div>
 
       {/* Tabs */}
-      <div className="flex rounded-2xl bg-zinc-200/60 dark:bg-zinc-800/60 p-1">
+      <div className="flex rounded-xl bg-[#ECEAE5] p-1">
         <button
           onClick={() => setActiveTab("pending")}
-          className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all relative ${
+          className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors relative ${
             activeTab === "pending"
-              ? "bg-white dark:bg-zinc-900 text-purple-600 dark:text-purple-400 shadow-xs"
-              : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-800"
+              ? "bg-[#111315] text-white shadow-2xs"
+              : "text-[#666A70] hover:text-[#111315]"
           }`}
         >
-          Pending Approval ({pendingOrders.length})
+          Pending ({pendingOrders.length})
           {pendingOrders.length > 0 && (
-            <span className="ml-1 px-1.5 py-0.2 text-[10px] bg-amber-500 text-white rounded-full font-extrabold animate-pulse">
+            <span className="ml-1 px-1.5 py-0.2 text-[10px] bg-[#FF5A1F] text-white rounded font-extrabold">
               NEW
             </span>
           )}
         </button>
         <button
           onClick={() => setActiveTab("active")}
-          className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
+          className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${
             activeTab === "active"
-              ? "bg-white dark:bg-zinc-900 text-purple-600 dark:text-purple-400 shadow-xs"
-              : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-800"
+              ? "bg-[#111315] text-white shadow-2xs"
+              : "text-[#666A70] hover:text-[#111315]"
           }`}
         >
           In Delivery ({inProgressOrders.length})
         </button>
         <button
           onClick={() => setActiveTab("history")}
-          className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
+          className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${
             activeTab === "history"
-              ? "bg-white dark:bg-zinc-900 text-purple-600 dark:text-purple-400 shadow-xs"
-              : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-800"
+              ? "bg-[#111315] text-white shadow-2xs"
+              : "text-[#666A70] hover:text-[#111315]"
           }`}
         >
           Completed ({historyOrders.length})
@@ -177,16 +177,15 @@ export default function AdminOrdersPage() {
       {loading ? (
         <div className="space-y-3 animate-pulse">
           {[1, 2].map((i) => (
-            <div key={i} className="h-44 bg-zinc-200 dark:bg-zinc-800 rounded-3xl" />
+            <div key={i} className="h-44 bg-zinc-200 rounded-2xl" />
           ))}
         </div>
       ) : currentList.length === 0 ? (
-        <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 border border-zinc-200 dark:border-zinc-800 text-center space-y-2">
-          <span className="text-3xl block">📋</span>
-          <h3 className="font-bold text-sm text-zinc-800 dark:text-zinc-200">
+        <div className="bg-[#FFFFFF] rounded-2xl p-8 border border-[#D9D7D2] text-center space-y-2">
+          <h3 className="font-bold text-sm text-[#111315]">
             No {activeTab} orders
           </h3>
-          <p className="text-xs text-zinc-500">
+          <p className="text-xs text-[#666A70]">
             Incoming student orders will appear here automatically in real-time.
           </p>
         </div>
@@ -195,42 +194,42 @@ export default function AdminOrdersPage() {
           {currentList.map((order) => (
             <div
               key={order.id}
-              className="bg-white dark:bg-zinc-900 p-4 rounded-3xl border border-zinc-200/80 dark:border-zinc-800 shadow-xs space-y-3"
+              className="bg-[#FFFFFF] p-4 rounded-2xl border border-[#D9D7D2] shadow-2xs space-y-3"
             >
               {/* Card Header */}
               <div className="flex items-center justify-between">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100">
+                    <span className="font-black text-sm text-[#111315]">
                       #{order.orderNumber}
                     </span>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
+                    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#ECEAE5] text-[#111315]">
                       {order.status}
                     </span>
                   </div>
-                  <span className="text-[11px] text-zinc-500 block mt-0.5">
-                    📍 {order.deliveryAddress}
+                  <span className="text-[11px] text-[#666A70] block mt-0.5">
+                    {order.deliveryAddress}
                   </span>
                 </div>
 
                 <div className="text-right">
-                  <span className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400 block">
+                  <span className="text-sm font-black text-[#FF5A1F] block">
                     ₹{order.totalAmount.toFixed(0)}
                   </span>
-                  <span className="text-[10px] font-semibold text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded-md bg-purple-100 dark:bg-purple-950">
+                  <span className="text-[10px] font-semibold text-[#1646C7] px-2 py-0.5 rounded bg-[#F5F3EE]">
                     {order.paymentMethod === "COD" ? "Cash on Delivery" : "UPI on Delivery"}
                   </span>
                 </div>
               </div>
 
               {/* Items List */}
-              <div className="bg-zinc-50 dark:bg-zinc-800/40 p-2.5 rounded-xl border border-zinc-100 dark:border-zinc-800/80 text-xs space-y-1">
+              <div className="bg-[#F5F3EE] p-2.5 rounded-xl border border-[#D9D7D2] text-xs space-y-1">
                 {order.items.map((item) => (
                   <div key={item.id} className="flex justify-between">
-                    <span className="text-zinc-800 dark:text-zinc-200 font-medium">
+                    <span className="text-[#111315] font-medium">
                       {item.productName}
                     </span>
-                    <span className="text-zinc-500 font-bold">
+                    <span className="text-[#666A70] font-bold">
                       x{item.quantity} • ₹{item.subtotal.toFixed(0)}
                     </span>
                   </div>
@@ -239,16 +238,16 @@ export default function AdminOrdersPage() {
 
               {/* Rider Selector Dropdown (when PREPARING / ASSIGNED) */}
               {(order.status === "PREPARING" || order.status === "ASSIGNED") && (
-                <div className="flex items-center gap-2 bg-purple-50 dark:bg-purple-950/40 p-2 rounded-xl border border-purple-200 dark:border-purple-900/50">
-                  <span className="text-xs font-bold text-purple-800 dark:text-purple-300 shrink-0">
-                    🛵 Assign Rider:
+                <div className="flex items-center gap-2 bg-[#F5F3EE] p-2 rounded-xl border border-[#D9D7D2]">
+                  <span className="text-xs font-bold text-[#111315] shrink-0">
+                    Assign Rider:
                   </span>
                   <select
                     value={order.deliveryPartner?.name ? riders.find(r => r.name === order.deliveryPartner?.name)?.id || "" : ""}
                     onChange={(e) =>
                       handleUpdateStatus(order.id, "ASSIGNED", e.target.value)
                     }
-                    className="flex-1 px-2.5 py-1 text-xs rounded-lg border border-purple-300 dark:border-purple-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 font-semibold"
+                    className="flex-1 px-2.5 py-1 text-xs rounded-lg border border-[#D9D7D2] bg-[#FFFFFF] text-[#111315] font-semibold focus:outline-none focus:border-[#FF5A1F]"
                   >
                     <option value="">Select Delivery Rider...</option>
                     {riders.map((r) => (
@@ -266,13 +265,13 @@ export default function AdminOrdersPage() {
                   <>
                     <button
                       onClick={() => setRejectingOrder(order)}
-                      className="flex-1 py-2 rounded-xl bg-rose-100 hover:bg-rose-200 dark:bg-rose-950 dark:hover:bg-rose-900 text-rose-700 dark:text-rose-300 font-bold text-xs transition-colors"
+                      className="flex-1 py-2 rounded-xl bg-[#ECEAE5] hover:bg-[#C63D3D] hover:text-white text-[#C63D3D] font-bold text-xs transition-colors"
                     >
                       Reject Order
                     </button>
                     <button
                       onClick={() => handleUpdateStatus(order.id, "ACCEPTED")}
-                      className="flex-1 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-colors"
+                      className="flex-1 py-2 rounded-xl bg-[#168A5B] hover:bg-[#111315] text-white font-bold text-xs shadow-2xs transition-colors"
                     >
                       Accept Order ✓
                     </button>
@@ -282,27 +281,27 @@ export default function AdminOrdersPage() {
                 {order.status === "ACCEPTED" && (
                   <button
                     onClick={() => handleUpdateStatus(order.id, "PREPARING")}
-                    className="w-full py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs transition-colors"
+                    className="w-full py-2 rounded-xl bg-[#1646C7] hover:bg-[#111315] text-white font-bold text-xs shadow-2xs transition-colors"
                   >
-                    Start Packing Items 📦
+                    Start Packing Items
                   </button>
                 )}
 
                 {order.status === "ASSIGNED" && (
                   <button
                     onClick={() => handleUpdateStatus(order.id, "OUT_FOR_DELIVERY")}
-                    className="w-full py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-xs transition-colors"
+                    className="w-full py-2 rounded-xl bg-[#FF5A1F] hover:bg-[#111315] text-white font-bold text-xs shadow-2xs transition-colors"
                   >
-                    Mark Out for Delivery 🛵
+                    Mark Out for Delivery
                   </button>
                 )}
 
                 {order.status === "OUT_FOR_DELIVERY" && (
                   <button
                     onClick={() => handleUpdateStatus(order.id, "DELIVERED")}
-                    className="w-full py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-colors"
+                    className="w-full py-2 rounded-xl bg-[#168A5B] hover:bg-[#111315] text-white font-bold text-xs shadow-2xs transition-colors"
                   >
-                    Mark Delivered 🎉
+                    Mark Delivered ✓
                   </button>
                 )}
               </div>

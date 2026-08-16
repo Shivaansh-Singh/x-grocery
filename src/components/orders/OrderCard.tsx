@@ -39,43 +39,43 @@ export function OrderCard({ order }: { order: OrderRecord }) {
   const isCompleted = order.status === "DELIVERED" || order.status === "CANCELLED" || order.status === "REJECTED";
 
   return (
-    <div className="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200/80 dark:border-zinc-800 p-4 shadow-xs hover:shadow-md transition-all space-y-3">
+    <div className="bg-[#FFFFFF] rounded-2xl border border-[#D9D7D2] p-4 shadow-2xs space-y-3">
       {/* Header Row */}
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <span className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100">
+            <span className="font-black text-sm text-[#111315]">
               #{order.orderNumber}
             </span>
-            <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold ${statusConfig.badgeClass}`}>
+            <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${statusConfig.badgeClass}`}>
               {statusConfig.label}
             </span>
           </div>
-          <span className="text-[11px] text-zinc-400 block mt-0.5">{formattedDate}</span>
+          <span className="text-[11px] text-[#666A70] block mt-0.5">{formattedDate}</span>
         </div>
 
         <div className="text-right">
-          <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 block">
+          <span className="text-sm font-black text-[#FF5A1F] block">
             ₹{order.totalAmount.toFixed(0)}
           </span>
-          <span className="text-[10px] text-zinc-500 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded-md inline-block mt-0.5">
+          <span className="text-[10px] font-medium text-[#666A70] bg-[#ECEAE5] px-2 py-0.5 rounded-md inline-block mt-0.5">
             {order.paymentMethod === "COD" ? "Cash on Delivery" : "UPI on Delivery"}
           </span>
         </div>
       </div>
 
       {/* Item Preview */}
-      <div className="bg-zinc-50 dark:bg-zinc-800/40 p-3 rounded-2xl border border-zinc-100 dark:border-zinc-800/80 space-y-1.5">
-        <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider block">
+      <div className="bg-[#F5F3EE] p-3 rounded-xl border border-[#D9D7D2] space-y-1.5">
+        <span className="text-[10px] font-semibold text-[#666A70] uppercase tracking-wider block">
           Items ({order.items.length})
         </span>
         <div className="space-y-1">
           {order.items.map((item) => (
             <div key={item.id} className="flex items-center justify-between text-xs">
-              <span className="text-zinc-700 dark:text-zinc-300 truncate max-w-[200px]">
+              <span className="text-[#111315] font-medium truncate max-w-[200px]">
                 {item.productName}
               </span>
-              <span className="font-semibold text-zinc-500 dark:text-zinc-400">
+              <span className="font-semibold text-[#666A70]">
                 x{item.quantity} • ₹{item.subtotal.toFixed(0)}
               </span>
             </div>
@@ -85,16 +85,16 @@ export function OrderCard({ order }: { order: OrderRecord }) {
 
       {/* Footer Action Button */}
       <div className="flex items-center justify-between pt-1">
-        <div className="text-[11px] text-zinc-500 truncate max-w-[200px]">
-          📍 {order.deliveryAddress.split("•")[0]}
+        <div className="text-[11px] text-[#666A70] truncate max-w-[200px]">
+          {order.deliveryAddress.split("•")[0]}
         </div>
 
         <Link
           href={`/orders/${order.id}`}
-          className={`px-3.5 py-1.5 rounded-xl font-bold text-xs shadow-xs transition-colors flex items-center gap-1 ${
+          className={`px-3.5 py-1.5 rounded-xl font-bold text-xs shadow-2xs transition-colors flex items-center gap-1.5 ${
             isCompleted
-              ? "bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300"
-              : "bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-500"
+              ? "bg-[#ECEAE5] text-[#111315] hover:bg-[#D9D7D2]"
+              : "bg-[#FF5A1F] text-white hover:bg-[#111315]"
           }`}
         >
           <span>{isCompleted ? "View Receipt" : "Track Live"}</span>
@@ -110,38 +110,38 @@ function getStatusBadgeConfig(status: OrderRecord["status"]) {
     case "PENDING":
       return {
         label: "Order Placed",
-        badgeClass: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300",
+        badgeClass: "bg-[#ECEAE5] text-[#111315]",
       };
     case "ACCEPTED":
       return {
         label: "Order Accepted",
-        badgeClass: "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300",
+        badgeClass: "bg-[#1646C7]/10 text-[#1646C7]",
       };
     case "PREPARING":
       return {
         label: "Packing Items",
-        badgeClass: "bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300",
+        badgeClass: "bg-[#1646C7]/10 text-[#1646C7]",
       };
     case "ASSIGNED":
       return {
         label: "Rider Assigned",
-        badgeClass: "bg-teal-100 text-teal-800 dark:bg-teal-950 dark:text-teal-300",
+        badgeClass: "bg-[#FF5A1F]/10 text-[#FF5A1F]",
       };
     case "OUT_FOR_DELIVERY":
       return {
-        label: "Out for Delivery 🛵",
-        badgeClass: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 animate-pulse",
+        label: "Out for Delivery",
+        badgeClass: "bg-[#FF5A1F] text-white",
       };
     case "DELIVERED":
       return {
-        label: "Delivered ✅",
-        badgeClass: "bg-zinc-200 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200",
+        label: "Delivered",
+        badgeClass: "bg-[#168A5B] text-white",
       };
     case "CANCELLED":
     case "REJECTED":
       return {
         label: "Cancelled",
-        badgeClass: "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300",
+        badgeClass: "bg-[#C63D3D] text-white",
       };
   }
 }

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { appConfig } from "@/config/app.config";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { ToastProvider } from "@/components/ui/Toast";
 import { CartProvider } from "@/components/providers/CartProvider";
@@ -19,8 +18,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: `${appConfig.displayName} - ${appConfig.tagline}`,
-  description: `Hyperlocal instant grocery delivery for ${appConfig.serviceArea}`,
+  title: "RushD - Your essentials. On the way.",
+  description: "Hyperlocal instant grocery delivery for VIT Bhopal Off-Campus residents",
 };
 
 export default function RootLayout({
@@ -33,7 +32,7 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full bg-zinc-50 dark:bg-zinc-950 font-sans">
+      <body className="min-h-full bg-[#F5F3EE] text-[#111315] font-sans selection:bg-[#FF5A1F] selection:text-white">
         <ToastProvider>
           <AuthProvider>
             <CartProvider>

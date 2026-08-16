@@ -45,13 +45,15 @@ export function RiderProfileSelector({
   const activeRider = riders.find((r) => r.id === selectedRiderId) || riders[0];
 
   return (
-    <div className="bg-zinc-900 text-white p-3 rounded-2xl border border-zinc-800 flex items-center justify-between gap-3 shadow-md">
+    <div className="bg-[#111315] text-white p-3 rounded-2xl border border-[#1646C7]/30 flex items-center justify-between gap-3 shadow-2xs">
       <div className="flex items-center gap-2.5 min-w-0">
-        <div className="w-9 h-9 rounded-xl bg-teal-500/20 border border-teal-500/40 text-teal-400 font-bold flex items-center justify-center text-lg shrink-0">
-          🛵
+        <div className="w-8 h-8 rounded-xl bg-[#1646C7] text-white font-bold flex items-center justify-center text-sm shrink-0">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
         </div>
         <div className="min-w-0">
-          <span className="text-[10px] text-zinc-400 uppercase font-semibold tracking-wider block">
+          <span className="text-[10px] text-[#666A70] uppercase font-bold tracking-wider block">
             Active Rider Profile
           </span>
           <h3 className="font-bold text-xs text-white truncate">
@@ -66,7 +68,7 @@ export function RiderProfileSelector({
           const target = riders.find((r) => r.id === e.target.value);
           if (target) onSelectRider(target);
         }}
-        className="px-2.5 py-1.5 rounded-xl border border-zinc-700 bg-zinc-800 text-xs font-semibold text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+        className="px-2.5 py-1.5 rounded-xl border border-[#D9D7D2]/20 bg-[#1646C7] text-xs font-bold text-white focus:outline-none focus:ring-1 focus:ring-[#FF5A1F]"
       >
         <option value="">Switch Rider...</option>
         {riders.map((r) => (

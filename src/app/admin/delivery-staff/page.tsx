@@ -52,25 +52,25 @@ export default function DeliveryStaffPage() {
   return (
     <div className="space-y-4 pt-1 pb-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between border-b border-[#D9D7D2] pb-2">
         <div>
-          <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
+          <h1 className="text-xl font-bold text-[#111315]">
             Delivery Staff Roster
           </h1>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            Store X registered delivery partners & riders
+          <p className="text-xs text-[#666A70]">
+            RushD registered delivery partners & riders
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Link
             href="/admin"
-            className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400"
+            className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-[#D9D7D2] text-[#666A70] hover:text-[#111315]"
           >
             ← Admin Hub
           </Link>
           <button
             onClick={() => setIsOnboardOpen(true)}
-            className="px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-xs transition-colors"
+            className="px-3.5 py-1.5 rounded-xl bg-[#FF5A1F] hover:bg-[#111315] text-white font-bold text-xs shadow-2xs transition-colors"
           >
             + Onboard Rider
           </button>
@@ -81,16 +81,15 @@ export default function DeliveryStaffPage() {
       {loading ? (
         <div className="space-y-3 animate-pulse">
           {[1, 2].map((i) => (
-            <div key={i} className="h-20 bg-zinc-200 dark:bg-zinc-800 rounded-2xl" />
+            <div key={i} className="h-20 bg-zinc-200 rounded-2xl" />
           ))}
         </div>
       ) : riders.length === 0 ? (
-        <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 border border-zinc-200 dark:border-zinc-800 text-center space-y-2">
-          <span className="text-3xl block">🛵</span>
-          <h3 className="font-bold text-sm text-zinc-800 dark:text-zinc-200">
+        <div className="bg-[#FFFFFF] rounded-2xl p-8 border border-[#D9D7D2] text-center space-y-2">
+          <h3 className="font-bold text-sm text-[#111315]">
             No delivery partners registered
           </h3>
-          <p className="text-xs text-zinc-500 max-w-xs mx-auto">
+          <p className="text-xs text-[#666A70] max-w-xs mx-auto">
             Onboard riders to assign orders for instant off-campus delivery.
           </p>
         </div>
@@ -99,17 +98,17 @@ export default function DeliveryStaffPage() {
           {riders.map((rider) => (
             <div
               key={rider.id}
-              className="bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 shadow-xs flex items-center justify-between gap-3"
+              className="bg-[#FFFFFF] p-4 rounded-2xl border border-[#D9D7D2] shadow-2xs flex items-center justify-between gap-3"
             >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 font-bold flex items-center justify-center text-lg">
-                  🛵
+                <div className="w-10 h-10 rounded-xl bg-[#1646C7] text-white font-bold flex items-center justify-center text-sm">
+                  R
                 </div>
                 <div>
-                  <h4 className="font-bold text-xs text-zinc-900 dark:text-zinc-100">
+                  <h4 className="font-bold text-xs text-[#111315]">
                     {rider.name}
                   </h4>
-                  <span className="text-[11px] text-zinc-500 block">
+                  <span className="text-[11px] text-[#666A70] block">
                     {rider.phone || "No phone"} • {rider.email}
                   </span>
                 </div>
@@ -117,9 +116,9 @@ export default function DeliveryStaffPage() {
 
               <a
                 href={`tel:${rider.phone}`}
-                className="px-3 py-1.5 bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 font-bold text-xs rounded-xl hover:bg-emerald-200 transition-colors flex items-center gap-1"
+                className="px-3 py-1.5 bg-[#168A5B] text-white font-bold text-xs rounded-xl hover:bg-[#111315] transition-colors"
               >
-                <span>📞 Call</span>
+                Call Rider
               </a>
             </div>
           ))}

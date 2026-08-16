@@ -22,31 +22,31 @@ export function DeliveryTaskCard({
   const cleanPhone = rawPhone.replace(/\s+/g, "");
 
   return (
-    <div className="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200/80 dark:border-zinc-800 p-4 shadow-xs space-y-3">
+    <div className="bg-[#FFFFFF] rounded-2xl border border-[#D9D7D2] p-4 shadow-2xs space-y-3">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <span className="font-black text-base text-zinc-900 dark:text-zinc-100">
+            <span className="font-black text-base text-[#111315]">
               #{order.orderNumber}
             </span>
             <span
-              className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+              className={`px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
                 isOutForDelivery
-                  ? "bg-teal-100 text-teal-800 dark:bg-teal-950 dark:text-teal-300 animate-pulse"
+                  ? "bg-[#FF5A1F] text-white"
                   : isAssigned
-                  ? "bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300"
-                  : "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+                  ? "bg-[#1646C7] text-white"
+                  : "bg-[#ECEAE5] text-[#111315]"
               }`}
             >
               {order.status === "OUT_FOR_DELIVERY"
-                ? "Out for Delivery 🛵"
+                ? "Out for Delivery"
                 : order.status === "ASSIGNED"
                 ? "Ready for Pickup"
-                : "Delivered ✅"}
+                : "Delivered"}
             </span>
           </div>
-          <span className="text-[10px] text-zinc-400 block mt-0.5">
+          <span className="text-[10px] text-[#666A70] font-medium block mt-0.5">
             {new Date(order.createdAt).toLocaleTimeString("en-IN", {
               hour: "2-digit",
               minute: "2-digit",
@@ -56,52 +56,55 @@ export function DeliveryTaskCard({
 
         {/* Payment Collection Badge */}
         <div className="text-right">
-          <span className="text-sm font-black text-emerald-600 dark:text-emerald-400 block">
+          <span className="text-sm font-black text-[#FF5A1F] block">
             ₹{order.totalAmount.toFixed(0)}
           </span>
-          <span className="text-[10px] font-bold px-2 py-0.5 rounded-md inline-block mt-0.5 bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
-            {order.paymentMethod === "COD" ? "💵 Collect Cash" : "📲 Scan UPI QR"}
+          <span className="text-[10px] font-bold px-2 py-0.5 rounded-md inline-block mt-0.5 bg-[#ECEAE5] text-[#111315]">
+            {order.paymentMethod === "COD" ? "Cash" : "UPI QR"}
           </span>
         </div>
       </div>
 
       {/* Customer Call Bar & Off-Campus Address */}
-      <div className="bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-2xl border border-zinc-100 dark:border-zinc-800 space-y-2">
+      <div className="bg-[#F5F3EE] p-3 rounded-xl border border-[#D9D7D2] space-y-2">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5 font-bold text-xs text-zinc-900 dark:text-zinc-100">
-            <span>👤 Student Customer</span>
+          <div className="flex items-center gap-1.5 font-bold text-xs text-[#111315]">
+            <span>Student Customer</span>
           </div>
           <a
             href={`tel:${cleanPhone}`}
-            className="px-3 py-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs rounded-xl shadow-xs transition-colors flex items-center gap-1"
+            className="px-3 py-1 bg-[#168A5B] hover:bg-[#111315] text-white font-bold text-xs rounded-lg shadow-2xs transition-colors flex items-center gap-1.5"
           >
-            <span>📞 Call Student</span>
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1.11 1.11 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+            </svg>
+            <span>Call Student</span>
           </a>
         </div>
 
-        <div className="text-xs text-zinc-700 dark:text-zinc-300 font-medium">
-          <span className="text-zinc-400 block text-[10px] uppercase font-semibold">
+        <div className="text-xs text-[#111315] font-medium leading-normal">
+          <span className="text-[#666A70] block text-[10px] uppercase font-bold tracking-wider">
             Off-Campus Address
           </span>
-          <span>📍 {order.deliveryAddress}</span>
+          <span>{order.deliveryAddress}</span>
         </div>
       </div>
 
       {/* Item Checklist */}
       <div className="space-y-1 text-xs">
-        <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
+        <span className="text-[10px] font-bold text-[#666A70] uppercase tracking-wider block">
           Grocery Package Items ({order.items.length})
         </span>
         <div className="space-y-1 max-h-24 overflow-y-auto no-scrollbar">
           {order.items.map((item) => (
             <div
               key={item.id}
-              className="flex justify-between bg-zinc-50 dark:bg-zinc-800/30 px-2 py-1 rounded-lg border border-zinc-100 dark:border-zinc-800/60"
+              className="flex justify-between bg-[#F5F3EE] px-2 py-1 rounded-lg border border-[#D9D7D2]"
             >
-              <span className="text-zinc-800 dark:text-zinc-200 font-medium truncate">
+              <span className="text-[#111315] font-medium truncate">
                 {item.productName}
               </span>
-              <span className="font-bold text-zinc-500">x{item.quantity}</span>
+              <span className="font-bold text-[#666A70]">x{item.quantity}</span>
             </div>
           ))}
         </div>
@@ -113,9 +116,9 @@ export function DeliveryTaskCard({
           {isAssigned && (
             <button
               onClick={() => onStartDelivery?.(order.id)}
-              className="w-full py-3 bg-teal-600 hover:bg-teal-700 text-white rounded-2xl font-bold text-xs shadow-md transition-all flex items-center justify-center gap-1.5"
+              className="w-full py-3 bg-[#FF5A1F] hover:bg-[#111315] text-white rounded-xl font-bold text-xs shadow-2xs transition-colors flex items-center justify-center gap-1.5"
             >
-              <span>🛵 Start Delivery Trip</span>
+              <span>Start Delivery Trip</span>
               <span>→</span>
             </button>
           )}
@@ -123,9 +126,9 @@ export function DeliveryTaskCard({
           {isOutForDelivery && (
             <button
               onClick={() => onOpenPaymentModal?.(order)}
-              className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold text-xs shadow-md transition-all flex items-center justify-center gap-1.5"
+              className="w-full py-3 bg-[#168A5B] hover:bg-[#111315] text-white rounded-xl font-bold text-xs shadow-2xs transition-colors flex items-center justify-center gap-1.5"
             >
-              <span>🎉 Mark Order Delivered</span>
+              <span>Mark Order Delivered</span>
               <span>→</span>
             </button>
           )}

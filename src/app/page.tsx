@@ -20,7 +20,7 @@ function CustomerHomeContent() {
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [loadingProducts, setLoadingProducts] = useState(true);
 
-  // Cart state management (local state for catalog stepper)
+  // Cart state management
   const [cartQuantities, setCartQuantities] = useState<Record<string, number>>({});
 
   // Product detail modal state
@@ -107,42 +107,49 @@ function CustomerHomeContent() {
 
   return (
     <div className="space-y-4">
-      {/* Top Hero Delivery Bar */}
-      <div className="bg-gradient-to-br from-emerald-600 to-teal-700 text-white rounded-3xl p-5 shadow-sm relative overflow-hidden">
+      {/* Brand Hero Banner */}
+      <div className="bg-[#111315] text-white rounded-2xl p-4 shadow-sm border border-[#1646C7]/30 flex flex-col justify-between">
         <div className="flex items-center justify-between">
-          <span className="inline-block px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-semibold">
-            ⚡ {appConfig.deliveryTargetMins} Mins Delivery
+          <span className="text-[11px] font-bold text-[#FF5A1F] uppercase tracking-wider">
+            RushD Instant Delivery
           </span>
-          <span className="text-[11px] text-emerald-100 font-medium">Store X Partner</span>
+          <span className="text-[10px] text-zinc-400 font-semibold px-2 py-0.5 rounded bg-white/10">
+            {appConfig.deliveryTargetMins} mins
+          </span>
         </div>
-        <h1 className="text-lg font-bold mt-2.5 leading-snug">
-          VIT Bhopal Off-Campus Grocery Store
-        </h1>
-        <p className="text-xs text-emerald-100 mt-0.5">
-          {appConfig.serviceArea}
-        </p>
+
+        <div className="mt-2">
+          <h1 className="text-xl font-black text-white tracking-tight">
+            Your essentials. On the way.
+          </h1>
+          <p className="text-xs text-[#666A70] mt-0.5 font-medium">
+            Fresh groceries, snacks & hostel essentials delivered off-campus.
+          </p>
+        </div>
       </div>
 
       {/* Live Search Bar */}
       <SearchBar onSearch={handleSearch} initialQuery={searchQuery} />
 
-      {/* Sticky Category Filter Pills */}
-      <CategoryPills
-        categories={categories}
-        activeCategory={activeCategory}
-        onSelectCategory={handleSelectCategory}
-        loading={loadingCategories}
-      />
+      {/* Category Filter Pills */}
+      <div id="categories">
+        <CategoryPills
+          categories={categories}
+          activeCategory={activeCategory}
+          onSelectCategory={handleSelectCategory}
+          loading={loadingCategories}
+        />
+      </div>
 
-      {/* Product Grid Section */}
+      {/* Product Section Header & Grid */}
       <div className="pt-1">
-        <div className="flex items-center justify-between mb-3 px-1">
-          <h2 className="font-bold text-sm text-zinc-800 dark:text-zinc-200">
+        <div className="flex items-center justify-between mb-2.5 px-1 border-b border-[#D9D7D2] pb-2">
+          <h2 className="font-bold text-sm text-[#111315]">
             {activeCategory === "all"
-              ? "All Products"
+              ? "Popular Near You"
               : categories.find((c) => c.slug === activeCategory)?.name || "Catalog"}
           </h2>
-          <span className="text-xs text-zinc-400 font-medium">
+          <span className="text-xs text-[#666A70] font-medium">
             {products.length} {products.length === 1 ? "item" : "items"}
           </span>
         </div>
@@ -174,12 +181,12 @@ export default function Home() {
     <Suspense
       fallback={
         <div className="space-y-4 pt-4 animate-pulse">
-          <div className="h-28 bg-emerald-700/30 rounded-3xl" />
-          <div className="h-10 bg-zinc-200 dark:bg-zinc-800 rounded-2xl" />
-          <div className="h-8 bg-zinc-200 dark:bg-zinc-800 rounded-full" />
+          <div className="h-24 bg-zinc-200 rounded-2xl" />
+          <div className="h-10 bg-zinc-200 rounded-xl" />
+          <div className="h-8 bg-zinc-200 rounded-lg" />
           <div className="grid grid-cols-2 gap-3">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-48 bg-zinc-200 dark:bg-zinc-800 rounded-2xl" />
+              <div key={i} className="h-44 bg-zinc-200 rounded-2xl" />
             ))}
           </div>
         </div>

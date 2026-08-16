@@ -10,7 +10,6 @@ interface Step {
   key: OrderRecord["status"];
   title: string;
   subtitle: string;
-  icon: string;
 }
 
 export function OrderTrackingTimeline({ status }: OrderTrackingTimelineProps) {
@@ -18,38 +17,32 @@ export function OrderTrackingTimeline({ status }: OrderTrackingTimelineProps) {
     {
       key: "PENDING",
       title: "Order Placed",
-      subtitle: "Sent to Store Owner X for review",
-      icon: "📝",
+      subtitle: "Received by Store X team",
     },
     {
       key: "ACCEPTED",
       title: "Order Accepted",
       subtitle: "Store X confirmed your order",
-      icon: "✅",
     },
     {
       key: "PREPARING",
       title: "Packing Items",
-      subtitle: "Store X team is packing your groceries",
-      icon: "📦",
+      subtitle: "Packing your fresh groceries",
     },
     {
       key: "ASSIGNED",
       title: "Rider Assigned",
-      subtitle: "Dedicated Store X rider assigned",
-      icon: "👤",
+      subtitle: "RushD rider assigned to order",
     },
     {
       key: "OUT_FOR_DELIVERY",
       title: "Out for Delivery",
-      subtitle: "Heading to your off-campus flat / room",
-      icon: "🛵",
+      subtitle: "Heading to your off-campus doorstep",
     },
     {
       key: "DELIVERED",
       title: "Delivered",
-      subtitle: "Order delivered to your doorstep",
-      icon: "🎉",
+      subtitle: "Order delivered to your location",
     },
   ];
 
@@ -67,25 +60,24 @@ export function OrderTrackingTimeline({ status }: OrderTrackingTimelineProps) {
 
   if (isCancelled) {
     return (
-      <div className="bg-rose-50 dark:bg-rose-950/40 p-4 rounded-3xl border border-rose-200 dark:border-rose-900 text-center space-y-2">
-        <span className="text-3xl block">❌</span>
-        <h3 className="font-bold text-sm text-rose-800 dark:text-rose-300">
+      <div className="bg-[#F5F3EE] p-4 rounded-2xl border border-[#C63D3D] text-center space-y-2">
+        <h3 className="font-bold text-sm text-[#C63D3D]">
           Order Cancelled / Rejected
         </h3>
-        <p className="text-xs text-rose-700 dark:text-rose-400">
-          This order was cancelled or could not be fulfilled by Store X.
+        <p className="text-xs text-[#666A70]">
+          This order was cancelled or could not be fulfilled.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white dark:bg-zinc-900 p-5 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-xs space-y-4">
+    <div className="bg-[#FFFFFF] p-5 rounded-2xl border border-[#D9D7D2] shadow-2xs space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="font-bold text-xs text-zinc-800 dark:text-zinc-200 uppercase tracking-wider">
+        <h3 className="font-bold text-xs text-[#111315] uppercase tracking-wider">
           Delivery Progress
         </h3>
-        <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
+        <span className="text-xs font-bold px-2.5 py-0.5 rounded-md bg-[#F5F3EE] text-[#FF5A1F] border border-[#D9D7D2]">
           Target: 10-15 Mins
         </span>
       </div>
@@ -101,23 +93,23 @@ export function OrderTrackingTimeline({ status }: OrderTrackingTimelineProps) {
               {/* Connector Vertical Line */}
               {!isLast && (
                 <div
-                  className={`absolute left-[15px] top-7 bottom--5 w-0.5 transition-colors duration-500 ${
-                    isDone ? "bg-emerald-500" : "bg-zinc-200 dark:bg-zinc-800"
+                  className={`absolute left-[13px] top-6 bottom--5 w-0.5 transition-colors duration-300 ${
+                    isDone ? "bg-[#168A5B]" : "bg-[#D9D7D2]"
                   }`}
                 />
               )}
 
               {/* Node Bullet Icon */}
               <div
-                className={`relative z-10 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 ${
+                className={`relative z-10 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-200 ${
                   isCurrent
-                    ? "bg-emerald-600 text-white shadow-lg ring-4 ring-emerald-100 dark:ring-emerald-950 animate-pulse scale-110"
+                    ? "bg-[#FF5A1F] text-white shadow-2xs ring-4 ring-[#FF5A1F]/20 scale-105"
                     : isDone
-                    ? "bg-emerald-500 text-white shadow-xs"
-                    : "bg-zinc-100 dark:bg-zinc-800 text-zinc-400 border border-zinc-200 dark:border-zinc-700"
+                    ? "bg-[#168A5B] text-white"
+                    : "bg-[#F5F3EE] text-[#666A70] border border-[#D9D7D2]"
                 }`}
               >
-                {isDone ? "✓" : step.icon}
+                {isDone ? "✓" : index + 1}
               </div>
 
               {/* Step Info */}
@@ -125,15 +117,15 @@ export function OrderTrackingTimeline({ status }: OrderTrackingTimelineProps) {
                 <h4
                   className={`text-xs font-bold transition-colors ${
                     isCurrent
-                      ? "text-emerald-600 dark:text-emerald-400 font-extrabold"
+                      ? "text-[#FF5A1F]"
                       : isDone
-                      ? "text-zinc-900 dark:text-zinc-100"
-                      : "text-zinc-400 dark:text-zinc-500"
+                      ? "text-[#111315]"
+                      : "text-[#666A70]"
                   }`}
                 >
                   {step.title}
                 </h4>
-                <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 leading-snug">
+                <p className="text-[11px] text-[#666A70] mt-0.5 leading-snug">
                   {step.subtitle}
                 </p>
               </div>
