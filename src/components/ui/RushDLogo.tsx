@@ -16,9 +16,9 @@ export function RushDLogo({
   className = "",
 }: RushDLogoProps) {
   const logoHeights = {
-    sm: "h-7",
-    md: "h-9",
-    lg: "h-12",
+    sm: "h-8",
+    md: "h-11",
+    lg: "h-16",
   };
 
   const content = (
@@ -26,17 +26,17 @@ export function RushDLogo({
       <Image
         src="/brand/rushd-logo.png"
         alt="RushD"
-        width={320}
-        height={100}
+        width={360}
+        height={110}
         priority
-        className={`${logoHeights[size]} w-auto object-contain`}
+        className={`${logoHeights[size]} w-auto object-contain shrink-0`}
       />
     </div>
   );
 
   if (href) {
     return (
-      <Link href={href} className="inline-block hover:opacity-95 transition-opacity">
+      <Link href={href} className="inline-block hover:opacity-95 transition-opacity shrink-0">
         {content}
       </Link>
     );

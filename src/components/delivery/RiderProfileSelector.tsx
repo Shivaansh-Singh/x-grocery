@@ -45,9 +45,9 @@ export function RiderProfileSelector({
   const activeRider = riders.find((r) => r.id === selectedRiderId) || riders[0];
 
   return (
-    <div className="bg-[#111315] text-white p-3 rounded-2xl border border-[#1646C7]/30 flex items-center justify-between gap-3 shadow-2xs">
-      <div className="flex items-center gap-2.5 min-w-0">
-        <div className="w-8 h-8 rounded-xl bg-[#1646C7] text-white font-bold flex items-center justify-center text-sm shrink-0">
+    <div className="bg-[#111315] text-white p-3.5 rounded-2xl border border-[#D9D7D2]/20 flex items-center justify-between gap-3 shadow-2xs">
+      <div className="flex items-center gap-3 min-w-0">
+        <div className="w-9 h-9 rounded-xl bg-[#FF5A1F] text-white font-bold flex items-center justify-center text-sm shrink-0">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
           </svg>
@@ -68,11 +68,11 @@ export function RiderProfileSelector({
           const target = riders.find((r) => r.id === e.target.value);
           if (target) onSelectRider(target);
         }}
-        className="px-2.5 py-1.5 rounded-xl border border-[#D9D7D2]/20 bg-[#1646C7] text-xs font-bold text-white focus:outline-none focus:ring-1 focus:ring-[#FF5A1F]"
+        className="px-3 py-1.5 rounded-xl border border-white/20 bg-[#111315] text-xs font-bold text-white focus:outline-none focus:border-[#FF5A1F] cursor-pointer"
       >
         <option value="">Switch Rider...</option>
         {riders.map((r) => (
-          <option key={r.id} value={r.id}>
+          <option key={r.id} value={r.id} className="bg-[#111315] text-white">
             {r.name}
           </option>
         ))}

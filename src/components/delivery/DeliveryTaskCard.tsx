@@ -35,7 +35,7 @@ export function DeliveryTaskCard({
                 isOutForDelivery
                   ? "bg-[#FF5A1F] text-white"
                   : isAssigned
-                  ? "bg-[#1646C7] text-white"
+                  ? "bg-[#111315] text-white"
                   : "bg-[#ECEAE5] text-[#111315]"
               }`}
             >

@@ -56,15 +56,16 @@ function CustomerHomeContent() {
 
     async function loadProducts() {
       try {
-        const url = new URL("/api/products", window.location.origin);
+        const params = new URLSearchParams();
         if (activeCategory && activeCategory !== "all") {
-          url.searchParams.set("category", activeCategory);
+          params.set("category", activeCategory);
         }
         if (searchQuery && searchQuery.trim() !== "") {
-          url.searchParams.set("search", searchQuery.trim());
+          params.set("search", searchQuery.trim());
         }
+        const queryString = params.toString() ? `?${params.toString()}` : "";
 
-        const res = await fetch(url.toString());
+        const res = await fetch(`/api/products${queryString}`);
         const data = await res.json();
         if (!ignore && data.products) {
           setProducts(data.products);
@@ -109,15 +110,15 @@ function CustomerHomeContent() {
   return (
     <div className="space-y-4">
       {/* Brand Hero Banner */}
-      <div className="bg-[#111315] text-white rounded-2xl p-4 shadow-sm border border-[#1646C7]/30 flex flex-col justify-between">
+      <div className="bg-[#111315] text-white rounded-2xl p-4.5 shadow-2xs border border-[#D9D7D2]/20 flex flex-col justify-between">
         <div className="flex items-center justify-between">
           <RushDLogo size="md" />
-          <span className="text-[10px] text-zinc-300 font-bold px-2.5 py-1 rounded-lg bg-white/10 border border-white/10">
-            {appConfig.deliveryTargetMins} mins
+          <span className="text-[10px] text-[#FF5A1F] font-black tracking-wider uppercase px-2.5 py-1 rounded-lg bg-[#FF5A1F]/10 border border-[#FF5A1F]/20">
+            {appConfig.deliveryTargetMins} MINS DELIVERY
           </span>
         </div>
 
-        <div className="mt-3">
+        <div className="mt-3.5">
           <h1 className="text-xl font-black text-white tracking-tight">
             Your essentials. On the way.
           </h1>
