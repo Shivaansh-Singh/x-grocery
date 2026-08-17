@@ -10,15 +10,9 @@ export function Header() {
   return (
     <header className="sticky top-0 z-40 bg-[#FFFFFF] border-b border-[#D9D7D2] px-4 py-3 shadow-2xs">
       <div className="max-w-md mx-auto flex items-center justify-between gap-3">
-        {/* Left: [R ICON] [RUSHD WORDMARK] [LOCATION] */}
+        {/* Left: [R ICON] [RUSHD WORDMARK] */}
         <div className="flex items-center gap-2.5 min-w-0">
           <RushDLogo variant="full" size="md" />
-
-          {/* Location Descriptor */}
-          <div className="hidden sm:flex items-center gap-1.5 text-[11px] font-semibold text-[#666A70] border-l border-[#D9D7D2] pl-2.5 min-w-0">
-            <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#168A5B] shrink-0"></span>
-            <span className="truncate">VIT Bhopal Off-Campus (Flats & PGs)</span>
-          </div>
         </div>
 
         {/* Right: Sign In / Actions */}

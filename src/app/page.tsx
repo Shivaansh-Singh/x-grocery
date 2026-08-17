@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { appConfig } from "@/config/app.config";
 import { SearchBar } from "@/components/catalog/SearchBar";
 import { CategoryPills, CategoryItem } from "@/components/catalog/CategoryPills";
 import { ProductGrid } from "@/components/catalog/ProductGrid";
@@ -118,27 +117,6 @@ function CustomerHomeContent() {
 
   return (
     <div className="space-y-4">
-      {/* Brand Hero Banner */}
-      <div className="bg-[#111315] text-white rounded-2xl p-4.5 shadow-2xs border border-[#D9D7D2]/20 flex flex-col justify-between">
-        <div className="flex items-center justify-between">
-          <span className="text-[10px] text-[#FF5A1F] font-black tracking-wider uppercase px-2.5 py-1 rounded-lg bg-[#FF5A1F]/10 border border-[#FF5A1F]/20">
-            OFF-CAMPUS HYPERLOCAL
-          </span>
-          <span className="text-[10px] text-white font-black tracking-wider uppercase px-2.5 py-1 rounded-lg bg-white/10 border border-white/10">
-            {appConfig.deliveryTargetMins} MINS DELIVERY
-          </span>
-        </div>
-
-        <div className="mt-3.5">
-          <h1 className="text-xl font-black text-white tracking-tight">
-            Your essentials. On the way.
-          </h1>
-          <p className="text-xs text-[#666A70] mt-0.5 font-medium">
-            Fresh groceries, snacks & hostel essentials delivered off-campus.
-          </p>
-        </div>
-      </div>
-
       {/* Live Search Bar */}
       <SearchBar onSearch={handleSearch} initialQuery={searchQuery} />
 
@@ -192,7 +170,6 @@ export default function Home() {
     <Suspense
       fallback={
         <div className="space-y-4 pt-4 animate-pulse">
-          <div className="h-24 bg-zinc-200 rounded-2xl" />
           <div className="h-10 bg-zinc-200 rounded-xl" />
           <div className="h-8 bg-zinc-200 rounded-lg" />
           <div className="grid grid-cols-2 gap-3">
