@@ -1,35 +1,40 @@
 @import "tailwindcss";
 
 :root {
-  --rushd-orange: #FF5A1F;
-  --rushd-cobalt: #1646C7;
-  --rushd-ink: #111315;
-  --rushd-paper: #F5F3EE;
-  --rushd-white: #FFFFFF;
-  --rushd-muted: #666A70;
-  --rushd-border: #D9D7D2;
-  --rushd-surface: #FFFFFF;
-  --rushd-surface-muted: #ECEAE5;
-  --rushd-success: #168A5B;
-  --rushd-warning: #D9822B;
-  --rushd-error: #C63D3D;
+  --rushd-bg-primary: #0D1117;
+  --rushd-bg-secondary: #111720;
+  --rushd-card-bg: #151B24;
+  --rushd-card-elevated: #1C2430;
+  --rushd-blue-primary: #0757D5;
+  --rushd-blue-deep: #063B91;
+  --rushd-orange-brand: #FF5A00;
+  --rushd-orange-hover: #FF6A1A;
+  --rushd-text-primary: #FFFFFF;
+  --rushd-text-secondary: #A8B0BC;
+  --rushd-text-muted: #737D8B;
+  --rushd-border: #27313D;
+  --rushd-success: #19B978;
+  --rushd-error: #FF4D4D;
 
-  --background: #F5F3EE;
-  --foreground: #111315;
+  --background: #0D1117;
+  --foreground: #FFFFFF;
 }
 
 @theme inline {
-  --color-rushd-orange: #FF5A1F;
-  --color-rushd-cobalt: #1646C7;
-  --color-rushd-ink: #111315;
-  --color-rushd-paper: #F5F3EE;
-  --color-rushd-muted: #666A70;
-  --color-rushd-border: #D9D7D2;
-  --color-rushd-surface: #FFFFFF;
-  --color-rushd-surface-muted: #ECEAE5;
-  --color-rushd-success: #168A5B;
-  --color-rushd-warning: #D9822B;
-  --color-rushd-error: #C63D3D;
+  --color-rushd-bg-primary: #0D1117;
+  --color-rushd-bg-secondary: #111720;
+  --color-rushd-card-bg: #151B24;
+  --color-rushd-card-elevated: #1C2430;
+  --color-rushd-blue-primary: #0757D5;
+  --color-rushd-blue-deep: #063B91;
+  --color-rushd-orange: #FF5A00;
+  --color-rushd-orange-hover: #FF6A1A;
+  --color-rushd-text-primary: #FFFFFF;
+  --color-rushd-text-secondary: #A8B0BC;
+  --color-rushd-text-muted: #737D8B;
+  --color-rushd-border: #27313D;
+  --color-rushd-success: #19B978;
+  --color-rushd-error: #FF4D4D;
   --font-sans: var(--font-geist-sans), Inter, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), monospace;
 }

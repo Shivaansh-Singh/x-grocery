@@ -63,7 +63,7 @@ export function ProductDetailModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-xs transition-opacity duration-300">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-sm transition-opacity duration-300">
       {/* Backdrop overlay touch to close */}
       <div
         className="absolute inset-0"
@@ -72,32 +72,32 @@ export function ProductDetailModal({
       />
 
       {/* Drawer Container */}
-      <div className="relative w-full max-w-md bg-[#FFFFFF] rounded-t-3xl p-5 shadow-2xl z-10 border-t border-[#D9D7D2] max-h-[85vh] overflow-y-auto no-scrollbar">
+      <div className="relative w-full max-w-md bg-[#151B24] rounded-t-3xl p-5 shadow-2xl z-10 border-t border-[#27313D] max-h-[85vh] overflow-y-auto no-scrollbar text-white">
         {/* Top Handle Indicator */}
-        <div className="w-12 h-1 bg-[#D9D7D2] rounded-full mx-auto mb-4" />
+        <div className="w-12 h-1 bg-[#27313D] rounded-full mx-auto mb-4" />
 
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-[#ECEAE5] flex items-center justify-center text-[#666A70] hover:text-[#111315] text-sm font-bold transition-colors"
+          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-[#1C2430] flex items-center justify-center text-[#A8B0BC] hover:text-[#FFFFFF] text-sm font-bold transition-colors border border-[#27313D]"
         >
           ✕
         </button>
 
         {/* Image Display */}
-        <div className="relative aspect-4/3 w-full rounded-2xl bg-[#ECEAE5] overflow-hidden mb-4">
+        <div className="relative aspect-4/3 w-full rounded-2xl bg-[#1C2430] overflow-hidden mb-4 p-2 flex items-center justify-center">
           {product.imageUrl && !imageError ? (
             <Image
               src={product.imageUrl}
               alt={product.name}
               fill
               unoptimized
-              className="object-cover"
+              className="object-contain p-2"
               onError={() => setImageError(true)}
               sizes="(max-width: 640px) 100vw, 400px"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-[#666A70]">
+            <div className="w-full h-full flex items-center justify-center text-[#737D8B]">
               <svg className="w-12 h-12 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
               </svg>
@@ -107,15 +107,15 @@ export function ProductDetailModal({
           {/* Stock Badges */}
           <div className="absolute top-3 left-3 flex gap-2">
             {isOutOfStock ? (
-              <span className="px-3 py-1 rounded-lg bg-[#C63D3D] text-white text-xs font-bold shadow-2xs">
+              <span className="px-3 py-1 rounded-lg bg-[#FF4D4D] text-white text-xs font-bold shadow-xs">
                 Out of Stock
               </span>
             ) : isLowStock ? (
-              <span className="px-3 py-1 rounded-lg bg-[#D9822B] text-white text-xs font-bold shadow-2xs">
+              <span className="px-3 py-1 rounded-lg bg-[#FF5A00] text-white text-xs font-bold shadow-xs">
                 Only {product.stock} Left!
               </span>
             ) : (
-              <span className="px-3 py-1 rounded-lg bg-[#168A5B] text-white text-xs font-bold shadow-2xs">
+              <span className="px-3 py-1 rounded-lg bg-[#19B978] text-white text-xs font-bold shadow-xs">
                 In Stock ({product.stock})
               </span>
             )}
@@ -125,48 +125,48 @@ export function ProductDetailModal({
         {/* Content Section */}
         <div className="space-y-3">
           <div>
-            <span className="text-xs font-semibold text-[#FF5A1F]">
+            <span className="text-xs font-bold text-[#0757D5] uppercase tracking-wider">
               {product.category?.name || "Grocery"}
             </span>
-            <h2 className="text-lg font-bold text-[#111315] mt-0.5">
+            <h2 className="text-lg font-bold text-[#FFFFFF] mt-0.5">
               {product.name}
             </h2>
-            <p className="text-xs font-medium text-[#666A70] mt-0.5">
+            <p className="text-xs font-medium text-[#A8B0BC] mt-0.5">
               Unit: {product.unitDisplay}
             </p>
           </div>
 
           <div className="flex items-baseline gap-1 py-1">
-            <span className="text-sm font-semibold text-[#FF5A1F]">₹</span>
-            <span className="text-2xl font-black text-[#111315]">
+            <span className="text-sm font-bold text-[#FF5A00]">₹</span>
+            <span className="text-2xl font-black text-[#FFFFFF]">
               {product.price}
             </span>
-            <span className="text-xs text-[#666A70] ml-2">Inclusive of all taxes</span>
+            <span className="text-xs text-[#737D8B] ml-2">Inclusive of all taxes</span>
           </div>
 
           {/* Description */}
           {product.description && (
-            <div className="bg-[#F5F3EE] p-3.5 rounded-2xl border border-[#D9D7D2]">
-              <h4 className="text-xs font-bold text-[#111315] mb-1">
+            <div className="bg-[#1C2430] p-3.5 rounded-2xl border border-[#27313D]">
+              <h4 className="text-xs font-bold text-[#FFFFFF] mb-1">
                 Product Details
               </h4>
-              <p className="text-xs text-[#666A70] leading-relaxed">
+              <p className="text-xs text-[#A8B0BC] leading-relaxed">
                 {product.description}
               </p>
             </div>
           )}
 
           {/* Delivery Note */}
-          <div className="flex items-center gap-2 p-3 bg-[#F5F3EE] rounded-2xl border border-[#D9D7D2] text-[#111315] text-xs">
-            <span className="w-2 h-2 rounded-full bg-[#168A5B] shrink-0"></span>
-            <span>Fast 10-15 Min delivery to VIT Bhopal off-campus flats & rooms.</span>
+          <div className="flex items-center gap-2 p-3 bg-[#1C2430] rounded-2xl border border-[#27313D] text-[#A8B0BC] text-xs">
+            <span className="w-2 h-2 rounded-full bg-[#19B978] shrink-0"></span>
+            <span>⚡ Instant 15-Min delivery to VIT Bhopal off-campus residents.</span>
           </div>
 
           {/* Footer Action Button */}
-          <div className="pt-3 border-t border-[#D9D7D2] flex items-center justify-between gap-3">
+          <div className="pt-3 border-t border-[#27313D] flex items-center justify-between gap-3">
             <div className="flex flex-col">
-              <span className="text-[10px] text-[#666A70]">Total Price</span>
-              <span className="text-lg font-bold text-[#111315]">
+              <span className="text-[10px] text-[#737D8B]">Total Price</span>
+              <span className="text-lg font-bold text-[#FFFFFF]">
                 ₹{quantity > 0 ? (product.price * quantity).toFixed(2) : product.price}
               </span>
             </div>
@@ -174,12 +174,12 @@ export function ProductDetailModal({
             {isOutOfStock ? (
               <button
                 disabled
-                className="w-full py-3 rounded-xl bg-[#ECEAE5] text-[#666A70] text-xs font-bold cursor-not-allowed"
+                className="w-full py-3 rounded-xl bg-[#1C2430] text-[#737D8B] text-xs font-bold cursor-not-allowed border border-[#27313D]"
               >
                 Currently Out of Stock
               </button>
             ) : quantity > 0 ? (
-              <div className="flex items-center justify-between bg-[#FF5A1F] text-white rounded-xl px-4 py-2.5 shadow-2xs flex-1">
+              <div className="flex items-center justify-between bg-[#FF5A00] text-white rounded-xl px-4 py-2.5 shadow-sm flex-1">
                 <button
                   type="button"
                   onClick={handleDecrement}
@@ -187,7 +187,7 @@ export function ProductDetailModal({
                 >
                   -
                 </button>
-                <span className="text-sm font-bold">{quantity} in cart</span>
+                <span className="text-sm font-extrabold">{quantity} in cart</span>
                 <button
                   type="button"
                   onClick={handleIncrement}
@@ -201,7 +201,7 @@ export function ProductDetailModal({
               <button
                 type="button"
                 onClick={handleAdd}
-                className="flex-1 py-3 rounded-xl bg-[#FF5A1F] hover:bg-[#111315] text-white text-xs font-bold shadow-2xs transition-colors"
+                className="flex-1 py-3 rounded-xl bg-[#FF5A00] hover:bg-[#FF6A1A] text-white text-xs font-extrabold shadow-sm transition-colors"
               >
                 Add to Cart • ₹{product.price}
               </button>

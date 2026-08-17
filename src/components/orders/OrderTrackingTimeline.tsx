@@ -60,11 +60,11 @@ export function OrderTrackingTimeline({ status }: OrderTrackingTimelineProps) {
 
   if (isCancelled) {
     return (
-      <div className="bg-[#F5F3EE] p-4 rounded-2xl border border-[#C63D3D] text-center space-y-2">
-        <h3 className="font-bold text-sm text-[#C63D3D]">
+      <div className="bg-[#151B24] p-4 rounded-2xl border border-[#FF4D4D] text-center space-y-2">
+        <h3 className="font-bold text-sm text-[#FF4D4D]">
           Order Cancelled / Rejected
         </h3>
-        <p className="text-xs text-[#666A70]">
+        <p className="text-xs text-[#A8B0BC]">
           This order was cancelled or could not be fulfilled.
         </p>
       </div>
@@ -72,13 +72,13 @@ export function OrderTrackingTimeline({ status }: OrderTrackingTimelineProps) {
   }
 
   return (
-    <div className="bg-[#FFFFFF] p-5 rounded-2xl border border-[#D9D7D2] shadow-2xs space-y-4">
+    <div className="bg-[#151B24] p-5 rounded-2xl border border-[#27313D] shadow-md space-y-4 text-white">
       <div className="flex items-center justify-between">
-        <h3 className="font-bold text-xs text-[#111315] uppercase tracking-wider">
+        <h3 className="font-extrabold text-xs text-[#FFFFFF] uppercase tracking-wider">
           Delivery Progress
         </h3>
-        <span className="text-xs font-bold px-2.5 py-0.5 rounded-md bg-[#F5F3EE] text-[#FF5A1F] border border-[#D9D7D2]">
-          Target: 10-15 Mins
+        <span className="text-xs font-bold px-2.5 py-0.5 rounded-lg bg-[#1C2430] text-[#FF5A00] border border-[#27313D]">
+          Target: 15 Mins ⚡
         </span>
       </div>
 
@@ -94,7 +94,7 @@ export function OrderTrackingTimeline({ status }: OrderTrackingTimelineProps) {
               {!isLast && (
                 <div
                   className={`absolute left-[13px] top-6 bottom--5 w-0.5 transition-colors duration-300 ${
-                    isDone ? "bg-[#168A5B]" : "bg-[#D9D7D2]"
+                    isDone ? "bg-[#19B978]" : "bg-[#27313D]"
                   }`}
                 />
               )}
@@ -103,10 +103,10 @@ export function OrderTrackingTimeline({ status }: OrderTrackingTimelineProps) {
               <div
                 className={`relative z-10 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-200 ${
                   isCurrent
-                    ? "bg-[#FF5A1F] text-white shadow-2xs ring-4 ring-[#FF5A1F]/20 scale-105"
+                    ? "bg-[#FF5A00] text-white shadow-sm ring-4 ring-[#FF5A00]/20 scale-105"
                     : isDone
-                    ? "bg-[#168A5B] text-white"
-                    : "bg-[#F5F3EE] text-[#666A70] border border-[#D9D7D2]"
+                    ? "bg-[#19B978] text-white"
+                    : "bg-[#1C2430] text-[#737D8B] border border-[#27313D]"
                 }`}
               >
                 {isDone ? "✓" : index + 1}
@@ -117,15 +117,15 @@ export function OrderTrackingTimeline({ status }: OrderTrackingTimelineProps) {
                 <h4
                   className={`text-xs font-bold transition-colors ${
                     isCurrent
-                      ? "text-[#FF5A1F]"
+                      ? "text-[#FF5A00]"
                       : isDone
-                      ? "text-[#111315]"
-                      : "text-[#666A70]"
+                      ? "text-[#FFFFFF]"
+                      : "text-[#737D8B]"
                   }`}
                 >
                   {step.title}
                 </h4>
-                <p className="text-[11px] text-[#666A70] mt-0.5 leading-snug">
+                <p className="text-[11px] text-[#A8B0BC] mt-0.5 leading-snug">
                   {step.subtitle}
                 </p>
               </div>

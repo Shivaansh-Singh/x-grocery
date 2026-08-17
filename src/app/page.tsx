@@ -130,15 +130,39 @@ function CustomerHomeContent() {
         />
       </div>
 
+      {/* Compact Quick Delivery Feature Card */}
+      {!searchQuery && activeCategory === "all" && (
+        <div className="bg-[#151B24] rounded-2xl p-4 border border-[#27313D] shadow-md flex items-center justify-between gap-3">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-black tracking-wider uppercase px-2 py-0.5 rounded-md bg-[#FF5A00]/15 text-[#FF5A00] border border-[#FF5A00]/30">
+                ⚡ 15-MIN HYPERLOCAL
+              </span>
+              <span className="text-[10px] font-bold text-[#A8B0BC]">
+                VIT Bhopal Off-Campus
+              </span>
+            </div>
+            <h2 className="text-sm font-extrabold text-[#FFFFFF] tracking-tight">
+              Hostel Essentials & Snacks Delivered Fast
+            </h2>
+          </div>
+          <div className="shrink-0 text-right">
+            <span className="text-xs font-black text-[#19B978] bg-[#19B978]/15 px-2.5 py-1 rounded-xl border border-[#19B978]/30">
+              FREE OVER ₹199
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Product Section Header & Grid */}
       <div className="pt-1">
-        <div className="flex items-center justify-between mb-2.5 px-1 border-b border-[#D9D7D2] pb-2">
-          <h2 className="font-bold text-sm text-[#111315]">
+        <div className="flex items-center justify-between mb-3 px-1 border-b border-[#27313D] pb-2.5">
+          <h2 className="font-extrabold text-sm text-[#FFFFFF] tracking-tight">
             {activeCategory === "all"
               ? "Popular Near You"
               : categories.find((c) => c.slug === activeCategory)?.name || "Catalog"}
           </h2>
-          <span className="text-xs text-[#666A70] font-medium">
+          <span className="text-xs text-[#A8B0BC] font-semibold">
             {products.length} {products.length === 1 ? "item" : "items"}
           </span>
         </div>
@@ -170,11 +194,11 @@ export default function Home() {
     <Suspense
       fallback={
         <div className="space-y-4 pt-4 animate-pulse">
-          <div className="h-10 bg-zinc-200 rounded-xl" />
-          <div className="h-8 bg-zinc-200 rounded-lg" />
+          <div className="h-10 bg-[#151B24] border border-[#27313D] rounded-xl" />
+          <div className="h-8 bg-[#151B24] border border-[#27313D] rounded-lg" />
           <div className="grid grid-cols-2 gap-3">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-44 bg-zinc-200 rounded-2xl" />
+              <div key={i} className="h-44 bg-[#151B24] border border-[#27313D] rounded-2xl" />
             ))}
           </div>
         </div>

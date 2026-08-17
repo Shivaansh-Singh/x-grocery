@@ -27,7 +27,7 @@ export function ProductGrid({
         {[1, 2, 3, 4, 5, 6].map((i) => (
           <div
             key={i}
-            className="h-56 bg-zinc-200 rounded-2xl"
+            className="h-56 bg-[#151B24] border border-[#27313D] rounded-2xl"
           />
         ))}
       </div>
@@ -36,13 +36,13 @@ export function ProductGrid({
 
   if (safeProducts.length === 0) {
     return (
-      <div className="bg-[#FFFFFF] rounded-2xl p-8 border border-[#D9D7D2] text-center space-y-2 my-4 shadow-2xs">
-        <h3 className="font-bold text-sm text-[#111315]">
+      <div className="bg-[#151B24] rounded-2xl p-8 border border-[#27313D] text-center space-y-2 my-4 shadow-md">
+        <h3 className="font-bold text-sm text-[#FFFFFF]">
           No products found
         </h3>
-        <p className="text-xs text-[#666A70] max-w-xs mx-auto">
+        <p className="text-xs text-[#A8B0BC] max-w-xs mx-auto">
           {searchQuery
-            ? `We couldn't find any grocery items matching "${searchQuery}".`
+            ? `We couldn't find any items matching "${searchQuery}".`
             : "No active products in this category at RushD."}
         </p>
       </div>

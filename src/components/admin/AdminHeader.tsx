@@ -23,15 +23,15 @@ export function AdminHeader({ pendingOrdersCount = 0 }: AdminHeaderProps) {
   ];
 
   return (
-    <header className="bg-[#111315] text-white rounded-2xl p-4 shadow-2xs border border-[#1646C7]/30 space-y-3 mb-4">
+    <header className="bg-[#151B24] text-white rounded-2xl p-4 shadow-md border border-[#27313D] space-y-3 mb-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <RushDLogo size="sm" href="/admin" />
-          <div className="border-l border-white/20 pl-2.5">
-            <h2 className="font-bold text-xs leading-tight text-white">
+          <div className="border-l border-[#27313D] pl-2.5">
+            <h2 className="font-extrabold text-xs leading-tight text-white">
               Admin Hub
             </h2>
-            <p className="text-[10px] text-[#666A70] font-medium">
+            <p className="text-[10px] text-[#A8B0BC] font-medium">
               Fulfillment & Staff Portal
             </p>
           </div>
@@ -39,7 +39,7 @@ export function AdminHeader({ pendingOrdersCount = 0 }: AdminHeaderProps) {
 
         <Link
           href="/"
-          className="text-xs text-zinc-300 hover:text-white transition-colors bg-white/10 px-3 py-1.5 rounded-xl font-semibold border border-white/10"
+          className="text-xs text-[#A8B0BC] hover:text-white transition-colors bg-[#1C2430] px-3 py-1.5 rounded-xl font-bold border border-[#27313D]"
         >
           Customer App ↗
         </Link>
@@ -54,13 +54,13 @@ export function AdminHeader({ pendingOrdersCount = 0 }: AdminHeaderProps) {
               href={link.href}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 shrink-0 ${
                 isActive
-                  ? "bg-[#1646C7] text-white shadow-2xs"
-                  : "bg-white/10 text-zinc-300 hover:bg-white/20 hover:text-white"
+                  ? "bg-[#0757D5] text-white shadow-xs"
+                  : "bg-[#1C2430] text-[#A8B0BC] hover:bg-[#27313D] hover:text-white"
               }`}
             >
               <span>{link.label}</span>
               {link.badge && (
-                <span className="px-1.5 py-0.2 rounded bg-[#FF5A1F] text-white text-[10px] font-extrabold">
+                <span className="px-1.5 py-0.2 rounded bg-[#FF5A00] text-white text-[10px] font-black">
                   {link.badge}
                 </span>
               )}

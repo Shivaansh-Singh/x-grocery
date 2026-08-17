@@ -39,43 +39,43 @@ export function OrderCard({ order }: { order: OrderRecord }) {
   const isCompleted = order.status === "DELIVERED" || order.status === "CANCELLED" || order.status === "REJECTED";
 
   return (
-    <div className="bg-[#FFFFFF] rounded-2xl border border-[#D9D7D2] p-4 shadow-2xs space-y-3">
+    <div className="bg-[#151B24] rounded-2xl border border-[#27313D] p-4 shadow-md space-y-3 text-white">
       {/* Header Row */}
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <span className="font-black text-sm text-[#111315]">
+            <span className="font-extrabold text-sm text-[#FFFFFF]">
               #{order.orderNumber}
             </span>
             <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${statusConfig.badgeClass}`}>
               {statusConfig.label}
             </span>
           </div>
-          <span className="text-[11px] text-[#666A70] block mt-0.5">{formattedDate}</span>
+          <span className="text-[11px] text-[#A8B0BC] block mt-0.5">{formattedDate}</span>
         </div>
 
         <div className="text-right">
-          <span className="text-sm font-black text-[#FF5A1F] block">
+          <span className="text-sm font-extrabold text-[#FF5A00] block">
             ₹{order.totalAmount.toFixed(0)}
           </span>
-          <span className="text-[10px] font-medium text-[#666A70] bg-[#ECEAE5] px-2 py-0.5 rounded-md inline-block mt-0.5">
+          <span className="text-[10px] font-semibold text-[#A8B0BC] bg-[#1C2430] border border-[#27313D] px-2 py-0.5 rounded-md inline-block mt-0.5">
             {order.paymentMethod === "COD" ? "Cash on Delivery" : "UPI on Delivery"}
           </span>
         </div>
       </div>
 
       {/* Item Preview */}
-      <div className="bg-[#F5F3EE] p-3 rounded-xl border border-[#D9D7D2] space-y-1.5">
-        <span className="text-[10px] font-semibold text-[#666A70] uppercase tracking-wider block">
+      <div className="bg-[#1C2430] p-3 rounded-xl border border-[#27313D] space-y-1.5">
+        <span className="text-[10px] font-bold text-[#737D8B] uppercase tracking-wider block">
           Items ({order.items.length})
         </span>
         <div className="space-y-1">
           {order.items.map((item) => (
             <div key={item.id} className="flex items-center justify-between text-xs">
-              <span className="text-[#111315] font-medium truncate max-w-[200px]">
+              <span className="text-[#FFFFFF] font-medium truncate max-w-[200px]">
                 {item.productName}
               </span>
-              <span className="font-semibold text-[#666A70]">
+              <span className="font-semibold text-[#A8B0BC]">
                 x{item.quantity} • ₹{item.subtotal.toFixed(0)}
               </span>
             </div>
@@ -85,16 +85,16 @@ export function OrderCard({ order }: { order: OrderRecord }) {
 
       {/* Footer Action Button */}
       <div className="flex items-center justify-between pt-1">
-        <div className="text-[11px] text-[#666A70] truncate max-w-[200px]">
+        <div className="text-[11px] text-[#737D8B] truncate max-w-[200px]">
           {order.deliveryAddress.split("•")[0]}
         </div>
 
         <Link
           href={`/orders/${order.id}`}
-          className={`px-3.5 py-1.5 rounded-xl font-bold text-xs shadow-2xs transition-colors flex items-center gap-1.5 ${
+          className={`px-3.5 py-1.5 rounded-xl font-extrabold text-xs shadow-xs transition-colors flex items-center gap-1.5 ${
             isCompleted
-              ? "bg-[#ECEAE5] text-[#111315] hover:bg-[#D9D7D2]"
-              : "bg-[#FF5A1F] text-white hover:bg-[#111315]"
+              ? "bg-[#1C2430] text-[#A8B0BC] hover:text-[#FFFFFF] border border-[#27313D]"
+              : "bg-[#FF5A00] text-white hover:bg-[#FF6A1A]"
           }`}
         >
           <span>{isCompleted ? "View Receipt" : "Track Live"}</span>
@@ -110,38 +110,38 @@ function getStatusBadgeConfig(status: OrderRecord["status"]) {
     case "PENDING":
       return {
         label: "Order Placed",
-        badgeClass: "bg-[#ECEAE5] text-[#111315]",
+        badgeClass: "bg-[#1C2430] text-[#A8B0BC] border border-[#27313D]",
       };
     case "ACCEPTED":
       return {
         label: "Order Accepted",
-        badgeClass: "bg-[#1646C7]/10 text-[#1646C7]",
+        badgeClass: "bg-[#0757D5]/20 text-[#0757D5] border border-[#0757D5]/40",
       };
     case "PREPARING":
       return {
         label: "Packing Items",
-        badgeClass: "bg-[#1646C7]/10 text-[#1646C7]",
+        badgeClass: "bg-[#0757D5]/20 text-[#0757D5] border border-[#0757D5]/40",
       };
     case "ASSIGNED":
       return {
         label: "Rider Assigned",
-        badgeClass: "bg-[#FF5A1F]/10 text-[#FF5A1F]",
+        badgeClass: "bg-[#FF5A00]/20 text-[#FF5A00] border border-[#FF5A00]/40",
       };
     case "OUT_FOR_DELIVERY":
       return {
         label: "Out for Delivery",
-        badgeClass: "bg-[#FF5A1F] text-white",
+        badgeClass: "bg-[#FF5A00] text-white",
       };
     case "DELIVERED":
       return {
         label: "Delivered",
-        badgeClass: "bg-[#168A5B] text-white",
+        badgeClass: "bg-[#19B978] text-white",
       };
     case "CANCELLED":
     case "REJECTED":
       return {
         label: "Cancelled",
-        badgeClass: "bg-[#C63D3D] text-white",
+        badgeClass: "bg-[#FF4D4D] text-white",
       };
   }
 }

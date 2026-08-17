@@ -26,7 +26,7 @@ export function CategoryPills({
         {[1, 2, 3, 4, 5].map((i) => (
           <div
             key={i}
-            className="h-8 w-24 bg-zinc-200 rounded-lg shrink-0"
+            className="h-8 w-24 bg-[#151B24] border border-[#27313D] rounded-xl shrink-0"
           />
         ))}
       </div>
@@ -35,14 +35,14 @@ export function CategoryPills({
 
   const allCategory: CategoryItem = {
     id: "all",
-    name: "All Items",
+    name: "⚡ All Items",
     slug: "all",
   };
 
   const fullList = [allCategory, ...categories];
 
   return (
-    <div className="sticky top-[52px] z-30 bg-[#F5F3EE]/95 backdrop-blur-md py-2 px-1 border-b border-[#D9D7D2]/60">
+    <div className="sticky top-[56px] z-30 bg-[#0D1117]/95 backdrop-blur-md py-2 px-1 border-b border-[#27313D]">
       <div className="flex gap-2 overflow-x-auto no-scrollbar scroll-smooth">
         {fullList.map((cat) => {
           const isSelected = activeCategory === cat.slug;
@@ -50,10 +50,10 @@ export function CategoryPills({
             <button
               key={cat.slug}
               onClick={() => onSelectCategory(cat.slug)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors shrink-0 ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all shrink-0 ${
                 isSelected
-                  ? "bg-[#FF5A1F] text-white shadow-2xs"
-                  : "bg-[#FFFFFF] text-[#666A70] hover:text-[#111315] hover:bg-[#ECEAE5] border border-[#D9D7D2]"
+                  ? "bg-[#FF5A00] text-white shadow-sm scale-[1.02]"
+                  : "bg-[#151B24] text-[#A8B0BC] hover:text-[#FFFFFF] hover:bg-[#1C2430] border border-[#27313D]"
               }`}
             >
               <span>{cat.name}</span>
