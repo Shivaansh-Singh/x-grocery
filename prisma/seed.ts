@@ -339,12 +339,19 @@ async function main() {
 
   console.log(`✓ Seeded ${productsData.length} products with initial stock & inventory logs`);
 
-  // 5. Seed Test Active Delivery Order for Ramesh Kumar (Rider 1)
   const existingOrder = await prisma.order.findUnique({
     where: { orderNumber: "XG-100101" },
   });
 
-  if (!existingOrder) {
+  if (existingOrder) {
+    await prisma.order.update({
+      where: { id: existingOrder.id },
+      data: {
+        status: OrderStatus.ASSIGNED,
+        paymentStatus: PaymentStatus.PENDING,
+      },
+    });
+  } else {
     const sampleProduct1 = await prisma.product.findFirst({
       where: { slug: "maggi-masala-noodles-4pack" },
     });
