@@ -275,7 +275,7 @@ async function main() {
       unitQuantity: 500,
       unitDisplay: "500g Pack",
       stock: 25,
-      imageUrl: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=500&q=80",
+      imageUrl: "/images/products/surf-excel.svg",
       description: "Superior stain removal powder ideal for hostel bucket washing.",
     },
     {
@@ -287,7 +287,7 @@ async function main() {
       unitQuantity: 75,
       unitDisplay: "75g Soap Bar",
       stock: 30,
-      imageUrl: "https://images.unsplash.com/photo-1600857544200-b2f666a9a2ec?w=500&q=80",
+      imageUrl: "/images/products/dettol-soap.svg",
       description: "Trusted germ protection bathing soap for daily hygiene.",
     },
   ];

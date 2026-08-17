@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F2F8F4"/>
+      <stop offset="100%" stop-color="#E2EFE7"/>
+    </linearGradient>
+    <linearGradient id="soapGreen" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#008044"/>
+      <stop offset="100%" stop-color="#005A30"/>
+    </linearGradient>
+    <linearGradient id="soapBar" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#72D59B"/>
+      <stop offset="100%" stop-color="#3EB872"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#00351C" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+
+  <!-- Background Surface -->
+  <rect width="500" height="500" rx="32" fill="url(#bgGrad)"/>
+
+  <!-- Dettol Soap Box Packaging -->
+  <g filter="url(#shadow)">
+    <!-- Box Base -->
+    <rect x="90" y="100" width="320" height="220" rx="24" fill="url(#soapGreen)"/>
+    
+    <!-- White Curved Wave Pattern -->
+    <path d="M90 180 Q250 220 410 160 L410 320 Q250 320 90 320 Z" fill="#FFFFFF"/>
+    
+    <!-- Yellow Accent Stripe -->
+    <path d="M90 170 Q250 210 410 150 L410 165 Q250 225 90 185 Z" fill="#FFC800"/>
+
+    <!-- Green Sword Emblem Background Circle -->
+    <circle cx="160" cy="240" r="42" fill="#008044"/>
+    
+    <!-- White Sword Graphic -->
+    <path d="M160 208 L164 212 L164 262 L160 270 L156 262 L156 212 Z" fill="#FFFFFF"/>
+    <rect x="146" y="254" width="28" height="6" rx="3" fill="#FFFFFF"/>
+
+    <!-- Dettol Brand Text -->
+    <text x="220" y="242" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="34" fill="#006837" letter-spacing="-1">Dettol</text>
+    <text x="220" y="268" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="14" fill="#FF8A00" letter-spacing="2">ORIGINAL</text>
+    <text x="220" y="290" font-family="system-ui, -apple-system, sans-serif" font-weight="600" font-size="11" fill="#666666">100% Germ Protection Soap</text>
+  </g>
+
+  <!-- Solid Soap Bar in Foreground -->
+  <g filter="url(#shadow)">
+    <rect x="130" y="280" width="240" height="130" rx="36" fill="url(#soapBar)"/>
+    <!-- Soap Embossed Inner Ring -->
+    <rect x="150" y="298" width="200" height="94" rx="26" fill="none" stroke="#FFFFFF" stroke-width="3" opacity="0.5"/>
+    <text x="250" y="356" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="22" fill="#FFFFFF" text-anchor="middle" opacity="0.9" letter-spacing="1">Dettol</text>
+  </g>
+</svg>
