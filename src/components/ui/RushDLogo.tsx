@@ -11,27 +11,48 @@ interface RushDLogoProps {
 }
 
 export function RushDLogo({
+  variant = "full",
   size = "md",
   href = "/",
   className = "",
 }: RushDLogoProps) {
-  const logoDimensions = {
+  const iconDimensions = {
     sm: "h-7 w-7",
-    md: "h-10 w-10",
-    lg: "h-14 w-14",
+    md: "h-9 w-9",
+    lg: "h-12 w-12",
+  };
+
+  const wordmarkHeights = {
+    sm: "h-5",
+    md: "h-6.5",
+    lg: "h-8",
   };
 
   const content = (
-    <div className={`inline-flex items-center select-none shrink-0 ${className}`}>
+    <div className={`inline-flex items-center gap-2 select-none shrink-0 ${className}`}>
+      {/* R Icon Emblem */}
       <Image
         src="/brand/rushd-logo.png"
-        alt="RushD"
+        alt="RushD Icon"
         width={160}
         height={160}
         priority
         unoptimized
-        className={`${logoDimensions[size]} object-contain rounded-xl shrink-0`}
+        className={`${iconDimensions[size]} object-contain rounded-xl shrink-0`}
       />
+
+      {/* RushD Wordmark Logo Asset */}
+      {variant === "full" && (
+        <Image
+          src="/brand/rushd-wordmark.svg"
+          alt="RushD"
+          width={180}
+          height={45}
+          priority
+          unoptimized
+          className={`${wordmarkHeights[size]} w-auto object-contain shrink-0`}
+        />
+      )}
     </div>
   );
 

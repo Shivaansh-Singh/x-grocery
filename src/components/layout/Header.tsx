@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { appConfig } from "@/config/app.config";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { RushDLogo } from "@/components/ui/RushDLogo";
 
@@ -9,21 +8,20 @@ export function Header() {
   const { user, role, signOut } = useAuth();
 
   return (
-    <header className="sticky top-0 z-40 bg-[#FFFFFF] border-b border-[#D9D7D2] px-4 py-2.5 shadow-2xs">
+    <header className="sticky top-0 z-40 bg-[#FFFFFF] border-b border-[#D9D7D2] px-4 py-3 shadow-2xs">
       <div className="max-w-md mx-auto flex items-center justify-between gap-3">
+        {/* Left: [R ICON] [RUSHD WORDMARK] [LOCATION] */}
         <div className="flex items-center gap-2.5 min-w-0">
-          <RushDLogo size="md" />
-          <div className="flex flex-col justify-center min-w-0 border-l border-[#D9D7D2] pl-2.5">
-            <span className="text-sm font-black text-[#111315] tracking-tight leading-none">
-              Rush<span className="text-[#FF5A1F]">D</span>
-            </span>
-            <div className="flex items-center gap-1 text-[10px] font-semibold text-[#666A70] mt-1">
-              <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#168A5B]"></span>
-              <span className="truncate">{appConfig.serviceArea}</span>
-            </div>
+          <RushDLogo variant="full" size="md" />
+
+          {/* Location Descriptor */}
+          <div className="hidden sm:flex items-center gap-1.5 text-[11px] font-semibold text-[#666A70] border-l border-[#D9D7D2] pl-2.5 min-w-0">
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#168A5B] shrink-0"></span>
+            <span className="truncate">VIT Bhopal Off-Campus (Flats & PGs)</span>
           </div>
         </div>
 
+        {/* Right: Sign In / Actions */}
         <div className="flex items-center gap-2 shrink-0">
           {role === "STORE_ADMIN" && (
             <Link
