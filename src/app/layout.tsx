@@ -18,8 +18,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "RushD ⚡ Midnight Rush - Your essentials. On the way.",
-  description: "Hyperlocal instant grocery delivery for VIT Bhopal Off-Campus residents",
+  title: "RushD ⚡ Electric Dusk - Your essentials. On the way.",
+  description: "Hyperlocal instant grocery delivery in 15 minutes",
 };
 
 export default function RootLayout({
@@ -32,7 +32,7 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full bg-[#0D1117] text-[#FFFFFF] font-sans selection:bg-[#FF5A00] selection:text-white">
+      <body className="min-h-full bg-[#0B0E14] text-[#F5F6FA] font-sans selection:bg-[#FF6B1A] selection:text-white">
         <ToastProvider>
           <AuthProvider>
             <CartProvider>

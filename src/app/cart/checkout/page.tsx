@@ -16,7 +16,7 @@ export default function CheckoutPage() {
   const [address, setAddress] = useState<AddressDetails>({
     buildingColony: "Royal City Flats, Block B",
     flatRoomNo: "",
-    landmark: "Near VIT Bhopal Main Gate Area",
+    landmark: "Near Main Gate Area",
     phone: "+91 ",
   });
 
@@ -27,16 +27,16 @@ export default function CheckoutPage() {
   if (itemCount === 0) {
     return (
       <div className="space-y-6 pt-6 text-center">
-        <div className="bg-[#151B24] rounded-2xl p-8 border border-[#27313D] shadow-md space-y-4 max-w-md mx-auto text-white">
-          <h2 className="text-lg font-bold text-[#FFFFFF]">
+        <div className="bg-[#141822] rounded-2xl p-8 border border-white/8 shadow-md space-y-4 max-w-md mx-auto text-[#F5F6FA]">
+          <h2 className="text-lg font-bold text-[#F5F6FA]">
             No items in cart for checkout
           </h2>
-          <p className="text-xs text-[#A8B0BC] max-w-xs mx-auto">
+          <p className="text-xs text-[#8A90A3] max-w-xs mx-auto">
             Please add grocery items to your cart before proceeding to checkout.
           </p>
           <Link
             href="/"
-            className="inline-block px-6 py-3 bg-[#FF5A00] hover:bg-[#FF6A1A] text-white rounded-xl font-bold text-xs shadow-sm transition-colors"
+            className="inline-block px-6 py-3 bg-gradient-to-r from-[#FF6B1A] to-[#2D6CFF] hover:opacity-90 text-white rounded-xl font-bold text-xs shadow-sm transition-all"
           >
             Browse Products
           </Link>
@@ -113,24 +113,24 @@ export default function CheckoutPage() {
   };
 
   return (
-    <form onSubmit={handlePlaceOrder} className="space-y-4 pb-6 pt-1 text-white">
+    <form onSubmit={handlePlaceOrder} className="space-y-4 pb-6 pt-1 text-[#F5F6FA]">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-[#27313D] pb-2.5">
+      <div className="flex items-center justify-between border-b border-white/8 pb-2.5">
         <div>
-          <h1 className="text-xl font-black text-[#FFFFFF] tracking-tight">
+          <h1 className="text-xl font-black text-[#F5F6FA] tracking-tight">
             Off-Campus Checkout
           </h1>
-          <p className="text-xs text-[#A8B0BC]">
+          <p className="text-xs text-[#8A90A3]">
             RushD Express Delivery
           </p>
         </div>
-        <Link href="/cart" className="text-xs font-bold text-[#FF5A00] hover:underline">
+        <Link href="/cart" className="text-xs font-bold text-[#FF6B1A] hover:underline">
           ← Back to Cart
         </Link>
       </div>
 
       {errorMessage && (
-        <div className="p-3.5 bg-[#151B24] border border-[#FF4D4D] text-[#FF4D4D] rounded-2xl text-xs font-bold">
+        <div className="p-3.5 bg-[#141822] border border-[#FF4D4D] text-[#FF4D4D] rounded-2xl text-xs font-bold">
           {errorMessage}
         </div>
       )}
@@ -142,8 +142,8 @@ export default function CheckoutPage() {
       <PaymentMethodSelector selectedMethod={paymentMethod} onChange={setPaymentMethod} />
 
       {/* Step 3: Order Summary & Bill Breakdown */}
-      <div className="bg-[#151B24] p-4 rounded-2xl border border-[#27313D] shadow-md space-y-3">
-        <h3 className="font-extrabold text-xs text-[#FFFFFF] uppercase tracking-wider">
+      <div className="bg-[#141822] p-4 rounded-2xl border border-white/8 shadow-md space-y-3">
+        <h3 className="font-extrabold text-xs text-[#F5F6FA] uppercase tracking-wider">
           Order Summary ({itemCount} {itemCount === 1 ? "Item" : "Items"})
         </h3>
 
@@ -152,38 +152,38 @@ export default function CheckoutPage() {
           {items.map(({ product, quantity }) => (
             <div
               key={product.id}
-              className="flex items-center gap-2 bg-[#1C2430] p-2 rounded-xl border border-[#27313D] text-xs shrink-0"
+              className="flex items-center gap-2 bg-[#1A1F2C] p-2 rounded-xl border border-white/8 text-xs shrink-0"
             >
-              <span className="font-semibold text-[#FFFFFF] truncate max-w-[120px]">
+              <span className="font-semibold text-[#F5F6FA] truncate max-w-[120px]">
                 {product.name}
               </span>
-              <span className="bg-[#FF5A00] text-white font-extrabold px-1.5 py-0.5 rounded text-[10px]">
+              <span className="bg-gradient-to-r from-[#FF6B1A] to-[#2D6CFF] text-white font-extrabold px-1.5 py-0.5 rounded text-[10px]">
                 x{quantity}
               </span>
             </div>
           ))}
         </div>
 
-        <div className="border-t border-[#27313D] pt-3 space-y-2 text-xs">
-          <div className="flex items-center justify-between text-[#A8B0BC]">
+        <div className="border-t border-white/8 pt-3 space-y-2 text-xs">
+          <div className="flex items-center justify-between text-[#8A90A3]">
             <span>Items Subtotal</span>
-            <span className="font-semibold text-[#FFFFFF]">₹{subtotal.toFixed(0)}</span>
+            <span className="font-semibold text-[#F5F6FA]">₹{subtotal.toFixed(0)}</span>
           </div>
 
-          <div className="flex items-center justify-between text-[#A8B0BC]">
+          <div className="flex items-center justify-between text-[#8A90A3]">
             <span>Delivery Fee</span>
             <span>
               {deliveryFee === 0 ? (
-                <span className="font-bold text-[#19B978]">FREE</span>
+                <span className="font-bold text-[#3DD68C]">FREE</span>
               ) : (
                 <span>₹15</span>
               )}
             </span>
           </div>
 
-          <div className="border-t border-[#27313D] pt-2 flex items-center justify-between font-extrabold text-sm text-[#FFFFFF]">
+          <div className="border-t border-white/8 pt-2 flex items-center justify-between font-extrabold text-sm text-[#F5F6FA]">
             <span>Total Payable</span>
-            <span className="text-[#FF5A00] text-base">
+            <span className="text-[#FF6B1A] text-base">
               ₹{totalAmount.toFixed(0)}
             </span>
           </div>
@@ -195,7 +195,7 @@ export default function CheckoutPage() {
         <button
           type="submit"
           disabled={submitting}
-          className="w-full py-3.5 bg-[#FF5A00] hover:bg-[#FF6A1A] text-white rounded-xl font-extrabold text-xs shadow-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+          className="w-full py-3.5 bg-gradient-to-r from-[#FF6B1A] to-[#2D6CFF] hover:opacity-90 text-white rounded-xl font-extrabold text-xs shadow-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2"
         >
           {submitting ? (
             <span>Placing Order...</span>

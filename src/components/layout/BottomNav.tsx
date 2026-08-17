@@ -28,7 +28,7 @@ export function BottomNav() {
       href: "/#categories",
       svg: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2h-2a2 2 0 01-2-2v-2z" />
         </svg>
       ),
     },
@@ -63,8 +63,8 @@ export function BottomNav() {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#111720] border-t border-[#27313D] px-2 py-2 shadow-lg">
-      <div className="max-w-md mx-auto flex items-center justify-around">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#0B0E14]/90 backdrop-blur-lg border-t border-white/8 px-2 py-2 shadow-xl">
+      <div className="max-w-md md:max-w-2xl mx-auto flex items-center justify-around">
         {tabs.map((tab) => {
           const isActive = pathname === tab.href;
           return (
@@ -73,19 +73,19 @@ export function BottomNav() {
               href={tab.href}
               className={`relative flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all ${
                 isActive
-                  ? "text-[#FF5A00] font-bold scale-105"
-                  : "text-[#737D8B] hover:text-[#FFFFFF]"
+                  ? "text-[#FF6B1A] font-extrabold scale-105"
+                  : "text-[#8A90A3] hover:text-[#F5F6FA]"
               }`}
             >
               <div className="relative">
                 {tab.svg}
                 {tab.badge && (
-                  <span className="absolute -top-1.5 -right-2 px-1.5 py-0.2 rounded-full bg-[#FF5A00] text-white text-[9px] font-black shadow-xs">
+                  <span className="absolute -top-1.5 -right-2.5 px-1.5 py-0.2 rounded-full bg-gradient-to-r from-[#FF6B1A] to-[#2D6CFF] text-white text-[9px] font-black shadow-xs">
                     {tab.badge}
                   </span>
                 )}
               </div>
-              <span className="text-[10px] mt-0.5 font-bold tracking-tight">{tab.label}</span>
+              <span className="text-[10px] mt-0.5 font-extrabold tracking-tight">{tab.label}</span>
             </Link>
           );
         })}

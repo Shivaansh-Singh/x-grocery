@@ -1,40 +1,34 @@
 @import "tailwindcss";
 
 :root {
-  --rushd-bg-primary: #0D1117;
-  --rushd-bg-secondary: #111720;
-  --rushd-card-bg: #151B24;
-  --rushd-card-elevated: #1C2430;
-  --rushd-blue-primary: #0757D5;
-  --rushd-blue-deep: #063B91;
-  --rushd-orange-brand: #FF5A00;
-  --rushd-orange-hover: #FF6A1A;
-  --rushd-text-primary: #FFFFFF;
-  --rushd-text-secondary: #A8B0BC;
-  --rushd-text-muted: #737D8B;
-  --rushd-border: #27313D;
-  --rushd-success: #19B978;
-  --rushd-error: #FF4D4D;
+  --rushd-bg-base: #0B0E14;
+  --rushd-surface: #141822;
+  --rushd-elevated: #1A1F2C;
+  --rushd-blue: #2D6CFF;
+  --rushd-orange: #FF6B1A;
+  --rushd-text-primary: #F5F6FA;
+  --rushd-text-secondary: #8A90A3;
+  --rushd-success: #3DD68C;
+  --rushd-alert: #FF4D4D;
+  --rushd-border: rgba(255, 255, 255, 0.08);
+  --rushd-blue-glow: rgba(45, 108, 255, 0.18);
+  --rushd-orange-glow: rgba(255, 107, 26, 0.18);
 
-  --background: #0D1117;
-  --foreground: #FFFFFF;
+  --background: #0B0E14;
+  --foreground: #F5F6FA;
 }
 
 @theme inline {
-  --color-rushd-bg-primary: #0D1117;
-  --color-rushd-bg-secondary: #111720;
-  --color-rushd-card-bg: #151B24;
-  --color-rushd-card-elevated: #1C2430;
-  --color-rushd-blue-primary: #0757D5;
-  --color-rushd-blue-deep: #063B91;
-  --color-rushd-orange: #FF5A00;
-  --color-rushd-orange-hover: #FF6A1A;
-  --color-rushd-text-primary: #FFFFFF;
-  --color-rushd-text-secondary: #A8B0BC;
-  --color-rushd-text-muted: #737D8B;
-  --color-rushd-border: #27313D;
-  --color-rushd-success: #19B978;
-  --color-rushd-error: #FF4D4D;
+  --color-rushd-bg: #0B0E14;
+  --color-rushd-surface: #141822;
+  --color-rushd-elevated: #1A1F2C;
+  --color-rushd-blue: #2D6CFF;
+  --color-rushd-orange: #FF6B1A;
+  --color-rushd-text-primary: #F5F6FA;
+  --color-rushd-text-secondary: #8A90A3;
+  --color-rushd-success: #3DD68C;
+  --color-rushd-alert: #FF4D4D;
+  --color-rushd-border: rgba(255, 255, 255, 0.08);
   --font-sans: var(--font-geist-sans), Inter, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), monospace;
 }
@@ -45,6 +39,44 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-image: 
+    radial-gradient(circle at 15% 10%, rgba(45, 108, 255, 0.07) 0%, transparent 45%),
+    radial-gradient(circle at 85% 60%, rgba(255, 107, 26, 0.06) 0%, transparent 45%);
+  background-attachment: fixed;
+}
+
+/* Electric Dusk Signature Gradient Utilities */
+.bg-rushd-gradient {
+  background: linear-gradient(135deg, #FF6B1A 0%, #2D6CFF 100%);
+}
+
+.text-rushd-gradient {
+  background: linear-gradient(135deg, #FF6B1A 0%, #2D6CFF 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.border-rushd-gradient {
+  border-image: linear-gradient(135deg, #FF6B1A 0%, #2D6CFF 100%) 1;
+}
+
+.shadow-electric-blue {
+  box-shadow: 0 0 16px rgba(45, 108, 255, 0.22);
+}
+
+.shadow-electric-orange {
+  box-shadow: 0 0 16px rgba(255, 107, 26, 0.22);
+}
+
+/* Diagonal Speed Line Motif Backdrop */
+.rushd-speed-lines {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(255, 255, 255, 0.015),
+    rgba(255, 255, 255, 0.015) 1px,
+    transparent 1px,
+    transparent 12px
+  );
 }
 
 /* Custom scrollbar utility */

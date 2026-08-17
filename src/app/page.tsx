@@ -130,24 +130,24 @@ function CustomerHomeContent() {
         />
       </div>
 
-      {/* Compact Quick Delivery Feature Card */}
+      {/* Electric Dusk Compact Hero Card */}
       {!searchQuery && activeCategory === "all" && (
-        <div className="bg-[#151B24] rounded-2xl p-4 border border-[#27313D] shadow-md flex items-center justify-between gap-3">
-          <div className="space-y-1">
+        <div className="bg-[#141822]/90 backdrop-blur-md rounded-2xl p-4.5 border border-white/8 shadow-lg flex items-center justify-between gap-3 relative overflow-hidden rushd-speed-lines">
+          <div className="space-y-1 z-10">
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-black tracking-wider uppercase px-2 py-0.5 rounded-md bg-[#FF5A00]/15 text-[#FF5A00] border border-[#FF5A00]/30">
-                ⚡ 15-MIN HYPERLOCAL
-              </span>
-              <span className="text-[10px] font-bold text-[#A8B0BC]">
-                VIT Bhopal Off-Campus
+              <span className="text-[10px] font-black tracking-wider uppercase px-2.5 py-0.5 rounded-md bg-gradient-to-r from-[#FF6B1A] to-[#2D6CFF] text-white shadow-xs">
+                RUSH IT. ⚡ 15-MIN HYPERLOCAL
               </span>
             </div>
-            <h2 className="text-sm font-extrabold text-[#FFFFFF] tracking-tight">
-              Hostel Essentials & Snacks Delivered Fast
+            <h2 className="text-base sm:text-lg font-black text-[#F5F6FA] tracking-tight">
+              Your essentials. On the way.
             </h2>
+            <p className="text-xs font-medium text-[#8A90A3]">
+              Groceries, snacks & everyday essentials delivered fast.
+            </p>
           </div>
-          <div className="shrink-0 text-right">
-            <span className="text-xs font-black text-[#19B978] bg-[#19B978]/15 px-2.5 py-1 rounded-xl border border-[#19B978]/30">
+          <div className="shrink-0 text-right z-10">
+            <span className="text-xs font-black text-[#3DD68C] bg-[#3DD68C]/15 px-3 py-1.5 rounded-xl border border-[#3DD68C]/30 shadow-xs">
               FREE OVER ₹199
             </span>
           </div>
@@ -156,13 +156,16 @@ function CustomerHomeContent() {
 
       {/* Product Section Header & Grid */}
       <div className="pt-1">
-        <div className="flex items-center justify-between mb-3 px-1 border-b border-[#27313D] pb-2.5">
-          <h2 className="font-extrabold text-sm text-[#FFFFFF] tracking-tight">
-            {activeCategory === "all"
-              ? "Popular Near You"
-              : categories.find((c) => c.slug === activeCategory)?.name || "Catalog"}
+        <div className="flex items-center justify-between mb-3 px-1 border-b border-white/8 pb-2.5">
+          <h2 className="font-black text-sm text-[#F5F6FA] tracking-tight flex items-center gap-2">
+            <span>
+              {activeCategory === "all"
+                ? "Popular Near You"
+                : categories.find((c) => c.slug === activeCategory)?.name || "Catalog"}
+            </span>
+            <span className="w-1.5 h-1.5 rounded-full bg-[#FF6B1A] inline-block" />
           </h2>
-          <span className="text-xs text-[#A8B0BC] font-semibold">
+          <span className="text-xs text-[#8A90A3] font-semibold">
             {products.length} {products.length === 1 ? "item" : "items"}
           </span>
         </div>
@@ -194,11 +197,11 @@ export default function Home() {
     <Suspense
       fallback={
         <div className="space-y-4 pt-4 animate-pulse">
-          <div className="h-10 bg-[#151B24] border border-[#27313D] rounded-xl" />
-          <div className="h-8 bg-[#151B24] border border-[#27313D] rounded-lg" />
-          <div className="grid grid-cols-2 gap-3">
+          <div className="h-10 bg-[#141822] border border-white/8 rounded-xl" />
+          <div className="h-8 bg-[#141822] border border-white/8 rounded-lg" />
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-44 bg-[#151B24] border border-[#27313D] rounded-2xl" />
+              <div key={i} className="h-44 bg-[#141822] border border-white/8 rounded-2xl" />
             ))}
           </div>
         </div>

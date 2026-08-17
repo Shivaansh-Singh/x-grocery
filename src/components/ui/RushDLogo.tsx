@@ -8,6 +8,7 @@ interface RushDLogoProps {
   size?: "sm" | "md" | "lg";
   href?: string;
   className?: string;
+  withContainer?: boolean;
 }
 
 export function RushDLogo({
@@ -15,21 +16,22 @@ export function RushDLogo({
   size = "md",
   href = "/",
   className = "",
+  withContainer = true,
 }: RushDLogoProps) {
   const iconDimensions = {
-    sm: "h-7 w-7",
-    md: "h-9.5 w-9.5",
-    lg: "h-12 w-12",
+    sm: "h-6 w-6",
+    md: "h-8 w-8",
+    lg: "h-10 w-10",
   };
 
   const wordmarkHeights = {
-    sm: "h-5",
-    md: "h-6.5",
-    lg: "h-8",
+    sm: "h-4.5",
+    md: "h-6",
+    lg: "h-7.5",
   };
 
-  const content = (
-    <div className={`inline-flex items-center gap-2 select-none shrink-0 ${className}`}>
+  const logoElements = (
+    <>
       {/* Supplied R Icon Emblem Image Asset */}
       <Image
         src="/brand/rushd-icon.png"
@@ -38,7 +40,7 @@ export function RushDLogo({
         height={160}
         priority
         unoptimized
-        className={`${iconDimensions[size]} object-contain rounded-xl shrink-0`}
+        className={`${iconDimensions[size]} object-contain rounded-lg shrink-0`}
       />
 
       {/* Supplied RushD Wordmark Image Asset */}
@@ -53,8 +55,14 @@ export function RushDLogo({
           className={`${wordmarkHeights[size]} w-auto object-contain shrink-0`}
         />
       )}
-    </div>
+    </>
   );
+
+  const containerClasses = withContainer
+    ? `inline-flex items-center gap-2 bg-[#FFFFFF] px-2.5 py-1 rounded-xl shadow-xs border border-white/20 select-none shrink-0 ${className}`
+    : `inline-flex items-center gap-2 select-none shrink-0 ${className}`;
+
+  const content = <div className={containerClasses}>{logoElements}</div>;
 
   if (href) {
     return (

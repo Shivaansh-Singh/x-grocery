@@ -26,7 +26,7 @@ export function OffCampusAddressForm({
   const hubs = [
     { label: "Royal City", value: "Royal City Flats, Block B" },
     { label: "Kotri Kalan", value: "Kotri Kalan Main Market Area" },
-    { label: "Main Gate Road", value: "Near VIT Bhopal Main Gate Area" },
+    { label: "Main Gate Road", value: "Near Main Gate Area" },
     { label: "Ashta Road", value: "Ashta Highway Residential Area" },
   ];
 
@@ -50,25 +50,25 @@ export function OffCampusAddressForm({
   };
 
   return (
-    <div className="bg-[#151B24] p-4 rounded-2xl border border-[#27313D] shadow-md space-y-4 text-white">
+    <div className="bg-[#141822] p-4 rounded-2xl border border-white/8 shadow-md space-y-4 text-[#F5F6FA]">
       {/* Service Scope Warning Banner */}
-      <div className="p-3.5 bg-[#1C2430] border border-[#27313D] rounded-xl text-[#A8B0BC] text-xs space-y-1">
-        <div className="flex items-center gap-1.5 font-extrabold text-[#FF5A00]">
-          <span>⚡ VIT Bhopal Off-Campus Delivery Scope</span>
+      <div className="p-3.5 bg-[#1A1F2C] border border-white/8 rounded-xl text-[#8A90A3] text-xs space-y-1">
+        <div className="flex items-center gap-1.5 font-extrabold text-[#FF6B1A]">
+          <span>⚡ Off-Campus Delivery Scope</span>
         </div>
-        <p className="text-[11px] text-[#A8B0BC] leading-relaxed">
+        <p className="text-[11px] text-[#8A90A3] leading-relaxed">
           RushD delivers strictly to off-campus flats, rooms & PGs in Kotri Kalan, Royal City & nearby areas. Inside-campus hostel delivery is not supported.
         </p>
       </div>
 
       <div className="space-y-3">
-        <h3 className="font-extrabold text-xs text-[#FFFFFF] uppercase tracking-wider">
+        <h3 className="font-extrabold text-xs text-[#F5F6FA] uppercase tracking-wider">
           Off-Campus Delivery Address
         </h3>
 
         {/* Quick Hub Presets */}
         <div className="space-y-1">
-          <label className="text-[11px] font-semibold text-[#A8B0BC]">Quick Select Off-Campus Hub</label>
+          <label className="text-[11px] font-semibold text-[#8A90A3]">Quick Select Off-Campus Hub</label>
           <div className="grid grid-cols-2 gap-2">
             {hubs.map((h) => {
               const isSelected = hub === h.value;
@@ -79,8 +79,8 @@ export function OffCampusAddressForm({
                   onClick={() => handleSelectHub(h.value)}
                   className={`p-2.5 rounded-xl text-xs font-bold text-left border transition-all ${
                     isSelected
-                      ? "bg-[#0757D5] text-white border-[#0757D5]"
-                      : "bg-[#1C2430] border-[#27313D] text-[#A8B0BC] hover:text-[#FFFFFF] hover:border-[#0757D5]"
+                      ? "bg-[#2D6CFF] text-white border-[#2D6CFF] shadow-xs"
+                      : "bg-[#1A1F2C] border-white/8 text-[#8A90A3] hover:text-[#F5F6FA] hover:border-[#2D6CFF]"
                   }`}
                 >
                   <span className="block text-[11px]">{h.label}</span>
@@ -92,7 +92,7 @@ export function OffCampusAddressForm({
 
         {/* Building / Colony */}
         <div className="space-y-1">
-          <label className="text-[11px] font-semibold text-[#A8B0BC]">Building / Colony Name</label>
+          <label className="text-[11px] font-semibold text-[#8A90A3]">Building / Colony Name</label>
           <input
             type="text"
             value={hub}
@@ -102,13 +102,13 @@ export function OffCampusAddressForm({
             }}
             placeholder="e.g. Royal City Flats, Block B"
             required
-            className="w-full px-3 py-2.5 text-xs rounded-xl border border-[#27313D] bg-[#1C2430] text-[#FFFFFF] placeholder-[#737D8B] focus:outline-none focus:border-[#0757D5]"
+            className="w-full px-3 py-2.5 text-xs rounded-xl border border-white/8 bg-[#1A1F2C] text-[#F5F6FA] placeholder-[#8A90A3] focus:outline-none focus:border-[#2D6CFF]"
           />
         </div>
 
         {/* Flat / Room No */}
         <div className="space-y-1">
-          <label className="text-[11px] font-semibold text-[#A8B0BC]">Flat / Room No *</label>
+          <label className="text-[11px] font-semibold text-[#8A90A3]">Flat / Room No *</label>
           <input
             type="text"
             value={flatRoomNo}
@@ -118,13 +118,13 @@ export function OffCampusAddressForm({
             }}
             placeholder="e.g. Flat 204, Room 12"
             required
-            className="w-full px-3 py-2.5 text-xs rounded-xl border border-[#27313D] bg-[#1C2430] text-[#FFFFFF] placeholder-[#737D8B] focus:outline-none focus:border-[#0757D5]"
+            className="w-full px-3 py-2.5 text-xs rounded-xl border border-white/8 bg-[#1A1F2C] text-[#F5F6FA] placeholder-[#8A90A3] focus:outline-none focus:border-[#2D6CFF]"
           />
         </div>
 
         {/* Landmark */}
         <div className="space-y-1">
-          <label className="text-[11px] font-semibold text-[#A8B0BC]">Landmark (Optional)</label>
+          <label className="text-[11px] font-semibold text-[#8A90A3]">Landmark (Optional)</label>
           <input
             type="text"
             value={landmark}
@@ -133,13 +133,13 @@ export function OffCampusAddressForm({
               updateAddress(hub, flatRoomNo, e.target.value, phone);
             }}
             placeholder="e.g. Near Shiv Temple / Main Gate Road"
-            className="w-full px-3 py-2.5 text-xs rounded-xl border border-[#27313D] bg-[#1C2430] text-[#FFFFFF] placeholder-[#737D8B] focus:outline-none focus:border-[#0757D5]"
+            className="w-full px-3 py-2.5 text-xs rounded-xl border border-white/8 bg-[#1A1F2C] text-[#F5F6FA] placeholder-[#8A90A3] focus:outline-none focus:border-[#2D6CFF]"
           />
         </div>
 
         {/* Phone */}
         <div className="space-y-1">
-          <label className="text-[11px] font-semibold text-[#A8B0BC]">Contact Phone Number *</label>
+          <label className="text-[11px] font-semibold text-[#8A90A3]">Contact Phone Number *</label>
           <input
             type="tel"
             value={phone}
@@ -149,7 +149,7 @@ export function OffCampusAddressForm({
             }}
             placeholder="+91 99999 88888"
             required
-            className="w-full px-3 py-2.5 text-xs rounded-xl border border-[#27313D] bg-[#1C2430] text-[#FFFFFF] placeholder-[#737D8B] focus:outline-none focus:border-[#0757D5]"
+            className="w-full px-3 py-2.5 text-xs rounded-xl border border-white/8 bg-[#1A1F2C] text-[#F5F6FA] placeholder-[#8A90A3] focus:outline-none focus:border-[#2D6CFF]"
           />
         </div>
       </div>

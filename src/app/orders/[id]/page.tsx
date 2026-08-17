@@ -73,9 +73,9 @@ function OrderTrackingContent({ id }: { id: string }) {
   if (loading) {
     return (
       <div className="space-y-4 pt-4 animate-pulse">
-        <div className="h-10 bg-[#151B24] border border-[#27313D] rounded-xl" />
-        <div className="h-64 bg-[#151B24] border border-[#27313D] rounded-2xl" />
-        <div className="h-32 bg-[#151B24] border border-[#27313D] rounded-2xl" />
+        <div className="h-10 bg-[#141822] border border-white/8 rounded-xl" />
+        <div className="h-64 bg-[#141822] border border-white/8 rounded-2xl" />
+        <div className="h-32 bg-[#141822] border border-white/8 rounded-2xl" />
       </div>
     );
   }
@@ -83,16 +83,16 @@ function OrderTrackingContent({ id }: { id: string }) {
   if (!order) {
     return (
       <div className="space-y-6 pt-6 text-center">
-        <div className="bg-[#151B24] rounded-2xl p-8 border border-[#27313D] shadow-md space-y-4 max-w-md mx-auto text-white">
-          <h2 className="text-lg font-bold text-[#FFFFFF]">
+        <div className="bg-[#141822] rounded-2xl p-8 border border-white/8 shadow-md space-y-4 max-w-md mx-auto text-[#F5F6FA]">
+          <h2 className="text-lg font-bold text-[#F5F6FA]">
             Order Not Found
           </h2>
-          <p className="text-xs text-[#A8B0BC] max-w-xs mx-auto">
+          <p className="text-xs text-[#8A90A3] max-w-xs mx-auto">
             We couldn&apos;t find order details for #{id}.
           </p>
           <Link
             href="/orders"
-            className="inline-block px-5 py-2.5 bg-[#FF5A00] text-white rounded-xl font-bold text-xs shadow-sm hover:bg-[#FF6A1A] transition-colors"
+            className="inline-block px-5 py-2.5 bg-gradient-to-r from-[#FF6B1A] to-[#2D6CFF] text-white rounded-xl font-bold text-xs shadow-sm hover:opacity-90 transition-all"
           >
             View Order History
           </Link>
@@ -105,29 +105,29 @@ function OrderTrackingContent({ id }: { id: string }) {
     order.status === "ASSIGNED" || order.status === "OUT_FOR_DELIVERY";
 
   return (
-    <div className="space-y-4 pt-1 pb-8 text-white">
+    <div className="space-y-4 pt-1 pb-8 text-[#F5F6FA]">
       {/* Header Bar */}
-      <div className="flex items-center justify-between border-b border-[#27313D] pb-2.5">
+      <div className="flex items-center justify-between border-b border-white/8 pb-2.5">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-black text-[#FFFFFF] tracking-tight">
+            <h1 className="text-xl font-black text-[#F5F6FA] tracking-tight">
               #{order.orderNumber}
             </h1>
             <button
               onClick={handleManualRefresh}
               disabled={refreshing}
-              className="text-xs text-[#FF5A00] font-bold hover:underline"
+              className="text-xs text-[#FF6B1A] font-bold hover:underline"
             >
               {refreshing ? "Refreshing..." : "Refresh"}
             </button>
           </div>
-          <p className="text-xs text-[#A8B0BC]">
+          <p className="text-xs text-[#8A90A3]">
             RushD Instant Delivery Tracking
           </p>
         </div>
         <Link
           href="/orders"
-          className="text-xs text-[#A8B0BC] hover:text-[#FFFFFF] font-semibold"
+          className="text-xs text-[#8A90A3] hover:text-[#F5F6FA] font-semibold"
         >
           ← All Orders
         </Link>
@@ -145,22 +145,22 @@ function OrderTrackingContent({ id }: { id: string }) {
       )}
 
       {/* Delivery Address Summary */}
-      <div className="bg-[#151B24] p-4 rounded-2xl border border-[#27313D] shadow-md space-y-2">
-        <h3 className="font-extrabold text-xs text-[#FFFFFF] uppercase tracking-wider">
+      <div className="bg-[#141822] p-4 rounded-2xl border border-white/8 shadow-md space-y-2">
+        <h3 className="font-extrabold text-xs text-[#F5F6FA] uppercase tracking-wider">
           Delivery Address
         </h3>
-        <div className="text-xs text-[#A8B0BC] font-medium leading-relaxed">
+        <div className="text-xs text-[#8A90A3] font-medium leading-relaxed">
           {order.deliveryAddress}
         </div>
       </div>
 
       {/* Itemized Order Receipt */}
-      <div className="bg-[#151B24] p-4 rounded-2xl border border-[#27313D] shadow-md space-y-3">
-        <div className="flex items-center justify-between border-b border-[#27313D] pb-2">
-          <h3 className="font-extrabold text-xs text-[#FFFFFF] uppercase tracking-wider">
+      <div className="bg-[#141822] p-4 rounded-2xl border border-white/8 shadow-md space-y-3">
+        <div className="flex items-center justify-between border-b border-white/8 pb-2">
+          <h3 className="font-extrabold text-xs text-[#F5F6FA] uppercase tracking-wider">
             Order Items ({order.items?.length || 0})
           </h3>
-          <span className="text-xs font-bold text-[#FF5A00]">
+          <span className="text-xs font-bold text-[#FF6B1A]">
             {order.paymentMethod === "COD" ? "Cash on Delivery" : "UPI on Delivery"}
           </span>
         </div>
@@ -168,18 +168,18 @@ function OrderTrackingContent({ id }: { id: string }) {
         <div className="space-y-2 text-xs">
           {order.items?.map((item) => (
             <div key={item.id} className="flex items-center justify-between">
-              <span className="text-[#FFFFFF] font-medium truncate max-w-[220px]">
+              <span className="text-[#F5F6FA] font-medium truncate max-w-[220px]">
                 {item.productName}
               </span>
-              <span className="text-[#A8B0BC] font-bold">
+              <span className="text-[#8A90A3] font-bold">
                 x{item.quantity} • ₹{item.subtotal.toFixed(0)}
               </span>
             </div>
           ))}
 
-          <div className="border-t border-[#27313D] pt-2.5 flex items-center justify-between font-extrabold text-sm text-[#FFFFFF]">
+          <div className="border-t border-white/8 pt-2.5 flex items-center justify-between font-extrabold text-sm text-[#F5F6FA]">
             <span>Total Amount</span>
-            <span className="text-[#FF5A00] text-base">
+            <span className="text-[#FF6B1A] text-base">
               ₹{order.totalAmount.toFixed(0)}
             </span>
           </div>
@@ -199,8 +199,8 @@ export default function OrderTrackingPage({
     <Suspense
       fallback={
         <div className="space-y-4 pt-4 animate-pulse">
-          <div className="h-10 bg-[#151B24] border border-[#27313D] rounded-xl" />
-          <div className="h-64 bg-[#151B24] border border-[#27313D] rounded-2xl" />
+          <div className="h-10 bg-[#141822] border border-white/8 rounded-xl" />
+          <div className="h-64 bg-[#141822] border border-white/8 rounded-2xl" />
         </div>
       }
     >

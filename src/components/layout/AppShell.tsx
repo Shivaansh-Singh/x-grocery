@@ -6,9 +6,9 @@ import { BottomNav } from "./BottomNav";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-[#0D1117] text-[#FFFFFF] flex flex-col antialiased">
+    <div className="min-h-screen bg-[#0B0E14] text-[#F5F6FA] flex flex-col antialiased">
       <Header />
-      <main className="flex-1 max-w-md mx-auto w-full pb-24 px-4 pt-3.5 space-y-4">
+      <main className="flex-1 max-w-6xl mx-auto w-full pb-24 px-4 sm:px-6 pt-4 space-y-5">
         {children}
       </main>
       <BottomNav />

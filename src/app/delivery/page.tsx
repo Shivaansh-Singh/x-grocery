@@ -100,23 +100,23 @@ export default function DeliveryPartnerPage() {
   const currentList = activeTab === "active" ? activeDeliveries : completedToday;
 
   return (
-    <div className="space-y-4 pt-1 pb-8 text-white">
+    <div className="space-y-4 pt-1 pb-8 text-[#F5F6FA]">
       {/* Header Bar */}
-      <div className="flex items-center justify-between border-b border-[#27313D] pb-2.5">
+      <div className="flex items-center justify-between border-b border-white/8 pb-2.5">
         <div className="flex items-center gap-2">
           <RushDLogo size="sm" href="/delivery" />
-          <div className="border-l border-[#27313D] pl-2.5">
-            <h1 className="text-sm font-black text-[#FFFFFF] tracking-tight">
+          <div className="border-l border-white/8 pl-2.5">
+            <h1 className="text-sm font-black text-[#F5F6FA] tracking-tight">
               Rider Portal
             </h1>
-            <p className="text-[10px] text-[#A8B0BC]">
+            <p className="text-[10px] text-[#8A90A3]">
               Mobile Rider Operations
             </p>
           </div>
         </div>
         <Link
           href="/"
-          className="text-xs font-bold text-[#FF5A00] hover:underline"
+          className="text-xs font-bold text-[#FF6B1A] hover:underline"
         >
           Customer App ↗
         </Link>
@@ -132,18 +132,18 @@ export default function DeliveryPartnerPage() {
       />
 
       {/* Tabs */}
-      <div className="flex rounded-2xl bg-[#151B24] p-1 border border-[#27313D]">
+      <div className="flex rounded-2xl bg-[#141822] p-1 border border-white/8">
         <button
           onClick={() => setActiveTab("active")}
           className={`flex-1 py-2 rounded-xl text-xs font-extrabold transition-all relative ${
             activeTab === "active"
-              ? "bg-[#0757D5] text-white shadow-sm"
-              : "text-[#A8B0BC] hover:text-[#FFFFFF]"
+              ? "bg-[#2D6CFF] text-white shadow-sm"
+              : "text-[#8A90A3] hover:text-[#F5F6FA]"
           }`}
         >
           Active Deliveries ({activeDeliveries.length})
           {activeDeliveries.length > 0 && (
-            <span className="ml-1.5 px-1.5 py-0.2 text-[10px] bg-[#FF5A00] text-white rounded font-black">
+            <span className="ml-1.5 px-1.5 py-0.2 text-[10px] bg-[#FF6B1A] text-white rounded font-black">
               LIVE
             </span>
           )}
@@ -152,8 +152,8 @@ export default function DeliveryPartnerPage() {
           onClick={() => setActiveTab("completed")}
           className={`flex-1 py-2 rounded-xl text-xs font-extrabold transition-all ${
             activeTab === "completed"
-              ? "bg-[#0757D5] text-white shadow-sm"
-              : "text-[#A8B0BC] hover:text-[#FFFFFF]"
+              ? "bg-[#2D6CFF] text-white shadow-sm"
+              : "text-[#8A90A3] hover:text-[#F5F6FA]"
           }`}
         >
           Completed Today ({completedToday.length})
@@ -164,15 +164,15 @@ export default function DeliveryPartnerPage() {
       {loading ? (
         <div className="space-y-3 animate-pulse">
           {[1, 2].map((i) => (
-            <div key={i} className="h-44 bg-[#151B24] border border-[#27313D] rounded-2xl" />
+            <div key={i} className="h-44 bg-[#141822] border border-white/8 rounded-2xl" />
           ))}
         </div>
       ) : currentList.length === 0 ? (
-        <div className="bg-[#151B24] rounded-2xl p-8 border border-[#27313D] text-center space-y-2 shadow-md">
-          <h3 className="font-bold text-sm text-[#FFFFFF]">
+        <div className="bg-[#141822] rounded-2xl p-8 border border-white/8 text-center space-y-2 shadow-md">
+          <h3 className="font-bold text-sm text-[#F5F6FA]">
             No {activeTab} delivery tasks
           </h3>
-          <p className="text-xs text-[#A8B0BC] max-w-xs mx-auto">
+          <p className="text-xs text-[#8A90A3] max-w-xs mx-auto">
             {activeTab === "active"
               ? "No active deliveries currently assigned to your rider profile."
               : "No delivered orders recorded for today's shift yet."}

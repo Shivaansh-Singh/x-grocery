@@ -27,8 +27,8 @@ export function PaymentMethodSelector({
   ];
 
   return (
-    <div className="bg-[#151B24] p-4 rounded-2xl border border-[#27313D] shadow-md space-y-3 text-white">
-      <h3 className="font-extrabold text-xs text-[#FFFFFF] uppercase tracking-wider">
+    <div className="bg-[#141822] p-4 rounded-2xl border border-white/8 shadow-md space-y-3 text-[#F5F6FA]">
+      <h3 className="font-extrabold text-xs text-[#F5F6FA] uppercase tracking-wider">
         Payment Method
       </h3>
 
@@ -41,8 +41,8 @@ export function PaymentMethodSelector({
               onClick={() => onChange(method.id)}
               className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-start gap-3 ${
                 isSelected
-                  ? "bg-[#1C2430] border-[#FF5A00] shadow-sm"
-                  : "bg-[#1C2430]/60 border-[#27313D] hover:border-[#0757D5]"
+                  ? "bg-[#1A1F2C] border-[#FF6B1A] shadow-sm"
+                  : "bg-[#1A1F2C]/60 border-white/8 hover:border-[#2D6CFF]"
               }`}
             >
               <div className="mt-0.5">
@@ -51,20 +51,20 @@ export function PaymentMethodSelector({
                   name="paymentMethod"
                   checked={isSelected}
                   onChange={() => onChange(method.id)}
-                  className="w-4 h-4 text-[#FF5A00] focus:ring-[#FF5A00]"
+                  className="w-4 h-4 text-[#FF6B1A] focus:ring-[#FF6B1A]"
                 />
               </div>
 
               <div className="flex-1">
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-xs text-[#FFFFFF]">
+                  <span className="font-bold text-xs text-[#F5F6FA]">
                     {method.title}
                   </span>
-                  <span className="text-[10px] font-bold text-[#19B978] px-2 py-0.5 rounded-md bg-[#19B978]/15 border border-[#19B978]/30">
+                  <span className="text-[10px] font-bold text-[#3DD68C] px-2 py-0.5 rounded-md bg-[#3DD68C]/15 border border-[#3DD68C]/30">
                     {method.badge}
                   </span>
                 </div>
-                <p className="text-[11px] text-[#A8B0BC] mt-1 leading-normal">
+                <p className="text-[11px] text-[#8A90A3] mt-1 leading-normal">
                   {method.subtitle}
                 </p>
               </div>

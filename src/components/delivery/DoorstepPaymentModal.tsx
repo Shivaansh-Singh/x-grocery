@@ -26,28 +26,28 @@ export function DoorstepPaymentModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-[#151B24] rounded-2xl border border-[#27313D] p-6 max-w-md w-full shadow-2xl space-y-4 text-white">
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+      <div className="bg-[#141822] rounded-2xl border border-white/8 p-6 max-w-md w-full shadow-2xl space-y-4 text-[#F5F6FA]">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-[#27313D] pb-3">
-          <h3 className="font-extrabold text-base text-[#FFFFFF]">
+        <div className="flex items-center justify-between border-b border-white/8 pb-3">
+          <h3 className="font-extrabold text-base text-[#F5F6FA]">
             Complete Order #{order.orderNumber}
           </h3>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-[#1C2430] flex items-center justify-center text-[#A8B0BC] font-bold text-xs hover:text-[#FFFFFF] border border-[#27313D]"
+            className="w-8 h-8 rounded-full bg-[#1A1F2C] flex items-center justify-center text-[#8A90A3] font-bold text-xs hover:text-[#F5F6FA] border border-white/8"
           >
             ✕
           </button>
         </div>
 
         {/* Doorstep Payment Banner */}
-        <div className="p-4 rounded-xl border border-[#27313D] bg-[#1C2430] text-[#FFFFFF] text-center space-y-2">
-          <span className="text-xs font-extrabold uppercase tracking-wider block text-[#FF5A00]">
+        <div className="p-4 rounded-xl border border-white/8 bg-[#1A1F2C] text-[#F5F6FA] text-center space-y-2">
+          <span className="text-xs font-extrabold uppercase tracking-wider block text-[#FF6B1A]">
             {isCOD ? "Cash on Delivery Collection" : "Pay via UPI on Delivery (Scan QR)"}
           </span>
-          <div className="text-3xl font-black text-[#FFFFFF]">₹{order.totalAmount.toFixed(0)}</div>
-          <p className="text-[11px] text-[#A8B0BC]">
+          <div className="text-3xl font-black text-[#F5F6FA]">₹{order.totalAmount.toFixed(0)}</div>
+          <p className="text-[11px] text-[#8A90A3]">
             {isCOD
               ? "Collect cash payment from the student before completing delivery."
               : "Ask student to scan RushD UPI QR Code on your smartphone or receipt."}
@@ -55,15 +55,15 @@ export function DoorstepPaymentModal({
         </div>
 
         {/* Checkbox confirmation */}
-        <div className="bg-[#1C2430] p-3.5 rounded-xl border border-[#27313D] flex items-start gap-3">
+        <div className="bg-[#1A1F2C] p-3.5 rounded-xl border border-white/8 flex items-start gap-3">
           <input
             type="checkbox"
             id="paymentCheck"
             checked={confirmed}
             onChange={(e) => setConfirmed(e.target.checked)}
-            className="w-5 h-5 text-[#19B978] rounded mt-0.5"
+            className="w-5 h-5 text-[#3DD68C] rounded mt-0.5"
           />
-          <label htmlFor="paymentCheck" className="text-xs font-semibold text-[#FFFFFF] leading-snug cursor-pointer">
+          <label htmlFor="paymentCheck" className="text-xs font-semibold text-[#F5F6FA] leading-snug cursor-pointer">
             I confirm that ₹{order.totalAmount.toFixed(0)} payment has been collected from the student at the doorstep.
           </label>
         </div>
@@ -73,7 +73,7 @@ export function DoorstepPaymentModal({
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 py-3 rounded-xl border border-[#27313D] bg-[#1C2430] text-[#A8B0BC] hover:text-[#FFFFFF] font-bold text-xs"
+            className="flex-1 py-3 rounded-xl border border-white/8 bg-[#1A1F2C] text-[#8A90A3] hover:text-[#F5F6FA] font-bold text-xs"
           >
             Cancel
           </button>
@@ -81,7 +81,7 @@ export function DoorstepPaymentModal({
             type="button"
             disabled={!confirmed || submitting}
             onClick={handleConfirm}
-            className="flex-1 py-3 rounded-xl bg-[#19B978] hover:bg-[#151B24] text-white font-extrabold text-xs shadow-sm transition-colors disabled:opacity-40"
+            className="flex-1 py-3 rounded-xl bg-[#3DD68C] hover:bg-[#141822] text-white font-extrabold text-xs shadow-sm transition-colors disabled:opacity-40"
           >
             {submitting ? "Completing..." : "Confirm Delivery ✓"}
           </button>

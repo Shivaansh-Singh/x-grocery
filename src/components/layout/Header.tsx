@@ -8,19 +8,19 @@ export function Header() {
   const { user, role, signOut } = useAuth();
 
   return (
-    <header className="sticky top-0 z-40 bg-[#111720] border-b border-[#27313D] px-4 py-3 shadow-md">
-      <div className="max-w-md mx-auto flex items-center justify-between gap-3">
-        {/* Left: [R ICON] [RUSHD WORDMARK] */}
+    <header className="sticky top-0 z-40 bg-[#0B0E14]/90 backdrop-blur-md border-b border-white/8 px-4 py-3 shadow-lg">
+      <div className="max-w-6xl mx-auto flex items-center justify-between gap-3">
+        {/* Left: [RushD Logo Badge] */}
         <div className="flex items-center gap-2.5 min-w-0">
-          <RushDLogo variant="full" size="md" />
+          <RushDLogo variant="full" size="md" withContainer={true} />
         </div>
 
-        {/* Right: Sign In / Admin / Rider Actions */}
-        <div className="flex items-center gap-2 shrink-0">
+        {/* Right: Actions */}
+        <div className="flex items-center gap-2.5 shrink-0">
           {role === "STORE_ADMIN" && (
             <Link
               href="/admin"
-              className="text-xs font-bold px-3.5 py-1.5 rounded-xl bg-[#0757D5] text-white hover:bg-[#063B91] transition-colors shadow-sm"
+              className="text-xs font-extrabold px-3.5 py-1.5 rounded-xl bg-[#2D6CFF] text-white hover:bg-[#2D6CFF]/90 transition-colors shadow-sm"
             >
               Admin Hub
             </Link>
@@ -28,7 +28,7 @@ export function Header() {
           {role === "DELIVERY_PARTNER" && (
             <Link
               href="/delivery"
-              className="text-xs font-bold px-3.5 py-1.5 rounded-xl bg-[#0757D5] text-white hover:bg-[#063B91] transition-colors shadow-sm"
+              className="text-xs font-extrabold px-3.5 py-1.5 rounded-xl bg-[#2D6CFF] text-white hover:bg-[#2D6CFF]/90 transition-colors shadow-sm"
             >
               Rider Portal
             </Link>
@@ -37,14 +37,14 @@ export function Header() {
           {user ? (
             <button
               onClick={() => signOut()}
-              className="text-xs font-bold text-[#A8B0BC] hover:text-[#FFFFFF] transition-colors px-2 py-1"
+              className="text-xs font-bold text-[#8A90A3] hover:text-[#F5F6FA] transition-colors px-2.5 py-1"
             >
               Sign Out
             </button>
           ) : (
             <Link
               href="/login"
-              className="text-xs font-bold text-[#FF5A00] hover:text-[#FF6A1A] transition-colors px-3.5 py-1.5 rounded-xl border border-[#27313D] bg-[#151B24] shadow-2xs"
+              className="text-xs font-extrabold text-[#FF6B1A] hover:text-[#FF6B1A]/90 transition-colors px-4 py-1.5 rounded-xl border border-white/8 bg-[#141822] shadow-xs"
             >
               Sign In
             </Link>

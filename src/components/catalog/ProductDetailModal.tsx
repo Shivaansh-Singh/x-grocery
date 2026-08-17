@@ -63,7 +63,7 @@ export function ProductDetailModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-sm transition-opacity duration-300">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-md transition-opacity duration-300">
       {/* Backdrop overlay touch to close */}
       <div
         className="absolute inset-0"
@@ -72,20 +72,20 @@ export function ProductDetailModal({
       />
 
       {/* Drawer Container */}
-      <div className="relative w-full max-w-md bg-[#151B24] rounded-t-3xl p-5 shadow-2xl z-10 border-t border-[#27313D] max-h-[85vh] overflow-y-auto no-scrollbar text-white">
+      <div className="relative w-full max-w-md bg-[#141822] rounded-t-3xl p-5 shadow-2xl z-10 border-t border-white/8 max-h-[85vh] overflow-y-auto no-scrollbar text-[#F5F6FA]">
         {/* Top Handle Indicator */}
-        <div className="w-12 h-1 bg-[#27313D] rounded-full mx-auto mb-4" />
+        <div className="w-12 h-1 bg-white/10 rounded-full mx-auto mb-4" />
 
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-[#1C2430] flex items-center justify-center text-[#A8B0BC] hover:text-[#FFFFFF] text-sm font-bold transition-colors border border-[#27313D]"
+          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-[#1A1F2C] flex items-center justify-center text-[#8A90A3] hover:text-[#F5F6FA] text-sm font-bold transition-colors border border-white/8"
         >
           ✕
         </button>
 
         {/* Image Display */}
-        <div className="relative aspect-4/3 w-full rounded-2xl bg-[#1C2430] overflow-hidden mb-4 p-2 flex items-center justify-center">
+        <div className="relative aspect-4/3 w-full rounded-2xl bg-[#1A1F2C] overflow-hidden mb-4 p-2 flex items-center justify-center">
           {product.imageUrl && !imageError ? (
             <Image
               src={product.imageUrl}
@@ -97,7 +97,7 @@ export function ProductDetailModal({
               sizes="(max-width: 640px) 100vw, 400px"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-[#737D8B]">
+            <div className="w-full h-full flex items-center justify-center text-[#8A90A3]">
               <svg className="w-12 h-12 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
               </svg>
@@ -111,11 +111,11 @@ export function ProductDetailModal({
                 Out of Stock
               </span>
             ) : isLowStock ? (
-              <span className="px-3 py-1 rounded-lg bg-[#FF5A00] text-white text-xs font-bold shadow-xs">
+              <span className="px-3 py-1 rounded-lg bg-[#FF6B1A] text-white text-xs font-bold shadow-xs">
                 Only {product.stock} Left!
               </span>
             ) : (
-              <span className="px-3 py-1 rounded-lg bg-[#19B978] text-white text-xs font-bold shadow-xs">
+              <span className="px-3 py-1 rounded-lg bg-[#3DD68C] text-white text-xs font-bold shadow-xs">
                 In Stock ({product.stock})
               </span>
             )}
@@ -125,48 +125,48 @@ export function ProductDetailModal({
         {/* Content Section */}
         <div className="space-y-3">
           <div>
-            <span className="text-xs font-bold text-[#0757D5] uppercase tracking-wider">
+            <span className="text-xs font-black text-[#2D6CFF] uppercase tracking-wider">
               {product.category?.name || "Grocery"}
             </span>
-            <h2 className="text-lg font-bold text-[#FFFFFF] mt-0.5">
+            <h2 className="text-lg font-bold text-[#F5F6FA] mt-0.5">
               {product.name}
             </h2>
-            <p className="text-xs font-medium text-[#A8B0BC] mt-0.5">
+            <p className="text-xs font-medium text-[#8A90A3] mt-0.5">
               Unit: {product.unitDisplay}
             </p>
           </div>
 
           <div className="flex items-baseline gap-1 py-1">
-            <span className="text-sm font-bold text-[#FF5A00]">₹</span>
-            <span className="text-2xl font-black text-[#FFFFFF]">
+            <span className="text-sm font-bold text-[#FF6B1A]">₹</span>
+            <span className="text-2xl font-black text-[#F5F6FA]">
               {product.price}
             </span>
-            <span className="text-xs text-[#737D8B] ml-2">Inclusive of all taxes</span>
+            <span className="text-xs text-[#8A90A3] ml-2">Inclusive of all taxes</span>
           </div>
 
           {/* Description */}
           {product.description && (
-            <div className="bg-[#1C2430] p-3.5 rounded-2xl border border-[#27313D]">
-              <h4 className="text-xs font-bold text-[#FFFFFF] mb-1">
+            <div className="bg-[#1A1F2C] p-3.5 rounded-2xl border border-white/8">
+              <h4 className="text-xs font-bold text-[#F5F6FA] mb-1">
                 Product Details
               </h4>
-              <p className="text-xs text-[#A8B0BC] leading-relaxed">
+              <p className="text-xs text-[#8A90A3] leading-relaxed">
                 {product.description}
               </p>
             </div>
           )}
 
           {/* Delivery Note */}
-          <div className="flex items-center gap-2 p-3 bg-[#1C2430] rounded-2xl border border-[#27313D] text-[#A8B0BC] text-xs">
-            <span className="w-2 h-2 rounded-full bg-[#19B978] shrink-0"></span>
-            <span>⚡ Instant 15-Min delivery to VIT Bhopal off-campus residents.</span>
+          <div className="flex items-center gap-2 p-3 bg-[#1A1F2C] rounded-2xl border border-white/8 text-[#8A90A3] text-xs">
+            <span className="w-2 h-2 rounded-full bg-[#3DD68C] shrink-0"></span>
+            <span>⚡ Instant 15-Min delivery to your doorstep.</span>
           </div>
 
           {/* Footer Action Button */}
-          <div className="pt-3 border-t border-[#27313D] flex items-center justify-between gap-3">
+          <div className="pt-3 border-t border-white/8 flex items-center justify-between gap-3">
             <div className="flex flex-col">
-              <span className="text-[10px] text-[#737D8B]">Total Price</span>
-              <span className="text-lg font-bold text-[#FFFFFF]">
+              <span className="text-[10px] text-[#8A90A3]">Total Price</span>
+              <span className="text-lg font-black text-[#F5F6FA]">
                 ₹{quantity > 0 ? (product.price * quantity).toFixed(2) : product.price}
               </span>
             </div>
@@ -174,12 +174,12 @@ export function ProductDetailModal({
             {isOutOfStock ? (
               <button
                 disabled
-                className="w-full py-3 rounded-xl bg-[#1C2430] text-[#737D8B] text-xs font-bold cursor-not-allowed border border-[#27313D]"
+                className="w-full py-3 rounded-xl bg-[#1A1F2C] text-[#8A90A3] text-xs font-bold cursor-not-allowed border border-white/8"
               >
                 Currently Out of Stock
               </button>
             ) : quantity > 0 ? (
-              <div className="flex items-center justify-between bg-[#FF5A00] text-white rounded-xl px-4 py-2.5 shadow-sm flex-1">
+              <div className="flex items-center justify-between bg-gradient-to-r from-[#FF6B1A] to-[#2D6CFF] text-white rounded-xl px-4 py-2.5 shadow-sm flex-1">
                 <button
                   type="button"
                   onClick={handleDecrement}
@@ -201,7 +201,7 @@ export function ProductDetailModal({
               <button
                 type="button"
                 onClick={handleAdd}
-                className="flex-1 py-3 rounded-xl bg-[#FF5A00] hover:bg-[#FF6A1A] text-white text-xs font-extrabold shadow-sm transition-colors"
+                className="flex-1 py-3 rounded-xl bg-gradient-to-r from-[#FF6B1A] to-[#2D6CFF] hover:opacity-90 text-white text-xs font-black shadow-sm transition-all"
               >
                 Add to Cart • ₹{product.price}
               </button>
