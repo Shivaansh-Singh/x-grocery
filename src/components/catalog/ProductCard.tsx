@@ -39,9 +39,28 @@ export function ProductCard({
   isFeatured = false,
 }: ProductCardProps) {
   const [imageError, setImageError] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const [tooltipPosition, setTooltipPosition] = useState<"top" | "bottom">("top");
 
   const isOutOfStock = product.stock <= 0;
   const isLowStock = product.stock > 0 && product.stock <= 5;
+
+  const handleMouseEnter = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches) {
+      return;
+    }
+    const rect = e.currentTarget.getBoundingClientRect();
+    if (rect.top < 220) {
+      setTooltipPosition("bottom");
+    } else {
+      setTooltipPosition("top");
+    }
+    setIsHovered(true);
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+  };
 
   const handleAdd = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -66,12 +85,66 @@ export function ProductCard({
     }
   };
 
+  const renderHoverPopover = () => {
+    if (!isHovered) return null;
+    return (
+      <div
+        className={`hidden md:block absolute z-50 left-1/2 -translate-x-1/2 w-64 bg-[#141822]/95 backdrop-blur-xl p-3.5 rounded-[16px] border border-white/20 shadow-[0_12px_32px_rgba(0,0,0,0.7),0_0_24px_rgba(45,108,255,0.30)] pointer-events-none transition-all duration-200 animate-in fade-in zoom-in-95 ${
+          tooltipPosition === "top" ? "bottom-full mb-3" : "top-full mt-3"
+        }`}
+      >
+        {/* Indicator Arrow */}
+        <div
+          className={`absolute left-1/2 -translate-x-1/2 w-3 h-3 bg-[#141822] border-white/20 rotate-45 ${
+            tooltipPosition === "top"
+              ? "-bottom-1.5 border-r border-b"
+              : "-top-1.5 border-l border-t"
+          }`}
+        />
+
+        <div className="space-y-2 relative z-10 text-left">
+          <div className="flex items-center justify-between">
+            <span className="text-[9px] font-black text-[#2D6CFF] uppercase tracking-wider">
+              {product.category?.name || "Grocery"}
+            </span>
+            <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-[#2D6CFF]/15 text-[#2D6CFF] border border-[#2D6CFF]/30">
+              ⚡ 15-MIN EXPRESS
+            </span>
+          </div>
+
+          <h4 className="font-display font-black text-xs text-[#F5F6FA] leading-tight">
+            {product.name}
+          </h4>
+
+          <p className="text-[11px] text-[#8A90A3] leading-relaxed line-clamp-2 font-medium">
+            {product.description || `Trusted quality ${product.name} delivered fresh to your off-campus doorstep.`}
+          </p>
+
+          <div className="pt-2 border-t border-white/10 flex items-center justify-between text-xs font-semibold">
+            <span className="text-[#8A90A3] text-[10px]">
+              Unit: <strong className="text-[#F5F6FA]">{product.unitDisplay}</strong>
+            </span>
+            <span className="text-[#FF6B1A] font-black">
+              ₹{product.price}
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   if (isFeatured) {
     return (
       <div
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
         onClick={() => onSelectProduct && onSelectProduct(product)}
-        className="col-span-2 sm:col-span-2 glass-card rounded-[20px] p-4 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4 cursor-pointer group relative overflow-hidden rushd-speed-slash hover:border-[#2D6CFF]/40 transition-all duration-200"
+        className={`col-span-2 sm:col-span-2 glass-card rounded-[20px] p-4 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4 cursor-pointer group relative rushd-speed-slash hover:border-[#2D6CFF]/40 transition-all duration-200 ${
+          isHovered ? "z-30" : "z-0"
+        }`}
       >
+        {renderHoverPopover()}
+
         {/* Featured Image Section with Radial Glow */}
         <div className="relative aspect-square w-full sm:w-44 rounded-[16px] product-img-glow overflow-hidden shrink-0 flex items-center justify-center p-3">
           {product.imageUrl && !imageError ? (
@@ -166,9 +239,15 @@ export function ProductCard({
 
   return (
     <div
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       onClick={() => onSelectProduct && onSelectProduct(product)}
-      className="bg-[#141822] rounded-[18px] border border-white/8 p-3 shadow-sm hover:border-white/20 transition-all duration-200 flex flex-col justify-between cursor-pointer group relative"
+      className={`bg-[#141822] rounded-[18px] border border-white/8 p-3 shadow-sm hover:border-white/20 transition-all duration-200 flex flex-col justify-between cursor-pointer group relative ${
+        isHovered ? "z-30" : "z-0"
+      }`}
     >
+      {renderHoverPopover()}
+
       {/* Image & Stock Badges Container */}
       <div className="relative aspect-square w-full rounded-[14px] bg-[#1A1F2C] overflow-hidden mb-2.5 flex items-center justify-center p-2">
         {product.imageUrl && !imageError ? (

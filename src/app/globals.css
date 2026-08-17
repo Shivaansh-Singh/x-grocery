@@ -64,7 +64,6 @@ body {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid transparent;
-  position: relative;
 }
 
 .glass-card::before {
