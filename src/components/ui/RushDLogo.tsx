@@ -15,21 +15,22 @@ export function RushDLogo({
   href = "/",
   className = "",
 }: RushDLogoProps) {
-  const logoHeights = {
-    sm: "h-8",
-    md: "h-11",
-    lg: "h-16",
+  const logoDimensions = {
+    sm: "h-7 w-7",
+    md: "h-10 w-10",
+    lg: "h-14 w-14",
   };
 
   const content = (
-    <div className={`inline-flex items-center select-none ${className}`}>
+    <div className={`inline-flex items-center select-none shrink-0 ${className}`}>
       <Image
         src="/brand/rushd-logo.png"
         alt="RushD"
-        width={360}
-        height={110}
+        width={160}
+        height={160}
         priority
-        className={`${logoHeights[size]} w-auto object-contain shrink-0`}
+        unoptimized
+        className={`${logoDimensions[size]} object-contain rounded-xl shrink-0`}
       />
     </div>
   );

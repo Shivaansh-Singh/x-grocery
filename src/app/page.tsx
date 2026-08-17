@@ -8,7 +8,6 @@ import { CategoryPills, CategoryItem } from "@/components/catalog/CategoryPills"
 import { ProductGrid } from "@/components/catalog/ProductGrid";
 import { ProductItem } from "@/components/catalog/ProductCard";
 import { ProductDetailModal } from "@/components/catalog/ProductDetailModal";
-import { RushDLogo } from "@/components/ui/RushDLogo";
 
 function CustomerHomeContent() {
   const searchParams = useSearchParams();
@@ -112,8 +111,10 @@ function CustomerHomeContent() {
       {/* Brand Hero Banner */}
       <div className="bg-[#111315] text-white rounded-2xl p-4.5 shadow-2xs border border-[#D9D7D2]/20 flex flex-col justify-between">
         <div className="flex items-center justify-between">
-          <RushDLogo size="md" />
           <span className="text-[10px] text-[#FF5A1F] font-black tracking-wider uppercase px-2.5 py-1 rounded-lg bg-[#FF5A1F]/10 border border-[#FF5A1F]/20">
+            OFF-CAMPUS HYPERLOCAL
+          </span>
+          <span className="text-[10px] text-white font-black tracking-wider uppercase px-2.5 py-1 rounded-lg bg-white/10 border border-white/10">
             {appConfig.deliveryTargetMins} MINS DELIVERY
           </span>
         </div>

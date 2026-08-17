@@ -76,6 +76,7 @@ export function ProductCard({
             src={product.imageUrl}
             alt={product.name}
             fill
+            unoptimized
             className="object-cover group-hover:scale-105 transition-transform duration-300"
             onError={() => setImageError(true)}
             sizes="(max-width: 640px) 50vw, 200px"

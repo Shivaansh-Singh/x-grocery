@@ -9,13 +9,18 @@ export function Header() {
   const { user, role, signOut } = useAuth();
 
   return (
-    <header className="sticky top-0 z-40 bg-[#FFFFFF] border-b border-[#D9D7D2] px-4 py-3 shadow-2xs">
+    <header className="sticky top-0 z-40 bg-[#FFFFFF] border-b border-[#D9D7D2] px-4 py-2.5 shadow-2xs">
       <div className="max-w-md mx-auto flex items-center justify-between gap-3">
-        <div className="flex flex-col justify-center min-w-0">
+        <div className="flex items-center gap-2.5 min-w-0">
           <RushDLogo size="md" />
-          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[#666A70] mt-1">
-            <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#168A5B]"></span>
-            <span className="truncate">Delivering to: {appConfig.serviceArea}</span>
+          <div className="flex flex-col justify-center min-w-0 border-l border-[#D9D7D2] pl-2.5">
+            <span className="text-sm font-black text-[#111315] tracking-tight leading-none">
+              Rush<span className="text-[#FF5A1F]">D</span>
+            </span>
+            <div className="flex items-center gap-1 text-[10px] font-semibold text-[#666A70] mt-1">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#168A5B]"></span>
+              <span className="truncate">{appConfig.serviceArea}</span>
+            </div>
           </div>
         </div>
 
@@ -47,7 +52,7 @@ export function Header() {
           ) : (
             <Link
               href="/login"
-              className="text-xs font-bold text-[#FF5A1F] hover:text-[#111315] transition-colors px-3 py-1.5 rounded-xl border border-[#D9D7D2] bg-[#F5F3EE]"
+              className="text-xs font-bold text-[#FF5A1F] hover:text-[#111315] transition-colors px-3.5 py-1.5 rounded-xl border border-[#D9D7D2] bg-[#F5F3EE]"
             >
               Sign In
             </Link>

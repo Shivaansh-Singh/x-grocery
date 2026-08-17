@@ -167,7 +167,7 @@ async function main() {
       unitQuantity: 1,
       unitDisplay: "1 Liter Bottle",
       stock: 100,
-      imageUrl: "https://images.unsplash.com/photo-1548839140-29a749e1bc4e?w=500&q=80",
+      imageUrl: "https://images.unsplash.com/photo-1550572017-edd951b55104?w=500&q=80",
       description: "Safe and hygienic mineral water bottle with added minerals.",
     },
     {
@@ -275,7 +275,7 @@ async function main() {
       unitQuantity: 500,
       unitDisplay: "500g Pack",
       stock: 25,
-      imageUrl: "https://images.unsplash.com/photo-1585830810191-3a514d56e02c?w=500&q=80",
+      imageUrl: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=500&q=80",
       description: "Superior stain removal powder ideal for hostel bucket washing.",
     },
     {
@@ -287,7 +287,7 @@ async function main() {
       unitQuantity: 75,
       unitDisplay: "75g Soap Bar",
       stock: 30,
-      imageUrl: "https://images.unsplash.com/photo-1607006482602-76ca0fd20b4d?w=500&q=80",
+      imageUrl: "https://images.unsplash.com/photo-1600857544200-b2f666a9a2ec?w=500&q=80",
       description: "Trusted germ protection bathing soap for daily hygiene.",
     },
   ];
@@ -306,6 +306,7 @@ async function main() {
       update: {
         stock: prod.stock,
         price: prod.price,
+        imageUrl: prod.imageUrl,
       },
       create: {
         storeId: storeX.id,
