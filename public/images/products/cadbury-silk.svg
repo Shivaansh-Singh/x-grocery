@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F5F0FA"/>
+      <stop offset="100%" stop-color="#E6D6F5"/>
+    </linearGradient>
+    <linearGradient id="purpleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4B207D"/>
+      <stop offset="100%" stop-color="#2D0D52"/>
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFE082"/>
+      <stop offset="100%" stop-color="#FFB300"/>
+    </linearGradient>
+    <linearGradient id="chocoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6D381E"/>
+      <stop offset="100%" stop-color="#421F0D"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#1A0533" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+
+  <!-- Background Surface -->
+  <rect width="500" height="500" rx="32" fill="url(#bgGrad)"/>
+
+  <!-- Cadbury Silk Wrapper -->
+  <g filter="url(#shadow)">
+    <!-- Chocolate Wrapper Bar -->
+    <rect x="80" y="140" width="340" height="220" rx="20" fill="url(#purpleGrad)"/>
+    
+    <!-- Gold Ribbon Waves -->
+    <path d="M80 200 Q250 250 420 180 L420 220 Q250 290 80 240 Z" fill="url(#goldGrad)" opacity="0.8"/>
+    
+    <!-- Cadbury Script Logo -->
+    <text x="250" y="195" font-family="Georgia, serif" font-weight="900" font-size="34" fill="url(#goldGrad)" text-anchor="middle" font-style="italic">Cadbury</text>
+    
+    <!-- Dairy Milk Typography -->
+    <text x="250" y="222" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="16" fill="#FFFFFF" text-anchor="middle" letter-spacing="2">DAIRY MILK</text>
+
+    <!-- SILK Swirl Badge -->
+    <text x="250" y="268" font-family="Georgia, serif" font-weight="900" font-size="38" fill="url(#goldGrad)" text-anchor="middle" font-style="italic" letter-spacing="1">Silk</text>
+    
+    <!-- Chocolate Bar Square Emblem -->
+    <rect x="200" y="285" width="100" height="55" rx="8" fill="url(#chocoGrad)"/>
+    <rect x="210" y="293" width="80" height="39" rx="5" fill="none" stroke="#8D4C2A" stroke-width="2"/>
+    <text x="250" y="318" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="10" fill="#E2A684" text-anchor="middle" letter-spacing="1">MILK CHOCOLATE</text>
+  </g>
+</svg>

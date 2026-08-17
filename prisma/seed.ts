@@ -251,7 +251,7 @@ async function main() {
       unitQuantity: 60,
       unitDisplay: "60g Bar",
       stock: 30,
-      imageUrl: "https://images.unsplash.com/photo-1549007994-cb92caebd54b?w=500&q=80",
+      imageUrl: "/images/products/cadbury-silk.svg",
       description: "Rich, smooth, and creamy milk chocolate bar.",
     },
     {
@@ -263,7 +263,7 @@ async function main() {
       unitQuantity: 1,
       unitDisplay: "1 Liter Pack",
       stock: 18,
-      imageUrl: "https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=500&q=80",
+      imageUrl: "/images/products/real-juice.svg",
       description: "Delicious blend of 9 fruit juices rich in natural Vitamin C.",
     },
     {
