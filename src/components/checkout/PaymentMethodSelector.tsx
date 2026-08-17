@@ -27,8 +27,8 @@ export function PaymentMethodSelector({
   ];
 
   return (
-    <div className="bg-[#141822] p-4 rounded-2xl border border-white/8 shadow-md space-y-3 text-[#F5F6FA]">
-      <h3 className="font-extrabold text-xs text-[#F5F6FA] uppercase tracking-wider">
+    <div className="glass-card p-4 rounded-[20px] shadow-md space-y-3 text-[#F5F6FA]">
+      <h3 className="font-display font-extrabold text-xs text-[#F5F6FA] uppercase tracking-wider">
         Payment Method
       </h3>
 
@@ -60,7 +60,7 @@ export function PaymentMethodSelector({
                   <span className="font-bold text-xs text-[#F5F6FA]">
                     {method.title}
                   </span>
-                  <span className="text-[10px] font-bold text-[#3DD68C] px-2 py-0.5 rounded-md bg-[#3DD68C]/15 border border-[#3DD68C]/30">
+                  <span className="text-[10px] font-bold text-[#2D6CFF] px-2 py-0.5 rounded-md bg-[#2D6CFF]/15 border border-[#2D6CFF]/30">
                     {method.badge}
                   </span>
                 </div>

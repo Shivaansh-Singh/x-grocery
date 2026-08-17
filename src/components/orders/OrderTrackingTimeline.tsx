@@ -60,8 +60,8 @@ export function OrderTrackingTimeline({ status }: OrderTrackingTimelineProps) {
 
   if (isCancelled) {
     return (
-      <div className="bg-[#141822] p-4 rounded-2xl border border-[#FF4D4D] text-center space-y-2">
-        <h3 className="font-bold text-sm text-[#FF4D4D]">
+      <div className="glass-card p-4 rounded-[20px] border border-[#FF4D4D] text-center space-y-2">
+        <h3 className="font-display font-bold text-sm text-[#FF4D4D]">
           Order Cancelled / Rejected
         </h3>
         <p className="text-xs text-[#8A90A3]">
@@ -72,9 +72,9 @@ export function OrderTrackingTimeline({ status }: OrderTrackingTimelineProps) {
   }
 
   return (
-    <div className="bg-[#141822] p-5 rounded-2xl border border-white/8 shadow-md space-y-4 text-[#F5F6FA]">
+    <div className="glass-card p-5 rounded-[20px] shadow-md space-y-4 text-[#F5F6FA]">
       <div className="flex items-center justify-between">
-        <h3 className="font-extrabold text-xs text-[#F5F6FA] uppercase tracking-wider">
+        <h3 className="font-display font-extrabold text-xs text-[#F5F6FA] uppercase tracking-wider">
           Delivery Progress
         </h3>
         <span className="text-xs font-bold px-2.5 py-0.5 rounded-lg bg-[#1A1F2C] text-[#FF6B1A] border border-white/8">
@@ -107,7 +107,7 @@ export function OrderTrackingTimeline({ status }: OrderTrackingTimelineProps) {
                   isCurrent
                     ? "bg-gradient-to-r from-[#FF6B1A] to-[#2D6CFF] text-white shadow-[0_0_12px_rgba(255,107,26,0.4)] ring-4 ring-[#FF6B1A]/20 scale-105"
                     : isDone
-                    ? "bg-[#3DD68C] text-white"
+                    ? "bg-[#2D6CFF] text-white"
                     : "bg-[#1A1F2C] text-[#8A90A3] border border-white/8"
                 }`}
               >

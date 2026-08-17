@@ -116,7 +116,7 @@ function CustomerHomeContent() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {/* Live Search Bar */}
       <SearchBar onSearch={handleSearch} initialQuery={searchQuery} />
 
@@ -130,41 +130,45 @@ function CustomerHomeContent() {
         />
       </div>
 
-      {/* Electric Dusk Compact Hero Card */}
+      {/* Editorial Hero Banner with Soft Gradient Glow & Speed-Slash Motif */}
       {!searchQuery && activeCategory === "all" && (
-        <div className="bg-[#141822]/90 backdrop-blur-md rounded-2xl p-4.5 border border-white/8 shadow-lg flex items-center justify-between gap-3 relative overflow-hidden rushd-speed-lines">
-          <div className="space-y-1 z-10">
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-black tracking-wider uppercase px-2.5 py-0.5 rounded-md bg-gradient-to-r from-[#FF6B1A] to-[#2D6CFF] text-white shadow-xs">
-                RUSH IT. ⚡ 15-MIN HYPERLOCAL
+        <div className="glass-card glass-card-hover rounded-[24px] p-5 sm:p-6 shadow-2xl relative overflow-hidden rushd-speed-slash">
+          {/* Subtle Ambient Radial Glow */}
+          <div className="absolute -top-10 -left-10 w-64 h-64 rounded-full bg-gradient-to-br from-[#FF6B1A]/20 to-[#2D6CFF]/20 blur-3xl pointer-events-none" />
+
+          <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black tracking-widest uppercase px-3 py-0.5 rounded-full bg-gradient-to-r from-[#FF6B1A] to-[#2D6CFF] text-white shadow-xs">
+                  RUSH IT. ⚡ 15-MIN EXPRESS
+                </span>
+              </div>
+              <h2 className="font-display font-black text-xl sm:text-2xl text-[#F5F6FA] tracking-tight">
+                Your essentials. On the way.
+              </h2>
+              <p className="text-xs font-medium text-[#8A90A3] max-w-md">
+                Groceries, snacks & everyday essentials delivered fast with real-time tracking.
+              </p>
+            </div>
+            <div className="shrink-0">
+              <span className="text-xs font-black text-[#2D6CFF] bg-[#2D6CFF]/15 px-3.5 py-2 rounded-xl border border-[#2D6CFF]/30 shadow-xs block text-center">
+                FREE OVER ₹199
               </span>
             </div>
-            <h2 className="text-base sm:text-lg font-black text-[#F5F6FA] tracking-tight">
-              Your essentials. On the way.
-            </h2>
-            <p className="text-xs font-medium text-[#8A90A3]">
-              Groceries, snacks & everyday essentials delivered fast.
-            </p>
-          </div>
-          <div className="shrink-0 text-right z-10">
-            <span className="text-xs font-black text-[#3DD68C] bg-[#3DD68C]/15 px-3 py-1.5 rounded-xl border border-[#3DD68C]/30 shadow-xs">
-              FREE OVER ₹199
-            </span>
           </div>
         </div>
       )}
 
       {/* Product Section Header & Grid */}
       <div className="pt-1">
-        <div className="flex items-center justify-between mb-3 px-1 border-b border-white/8 pb-2.5">
-          <h2 className="font-black text-sm text-[#F5F6FA] tracking-tight flex items-center gap-2">
-            <span>
+        <div className="flex items-end justify-between mb-4 px-1 border-b border-white/8 pb-3">
+          <div className="heading-accent-line">
+            <h2 className="font-display font-black text-base sm:text-lg text-[#F5F6FA] tracking-tight">
               {activeCategory === "all"
                 ? "Popular Near You"
                 : categories.find((c) => c.slug === activeCategory)?.name || "Catalog"}
-            </span>
-            <span className="w-1.5 h-1.5 rounded-full bg-[#FF6B1A] inline-block" />
-          </h2>
+            </h2>
+          </div>
           <span className="text-xs text-[#8A90A3] font-semibold">
             {products.length} {products.length === 1 ? "item" : "items"}
           </span>
@@ -197,11 +201,11 @@ export default function Home() {
     <Suspense
       fallback={
         <div className="space-y-4 pt-4 animate-pulse">
-          <div className="h-10 bg-[#141822] border border-white/8 rounded-xl" />
-          <div className="h-8 bg-[#141822] border border-white/8 rounded-lg" />
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="h-12 glass-card rounded-2xl" />
+          <div className="h-10 glass-card rounded-xl" />
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-44 bg-[#141822] border border-white/8 rounded-2xl" />
+              <div key={i} className="h-56 glass-card rounded-[20px]" />
             ))}
           </div>
         </div>

@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@600;700;800;900&display=swap');
 @import "tailwindcss";
 
 :root {
@@ -8,11 +9,8 @@
   --rushd-orange: #FF6B1A;
   --rushd-text-primary: #F5F6FA;
   --rushd-text-secondary: #8A90A3;
-  --rushd-success: #3DD68C;
   --rushd-alert: #FF4D4D;
   --rushd-border: rgba(255, 255, 255, 0.08);
-  --rushd-blue-glow: rgba(45, 108, 255, 0.18);
-  --rushd-orange-glow: rgba(255, 107, 26, 0.18);
 
   --background: #0B0E14;
   --foreground: #F5F6FA;
@@ -26,11 +24,9 @@
   --color-rushd-orange: #FF6B1A;
   --color-rushd-text-primary: #F5F6FA;
   --color-rushd-text-secondary: #8A90A3;
-  --color-rushd-success: #3DD68C;
   --color-rushd-alert: #FF4D4D;
-  --color-rushd-border: rgba(255, 255, 255, 0.08);
-  --font-sans: var(--font-geist-sans), Inter, system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), monospace;
+  --font-sans: var(--font-geist-sans), 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-display: 'Outfit', 'Plus Jakarta Sans', var(--font-geist-sans), sans-serif;
 }
 
 body {
@@ -40,9 +36,15 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-image: 
-    radial-gradient(circle at 15% 10%, rgba(45, 108, 255, 0.07) 0%, transparent 45%),
-    radial-gradient(circle at 85% 60%, rgba(255, 107, 26, 0.06) 0%, transparent 45%);
+    radial-gradient(circle at 15% 15%, rgba(45, 108, 255, 0.08) 0%, transparent 45%),
+    radial-gradient(circle at 85% 65%, rgba(255, 107, 26, 0.07) 0%, transparent 45%),
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.035'/%3E%3C/svg%3E");
   background-attachment: fixed;
+}
+
+.font-display {
+  font-family: 'Outfit', 'Plus Jakarta Sans', system-ui, sans-serif;
+  letter-spacing: -0.025em;
 }
 
 /* Electric Dusk Signature Gradient Utilities */
@@ -56,27 +58,91 @@ body {
   -webkit-text-fill-color: transparent;
 }
 
-.border-rushd-gradient {
-  border-image: linear-gradient(135deg, #FF6B1A 0%, #2D6CFF 100%) 1;
+/* Glassmorphism Cards with Gradient Border */
+.glass-card {
+  background: rgba(20, 24, 34, 0.55);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid transparent;
+  position: relative;
 }
 
-.shadow-electric-blue {
-  box-shadow: 0 0 16px rgba(45, 108, 255, 0.22);
+.glass-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(255, 107, 26, 0.4), rgba(45, 108, 255, 0.4));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
 }
 
-.shadow-electric-orange {
-  box-shadow: 0 0 16px rgba(255, 107, 26, 0.22);
+.glass-card-hover {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Diagonal Speed Line Motif Backdrop */
-.rushd-speed-lines {
+.glass-card-hover:hover {
+  box-shadow: 0 0 24px rgba(45, 108, 255, 0.22), 0 0 16px rgba(255, 107, 26, 0.20);
+  transform: translateY(-2px);
+}
+
+/* Signature Diagonal Speed-Slash Motif */
+.rushd-speed-slash {
   background-image: repeating-linear-gradient(
-    -45deg,
-    rgba(255, 255, 255, 0.015),
-    rgba(255, 255, 255, 0.015) 1px,
-    transparent 1px,
-    transparent 12px
+    -55deg,
+    rgba(255, 107, 26, 0.08),
+    rgba(255, 107, 26, 0.08) 2px,
+    transparent 2px,
+    transparent 14px,
+    rgba(45, 108, 255, 0.08) 14px,
+    rgba(45, 108, 255, 0.08) 16px,
+    transparent 16px,
+    transparent 28px
   );
+}
+
+/* Animated Speed Slash for Loading/Progress */
+@keyframes speedSlashMove {
+  0% { background-position: 0 0; }
+  100% { background-position: 50px 0; }
+}
+
+.rushd-speed-slash-animated {
+  background-image: repeating-linear-gradient(
+    -55deg,
+    rgba(255, 107, 26, 0.25),
+    rgba(255, 107, 26, 0.25) 4px,
+    transparent 4px,
+    transparent 12px,
+    rgba(45, 108, 255, 0.25) 12px,
+    rgba(45, 108, 255, 0.25) 16px,
+    transparent 16px,
+    transparent 24px
+  );
+  animation: speedSlashMove 2s linear infinite;
+}
+
+/* Product Card Radial Image Glow */
+.product-img-glow {
+  background: radial-gradient(circle at 50% 50%, rgba(255, 107, 26, 0.16) 0%, rgba(45, 108, 255, 0.16) 55%, transparent 75%);
+}
+
+/* 2px Gradient Section Heading Line Accent */
+.heading-accent-line {
+  position: relative;
+  display: inline-block;
+}
+.heading-accent-line::after {
+  content: '';
+  display: block;
+  height: 2px;
+  width: 44px;
+  background: linear-gradient(90deg, #FF6B1A 0%, #2D6CFF 100%);
+  border-radius: 2px;
+  margin-top: 4px;
 }
 
 /* Custom scrollbar utility */

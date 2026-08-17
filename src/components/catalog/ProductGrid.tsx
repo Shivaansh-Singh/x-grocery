@@ -23,11 +23,11 @@ export function ProductGrid({
 
   if (loading) {
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 animate-pulse">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-3.5 sm:gap-4.5 animate-pulse">
         {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
           <div
             key={i}
-            className="h-56 bg-[#141822] border border-white/8 rounded-2xl"
+            className="h-56 glass-card rounded-[20px]"
           />
         ))}
       </div>
@@ -36,8 +36,8 @@ export function ProductGrid({
 
   if (safeProducts.length === 0) {
     return (
-      <div className="bg-[#141822] rounded-2xl p-8 border border-white/8 text-center space-y-2 my-4 shadow-md">
-        <h3 className="font-bold text-sm text-[#F5F6FA]">
+      <div className="glass-card rounded-[20px] p-8 text-center space-y-2 my-4 shadow-md">
+        <h3 className="font-display font-extrabold text-sm text-[#F5F6FA]">
           No products found
         </h3>
         <p className="text-xs text-[#8A90A3] max-w-xs mx-auto">
@@ -50,16 +50,21 @@ export function ProductGrid({
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
-      {safeProducts.map((product) => (
-        <ProductCard
-          key={product.id}
-          product={product}
-          quantity={cartQuantities[product.id] || 0}
-          onUpdateQuantity={onUpdateQuantity}
-          onSelectProduct={onSelectProduct}
-        />
-      ))}
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-3.5 sm:gap-4.5 items-stretch">
+      {safeProducts.map((product, index) => {
+        // First product or every 9th product when not searching gets Featured Bento treatment
+        const isFeaturedTile = !searchQuery && (index === 0 || (index > 0 && index % 9 === 0));
+        return (
+          <ProductCard
+            key={product.id}
+            product={product}
+            quantity={cartQuantities[product.id] || 0}
+            onUpdateQuantity={onUpdateQuantity}
+            onSelectProduct={onSelectProduct}
+            isFeatured={isFeaturedTile}
+          />
+        );
+      })}
     </div>
   );
 }

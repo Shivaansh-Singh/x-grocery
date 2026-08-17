@@ -22,12 +22,12 @@ export function DeliveryTaskCard({
   const cleanPhone = rawPhone.replace(/\s+/g, "");
 
   return (
-    <div className="bg-[#141822] rounded-2xl border border-white/8 p-4 shadow-md space-y-3 text-[#F5F6FA]">
+    <div className="glass-card rounded-[20px] p-4 shadow-md space-y-3 text-[#F5F6FA]">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <span className="font-extrabold text-base text-[#F5F6FA]">
+            <span className="font-display font-extrabold text-base text-[#F5F6FA]">
               #{order.orderNumber}
             </span>
             <span
@@ -56,7 +56,7 @@ export function DeliveryTaskCard({
 
         {/* Payment Collection Badge */}
         <div className="text-right">
-          <span className="text-sm font-extrabold text-[#FF6B1A] block">
+          <span className="text-sm font-black text-[#FF6B1A] block">
             ₹{order.totalAmount.toFixed(0)}
           </span>
           <span className="text-[10px] font-bold px-2 py-0.5 rounded-md inline-block mt-0.5 bg-[#1A1F2C] text-[#8A90A3] border border-white/8">
@@ -73,7 +73,7 @@ export function DeliveryTaskCard({
           </div>
           <a
             href={`tel:${cleanPhone}`}
-            className="px-3.5 py-1.5 bg-[#3DD68C] hover:bg-[#141822] text-white font-bold text-xs rounded-xl shadow-xs transition-colors flex items-center gap-1.5"
+            className="px-3.5 py-1.5 bg-[#2D6CFF] hover:bg-[#2D6CFF]/90 text-white font-bold text-xs rounded-xl shadow-xs transition-colors flex items-center gap-1.5"
           >
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1.11 1.11 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
@@ -126,7 +126,7 @@ export function DeliveryTaskCard({
           {isOutForDelivery && (
             <button
               onClick={() => onOpenPaymentModal?.(order)}
-              className="w-full py-3 bg-[#3DD68C] hover:bg-[#141822] text-white rounded-xl font-extrabold text-xs shadow-sm transition-colors flex items-center justify-center gap-1.5"
+              className="w-full py-3 bg-gradient-to-r from-[#FF6B1A] to-[#2D6CFF] hover:opacity-90 text-white rounded-xl font-extrabold text-xs shadow-sm transition-all flex items-center justify-center gap-1.5"
             >
               <span>Mark Order Delivered 🎉</span>
               <span>→</span>

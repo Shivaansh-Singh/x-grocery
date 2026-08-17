@@ -72,9 +72,9 @@ export function ProductDetailModal({
       />
 
       {/* Drawer Container */}
-      <div className="relative w-full max-w-md bg-[#141822] rounded-t-3xl p-5 shadow-2xl z-10 border-t border-white/8 max-h-[85vh] overflow-y-auto no-scrollbar text-[#F5F6FA]">
+      <div className="relative w-full max-w-md glass-card rounded-t-[28px] p-5 shadow-2xl z-10 max-h-[85vh] overflow-y-auto no-scrollbar text-[#F5F6FA]">
         {/* Top Handle Indicator */}
-        <div className="w-12 h-1 bg-white/10 rounded-full mx-auto mb-4" />
+        <div className="w-12 h-1 bg-white/15 rounded-full mx-auto mb-4" />
 
         {/* Close Button */}
         <button
@@ -85,7 +85,7 @@ export function ProductDetailModal({
         </button>
 
         {/* Image Display */}
-        <div className="relative aspect-4/3 w-full rounded-2xl bg-[#1A1F2C] overflow-hidden mb-4 p-2 flex items-center justify-center">
+        <div className="relative aspect-4/3 w-full rounded-[20px] product-img-glow overflow-hidden mb-4 p-2 flex items-center justify-center">
           {product.imageUrl && !imageError ? (
             <Image
               src={product.imageUrl}
@@ -107,15 +107,15 @@ export function ProductDetailModal({
           {/* Stock Badges */}
           <div className="absolute top-3 left-3 flex gap-2">
             {isOutOfStock ? (
-              <span className="px-3 py-1 rounded-lg bg-[#FF4D4D] text-white text-xs font-bold shadow-xs">
+              <span className="px-3 py-1 rounded-lg bg-[#FF4D4D] text-white text-xs font-black shadow-xs">
                 Out of Stock
               </span>
             ) : isLowStock ? (
-              <span className="px-3 py-1 rounded-lg bg-[#FF6B1A] text-white text-xs font-bold shadow-xs">
+              <span className="px-3 py-1 rounded-lg bg-[#FF6B1A] text-white text-xs font-black shadow-xs">
                 Only {product.stock} Left!
               </span>
             ) : (
-              <span className="px-3 py-1 rounded-lg bg-[#3DD68C] text-white text-xs font-bold shadow-xs">
+              <span className="px-3 py-1 rounded-lg bg-[#2D6CFF] text-white text-xs font-black shadow-xs">
                 In Stock ({product.stock})
               </span>
             )}
@@ -128,7 +128,7 @@ export function ProductDetailModal({
             <span className="text-xs font-black text-[#2D6CFF] uppercase tracking-wider">
               {product.category?.name || "Grocery"}
             </span>
-            <h2 className="text-lg font-bold text-[#F5F6FA] mt-0.5">
+            <h2 className="font-display font-black text-lg text-[#F5F6FA] mt-0.5">
               {product.name}
             </h2>
             <p className="text-xs font-medium text-[#8A90A3] mt-0.5">
@@ -146,8 +146,8 @@ export function ProductDetailModal({
 
           {/* Description */}
           {product.description && (
-            <div className="bg-[#1A1F2C] p-3.5 rounded-2xl border border-white/8">
-              <h4 className="text-xs font-bold text-[#F5F6FA] mb-1">
+            <div className="bg-[#1A1F2C] p-3.5 rounded-[16px] border border-white/8">
+              <h4 className="font-display font-extrabold text-xs text-[#F5F6FA] mb-1">
                 Product Details
               </h4>
               <p className="text-xs text-[#8A90A3] leading-relaxed">
@@ -157,8 +157,8 @@ export function ProductDetailModal({
           )}
 
           {/* Delivery Note */}
-          <div className="flex items-center gap-2 p-3 bg-[#1A1F2C] rounded-2xl border border-white/8 text-[#8A90A3] text-xs">
-            <span className="w-2 h-2 rounded-full bg-[#3DD68C] shrink-0"></span>
+          <div className="flex items-center gap-2 p-3 bg-[#1A1F2C] rounded-[16px] border border-white/8 text-[#8A90A3] text-xs">
+            <span className="w-2 h-2 rounded-full bg-[#2D6CFF] shrink-0"></span>
             <span>⚡ Instant 15-Min delivery to your doorstep.</span>
           </div>
 
@@ -201,7 +201,7 @@ export function ProductDetailModal({
               <button
                 type="button"
                 onClick={handleAdd}
-                className="flex-1 py-3 rounded-xl bg-gradient-to-r from-[#FF6B1A] to-[#2D6CFF] hover:opacity-90 text-white text-xs font-black shadow-sm transition-all"
+                className="flex-1 py-3 rounded-xl bg-gradient-to-r from-[#FF6B1A] to-[#2D6CFF] hover:opacity-90 text-white text-xs font-black shadow-md transition-all"
               >
                 Add to Cart • ₹{product.price}
               </button>

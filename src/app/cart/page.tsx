@@ -17,14 +17,14 @@ export default function CartPage() {
   if (itemCount === 0) {
     return (
       <div className="space-y-6 pt-6 text-center">
-        <div className="bg-[#141822] rounded-2xl p-8 border border-white/8 shadow-md space-y-4 max-w-md mx-auto text-[#F5F6FA]">
+        <div className="glass-card rounded-[24px] p-8 shadow-xl space-y-4 max-w-md mx-auto text-[#F5F6FA]">
           <div className="w-14 h-14 rounded-full bg-[#1A1F2C] text-[#FF6B1A] flex items-center justify-center mx-auto border border-white/8">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
             </svg>
           </div>
           <div>
-            <h2 className="text-lg font-bold text-[#F5F6FA]">
+            <h2 className="font-display font-black text-lg text-[#F5F6FA]">
               Your cart is empty
             </h2>
             <p className="text-xs text-[#8A90A3] mt-1 max-w-xs mx-auto">
@@ -33,7 +33,7 @@ export default function CartPage() {
           </div>
           <Link
             href="/"
-            className="inline-block px-6 py-3 bg-gradient-to-r from-[#FF6B1A] to-[#2D6CFF] hover:opacity-90 text-white rounded-xl font-bold text-xs transition-all shadow-sm"
+            className="inline-block px-6 py-3 bg-gradient-to-r from-[#FF6B1A] to-[#2D6CFF] hover:opacity-90 text-white rounded-xl font-extrabold text-xs transition-all shadow-md"
           >
             Start Shopping RushD
           </Link>
@@ -47,7 +47,7 @@ export default function CartPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-black text-[#F5F6FA] tracking-tight">
+          <h1 className="font-display font-black text-xl text-[#F5F6FA] tracking-tight">
             Shopping Cart
           </h1>
           <p className="text-xs text-[#8A90A3]">
@@ -63,11 +63,11 @@ export default function CartPage() {
       </div>
 
       {/* Free Delivery Progress Bar */}
-      <div className="bg-[#141822] p-4 rounded-2xl border border-white/8 shadow-sm space-y-2">
+      <div className="glass-card p-4 rounded-[20px] shadow-sm space-y-2">
         <div className="flex items-center justify-between text-xs font-semibold">
           <span>
             {amountForFreeDelivery === 0 ? (
-              <span className="text-[#3DD68C]">⚡ FREE Delivery Unlocked!</span>
+              <span className="text-[#2D6CFF] font-black">⚡ FREE Delivery Unlocked!</span>
             ) : (
               <span>Add <strong className="text-[#FF6B1A]">₹{amountForFreeDelivery.toFixed(0)}</strong> more for FREE Delivery</span>
             )}
@@ -76,7 +76,7 @@ export default function CartPage() {
         </div>
         <div className="w-full bg-[#1A1F2C] h-2 rounded-full overflow-hidden border border-white/8">
           <div
-            className="bg-[#3DD68C] h-full transition-all duration-300 rounded-full"
+            className="bg-gradient-to-r from-[#FF6B1A] to-[#2D6CFF] h-full transition-all duration-300 rounded-full"
             style={{ width: `${freeDeliveryProgress}%` }}
           />
         </div>
@@ -87,10 +87,10 @@ export default function CartPage() {
         {items.map(({ product, quantity }) => (
           <div
             key={product.id}
-            className="bg-[#141822] p-3 rounded-2xl border border-white/8 shadow-sm flex items-center justify-between gap-3"
+            className="glass-card glass-card-hover p-3.5 rounded-[20px] shadow-sm flex items-center justify-between gap-3"
           >
             {/* Product Image */}
-            <div className="w-14 h-14 rounded-xl bg-[#1A1F2C] relative overflow-hidden shrink-0 flex items-center justify-center p-1">
+            <div className="w-14 h-14 rounded-xl product-img-glow relative overflow-hidden shrink-0 flex items-center justify-center p-1">
               {product.imageUrl && !imageErrors[product.id] ? (
                 <Image
                   src={product.imageUrl}
@@ -156,8 +156,8 @@ export default function CartPage() {
       </div>
 
       {/* Bill Details Summary */}
-      <div className="bg-[#141822] p-4 rounded-2xl border border-white/8 shadow-sm space-y-3">
-        <h3 className="font-bold text-xs text-[#F5F6FA] uppercase tracking-wider">
+      <div className="glass-card p-4 rounded-[20px] shadow-sm space-y-3">
+        <h3 className="font-display font-extrabold text-xs text-[#F5F6FA] uppercase tracking-wider">
           Bill Details
         </h3>
 
@@ -171,7 +171,7 @@ export default function CartPage() {
             <span>Delivery Fee</span>
             <span>
               {deliveryFee === 0 ? (
-                <span className="font-bold text-[#3DD68C]">FREE</span>
+                <span className="font-bold text-[#2D6CFF]">FREE</span>
               ) : (
                 <span className="font-medium text-[#F5F6FA]">₹15</span>
               )}
@@ -189,7 +189,7 @@ export default function CartPage() {
       <div className="pt-2">
         <Link
           href="/cart/checkout"
-          className="w-full py-3.5 bg-gradient-to-r from-[#FF6B1A] to-[#2D6CFF] hover:opacity-90 text-white rounded-xl font-extrabold text-xs shadow-sm transition-all flex items-center justify-center gap-2"
+          className="w-full py-3.5 bg-gradient-to-r from-[#FF6B1A] to-[#2D6CFF] hover:opacity-90 text-white rounded-xl font-extrabold text-xs shadow-md transition-all flex items-center justify-center gap-2"
         >
           <span>Proceed to Checkout • ₹{totalAmount.toFixed(0)}</span>
           <span>→</span>
