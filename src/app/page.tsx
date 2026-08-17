@@ -130,31 +130,24 @@ function CustomerHomeContent() {
         />
       </div>
 
-      {/* Editorial Hero Banner with Soft Gradient Glow & Speed-Slash Motif */}
+      {/* Clean Editorial Hero Banner */}
       {!searchQuery && activeCategory === "all" && (
-        <div className="glass-card glass-card-hover rounded-[24px] p-5 sm:p-6 shadow-2xl relative overflow-hidden rushd-speed-slash">
-          {/* Subtle Ambient Radial Glow */}
-          <div className="absolute -top-10 -left-10 w-64 h-64 rounded-full bg-gradient-to-br from-[#FF6B1A]/20 to-[#2D6CFF]/20 blur-3xl pointer-events-none" />
+        <div className="glass-card rounded-[22px] p-5 sm:p-6 shadow-xl relative overflow-hidden rushd-speed-slash">
+          {/* Subtle Ambient Soft Glow */}
+          <div className="absolute -top-12 -left-12 w-56 h-56 rounded-full bg-gradient-to-br from-[#FF6B1A]/12 to-[#2D6CFF]/12 blur-3xl pointer-events-none" />
 
-          <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-black tracking-widest uppercase px-3 py-0.5 rounded-full bg-gradient-to-r from-[#FF6B1A] to-[#2D6CFF] text-white shadow-xs">
-                  RUSH IT. ⚡ 15-MIN EXPRESS
-                </span>
-              </div>
-              <h2 className="font-display font-black text-xl sm:text-2xl text-[#F5F6FA] tracking-tight">
-                Your essentials. On the way.
-              </h2>
-              <p className="text-xs font-medium text-[#8A90A3] max-w-md">
-                Groceries, snacks & everyday essentials delivered fast with real-time tracking.
-              </p>
-            </div>
-            <div className="shrink-0">
-              <span className="text-xs font-black text-[#2D6CFF] bg-[#2D6CFF]/15 px-3.5 py-2 rounded-xl border border-[#2D6CFF]/30 shadow-xs block text-center">
-                FREE OVER ₹199
+          <div className="relative z-10 space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-black tracking-wider uppercase px-2.5 py-0.5 rounded-md bg-gradient-to-r from-[#FF6B1A] to-[#2D6CFF] text-white shadow-xs">
+                ⚡ 15-MIN EXPRESS
               </span>
             </div>
+            <h2 className="font-display font-black text-xl sm:text-2xl text-[#F5F6FA] tracking-tight">
+              Your essentials. On the way.
+            </h2>
+            <p className="text-xs font-medium text-[#8A90A3] max-w-md leading-relaxed">
+              Groceries, snacks & everyday essentials delivered fast.
+            </p>
           </div>
         </div>
       )}

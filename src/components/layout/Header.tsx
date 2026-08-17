@@ -10,9 +10,9 @@ export function Header() {
   return (
     <header className="sticky top-0 z-40 bg-[#0B0E14]/90 backdrop-blur-md border-b border-white/8 px-4 py-3 shadow-lg">
       <div className="max-w-6xl mx-auto flex items-center justify-between gap-3">
-        {/* Left: [RushD Logo Badge] */}
+        {/* Left: [RushD BRAND] */}
         <div className="flex items-center gap-2.5 min-w-0">
-          <RushDLogo variant="full" size="md" withContainer={true} />
+          <RushDLogo variant="full" size="md" />
         </div>
 
         {/* Right: Actions */}

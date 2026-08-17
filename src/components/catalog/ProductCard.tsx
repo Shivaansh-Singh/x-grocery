@@ -70,10 +70,10 @@ export function ProductCard({
     return (
       <div
         onClick={() => onSelectProduct && onSelectProduct(product)}
-        className="col-span-2 sm:col-span-2 glass-card glass-card-hover rounded-[20px] p-4 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4 cursor-pointer group relative overflow-hidden rushd-speed-slash"
+        className="col-span-2 sm:col-span-2 glass-card rounded-[20px] p-4 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4 cursor-pointer group relative overflow-hidden rushd-speed-slash hover:border-[#2D6CFF]/40 transition-all duration-200"
       >
         {/* Featured Image Section with Radial Glow */}
-        <div className="relative aspect-square w-full sm:w-48 rounded-[16px] product-img-glow overflow-hidden shrink-0 flex items-center justify-center p-3">
+        <div className="relative aspect-square w-full sm:w-44 rounded-[16px] product-img-glow overflow-hidden shrink-0 flex items-center justify-center p-3">
           {product.imageUrl && !imageError ? (
             <Image
               src={product.imageUrl}
@@ -93,7 +93,7 @@ export function ProductCard({
           )}
 
           <span className="absolute top-2 left-2 px-2.5 py-0.5 rounded-md bg-gradient-to-r from-[#FF6B1A] to-[#2D6CFF] text-white text-[10px] font-black uppercase tracking-wider shadow-xs">
-            RUSH SELECTION ⚡
+            RUSH SELECTION
           </span>
         </div>
 
@@ -103,7 +103,7 @@ export function ProductCard({
             <span className="text-[10px] font-black text-[#2D6CFF] uppercase tracking-wider block">
               {product.category?.name || "Featured"}
             </span>
-            <h3 className="font-display font-black text-base sm:text-lg text-[#F5F6FA] line-clamp-2 leading-tight mt-1 group-hover:text-[#FF6B1A] transition-colors">
+            <h3 className="font-display font-black text-base sm:text-lg text-[#F5F6FA] line-clamp-2 leading-tight mt-0.5 group-hover:text-[#FF6B1A] transition-colors">
               {product.name}
             </h3>
             <p className="text-xs text-[#8A90A3] mt-1 font-medium line-clamp-2">
@@ -111,8 +111,8 @@ export function ProductCard({
             </p>
           </div>
 
-          <div className="mt-4 pt-3 border-t border-white/8 flex items-center justify-between gap-3">
-            <div className="flex items-baseline gap-1">
+          <div className="mt-3 pt-2.5 border-t border-white/8 flex items-center justify-between gap-3">
+            <div className="flex items-baseline gap-0.5">
               <span className="text-xs font-bold text-[#FF6B1A]">₹</span>
               <span className="text-xl font-black text-[#F5F6FA]">
                 {product.price}
@@ -153,7 +153,7 @@ export function ProductCard({
               <button
                 type="button"
                 onClick={handleAdd}
-                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#FF6B1A] to-[#2D6CFF] hover:opacity-90 active:scale-95 text-white text-xs font-black tracking-wide transition-all shadow-md"
+                className="px-4.5 py-2 rounded-xl bg-gradient-to-r from-[#FF6B1A] to-[#2D6CFF] hover:opacity-90 active:scale-95 text-white text-xs font-black tracking-wide transition-all shadow-md"
               >
                 ADD TO CART
               </button>
@@ -167,10 +167,10 @@ export function ProductCard({
   return (
     <div
       onClick={() => onSelectProduct && onSelectProduct(product)}
-      className="glass-card glass-card-hover rounded-[20px] p-3.5 shadow-md flex flex-col justify-between cursor-pointer group relative"
+      className="bg-[#141822] rounded-[18px] border border-white/8 p-3 shadow-sm hover:border-white/20 transition-all duration-200 flex flex-col justify-between cursor-pointer group relative"
     >
       {/* Image & Stock Badges Container */}
-      <div className="relative aspect-square w-full rounded-[14px] product-img-glow overflow-hidden mb-2.5 flex items-center justify-center p-2">
+      <div className="relative aspect-square w-full rounded-[14px] bg-[#1A1F2C] overflow-hidden mb-2.5 flex items-center justify-center p-2">
         {product.imageUrl && !imageError ? (
           <Image
             src={product.imageUrl}
@@ -210,16 +210,16 @@ export function ProductCard({
           <span className="text-[10px] font-black text-[#2D6CFF] uppercase tracking-wider block truncate">
             {product.category?.name || "Grocery"}
           </span>
-          <h3 className="font-display font-extrabold text-xs text-[#F5F6FA] line-clamp-2 leading-snug mt-0.5 group-hover:text-[#FF6B1A] transition-colors">
+          <h3 className="font-display font-semibold text-xs text-[#F5F6FA] line-clamp-2 leading-snug mt-0.5 group-hover:text-[#FF6B1A] transition-colors">
             {product.name}
           </h3>
-          <p className="text-[11px] text-[#8A90A3] mt-1 font-medium">
+          <p className="text-[11px] text-[#8A90A3] mt-0.5 font-medium">
             {product.unitDisplay}
           </p>
         </div>
 
         {/* Price & Action Button */}
-        <div className="mt-3 pt-2 border-t border-white/8 flex items-center justify-between gap-1">
+        <div className="mt-2.5 pt-2 border-t border-white/8 flex items-center justify-between gap-1">
           <div className="flex items-baseline gap-0.5">
             <span className="text-xs font-bold text-[#FF6B1A]">₹</span>
             <span className="text-base font-black text-[#F5F6FA]">

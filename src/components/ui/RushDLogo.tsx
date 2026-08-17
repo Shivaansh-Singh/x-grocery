@@ -8,7 +8,6 @@ interface RushDLogoProps {
   size?: "sm" | "md" | "lg";
   href?: string;
   className?: string;
-  withContainer?: boolean;
 }
 
 export function RushDLogo({
@@ -16,22 +15,21 @@ export function RushDLogo({
   size = "md",
   href = "/",
   className = "",
-  withContainer = true,
 }: RushDLogoProps) {
   const iconDimensions = {
-    sm: "h-6 w-6",
-    md: "h-8 w-8",
-    lg: "h-10 w-10",
+    sm: "h-7 w-7",
+    md: "h-9 w-9",
+    lg: "h-11 w-11",
   };
 
   const wordmarkHeights = {
-    sm: "h-4.5",
-    md: "h-6",
-    lg: "h-7.5",
+    sm: "h-5",
+    md: "h-6.5",
+    lg: "h-8",
   };
 
   const logoElements = (
-    <>
+    <div className={`inline-flex items-center gap-2.5 select-none shrink-0 ${className}`}>
       {/* Supplied R Icon Emblem Image Asset */}
       <Image
         src="/brand/rushd-icon.png"
@@ -40,10 +38,10 @@ export function RushDLogo({
         height={160}
         priority
         unoptimized
-        className={`${iconDimensions[size]} object-contain rounded-lg shrink-0`}
+        className={`${iconDimensions[size]} object-contain rounded-xl shrink-0 shadow-sm`}
       />
 
-      {/* Supplied RushD Wordmark Image Asset */}
+      {/* Supplied RushD Wordmark Image Asset (Inverted to bright white for seamless dark theme contrast) */}
       {variant === "full" && (
         <Image
           src="/brand/rushd-wordmark.png"
@@ -52,25 +50,19 @@ export function RushDLogo({
           height={50}
           priority
           unoptimized
-          className={`${wordmarkHeights[size]} w-auto object-contain shrink-0`}
+          className={`${wordmarkHeights[size]} w-auto object-contain shrink-0 brightness-0 invert opacity-95`}
         />
       )}
-    </>
+    </div>
   );
-
-  const containerClasses = withContainer
-    ? `inline-flex items-center gap-2 bg-[#FFFFFF] px-2.5 py-1 rounded-xl shadow-xs border border-white/20 select-none shrink-0 ${className}`
-    : `inline-flex items-center gap-2 select-none shrink-0 ${className}`;
-
-  const content = <div className={containerClasses}>{logoElements}</div>;
 
   if (href) {
     return (
-      <Link href={href} className="inline-block hover:opacity-95 transition-opacity shrink-0">
-        {content}
+      <Link href={href} className="inline-block hover:opacity-90 transition-opacity shrink-0">
+        {logoElements}
       </Link>
     );
   }
 
-  return content;
+  return logoElements;
 }
