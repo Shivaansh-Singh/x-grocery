@@ -92,13 +92,23 @@ function CustomerHomeContent() {
   };
 
   const handleSelectCategory = (catSlug: string) => {
-    setLoadingProducts(true);
-    setActiveCategory(catSlug);
+    setActiveCategory((prev) => {
+      if (prev !== catSlug) {
+        setLoadingProducts(true);
+        return catSlug;
+      }
+      return prev;
+    });
   };
 
   const handleSearch = useCallback((query: string) => {
-    setLoadingProducts(true);
-    setSearchQuery(query);
+    setSearchQuery((prev) => {
+      if (prev !== query) {
+        setLoadingProducts(true);
+        return query;
+      }
+      return prev;
+    });
   }, []);
 
   const handleSelectProduct = (product: ProductItem) => {

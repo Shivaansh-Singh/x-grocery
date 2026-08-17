@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 interface SearchBarProps {
   onSearch: (query: string) => void;
@@ -14,8 +14,14 @@ export function SearchBar({
   initialQuery = "",
 }: SearchBarProps) {
   const [searchTerm, setSearchTerm] = useState(initialQuery);
+  const isFirstRender = useRef(true);
 
   useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+
     const timer = setTimeout(() => {
       onSearch(searchTerm);
     }, 300);
