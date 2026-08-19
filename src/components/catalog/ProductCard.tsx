@@ -40,20 +40,13 @@ export function ProductCard({
 }: ProductCardProps) {
   const [imageError, setImageError] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  const [tooltipPosition, setTooltipPosition] = useState<"top" | "bottom">("top");
 
   const isOutOfStock = product.stock <= 0;
   const isLowStock = product.stock > 0 && product.stock <= 5;
 
-  const handleMouseEnter = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleMouseEnter = () => {
     if (typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches) {
       return;
-    }
-    const rect = e.currentTarget.getBoundingClientRect();
-    if (rect.top < 220) {
-      setTooltipPosition("bottom");
-    } else {
-      setTooltipPosition("top");
     }
     setIsHovered(true);
   };
@@ -89,20 +82,9 @@ export function ProductCard({
     if (!isHovered) return null;
     return (
       <div
-        className={`hidden md:block absolute z-50 left-1/2 -translate-x-1/2 w-64 bg-[#141822]/95 backdrop-blur-xl p-3.5 rounded-[16px] border border-white/20 shadow-[0_12px_32px_rgba(0,0,0,0.7),0_0_24px_rgba(45,108,255,0.30)] pointer-events-none transition-all duration-200 animate-in fade-in zoom-in-95 ${
-          tooltipPosition === "top" ? "bottom-full mb-3" : "top-full mt-3"
-        }`}
+        className="hidden md:block absolute top-0 -left-2 -right-2 z-50 bg-[#141822] backdrop-blur-xl p-3.5 rounded-[18px] border border-[#2D6CFF]/50 shadow-[0_16px_40px_rgba(0,0,0,0.85),0_0_24px_rgba(45,108,255,0.30)] pointer-events-none transition-all duration-200 animate-in fade-in zoom-in-95"
       >
-        {/* Indicator Arrow */}
-        <div
-          className={`absolute left-1/2 -translate-x-1/2 w-3 h-3 bg-[#141822] border-white/20 rotate-45 ${
-            tooltipPosition === "top"
-              ? "-bottom-1.5 border-r border-b"
-              : "-top-1.5 border-l border-t"
-          }`}
-        />
-
-        <div className="space-y-2 relative z-10 text-left">
+        <div className="space-y-2.5 relative z-10 text-left">
           <div className="flex items-center justify-between">
             <span className="text-[9px] font-black text-[#2D6CFF] uppercase tracking-wider">
               {product.category?.name || "Grocery"}
@@ -116,7 +98,7 @@ export function ProductCard({
             {product.name}
           </h4>
 
-          <p className="text-[11px] text-[#8A90A3] leading-relaxed line-clamp-2 font-medium">
+          <p className="text-[11px] text-[#8A90A3] leading-relaxed line-clamp-3 font-medium">
             {product.description || `Trusted quality ${product.name} delivered fresh to your off-campus doorstep.`}
           </p>
 
