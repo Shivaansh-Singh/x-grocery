@@ -17,7 +17,7 @@ interface CartContextType {
   deliveryFee: number;
   totalAmount: number;
   addItem: (product: ProductItem, quantity?: number) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
+  updateQuantity: (productOrId: ProductItem | string, quantity: number) => void;
   removeItem: (productId: string) => void;
   clearCart: () => void;
   getQuantity: (productId: string) => number;
@@ -99,7 +99,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const updateQuantity = (productId: string, newQty: number) => {
+  const updateQuantity = (productOrId: ProductItem | string, newQty: number) => {
+    const productId = typeof productOrId === "string" ? productOrId : productOrId.id;
+
     if (newQty <= 0) {
       removeItem(productId);
       return;
@@ -107,7 +109,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     setItems((prev) => {
       const existing = prev.find((i) => i.product.id === productId);
-      if (!existing) return prev;
+
+      if (!existing) {
+        if (typeof productOrId === "object") {
+          return [...prev, { id: productOrId.id, product: productOrId, quantity: newQty }];
+        }
+        return prev;
+      }
 
       if (newQty > existing.product.stock) {
         showToast(

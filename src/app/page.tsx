@@ -7,6 +7,7 @@ import { CategoryPills, CategoryItem } from "@/components/catalog/CategoryPills"
 import { ProductGrid } from "@/components/catalog/ProductGrid";
 import { ProductItem } from "@/components/catalog/ProductCard";
 import { ProductDetailModal } from "@/components/catalog/ProductDetailModal";
+import { useCart } from "@/components/providers/CartProvider";
 
 function CustomerHomeContent() {
   const searchParams = useSearchParams();
@@ -19,12 +20,18 @@ function CustomerHomeContent() {
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [loadingProducts, setLoadingProducts] = useState(true);
 
-  // Cart state management
-  const [cartQuantities, setCartQuantities] = useState<Record<string, number>>({});
+  // Cart state management directly from unified CartProvider
+  const { items, updateQuantity } = useCart();
 
   // Product detail modal state
   const [selectedProduct, setSelectedProduct] = useState<ProductItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Derived cart quantities map for fast lookup
+  const cartQuantities = items.reduce<Record<string, number>>((acc, item) => {
+    acc[item.product.id] = item.quantity;
+    return acc;
+  }, {});
 
   // Fetch categories
   useEffect(() => {
@@ -82,12 +89,9 @@ function CustomerHomeContent() {
     };
   }, [activeCategory, searchQuery]);
 
-  // Update cart quantity
+  // Update cart quantity using unified CartProvider
   const handleUpdateQuantity = (product: ProductItem, newQty: number) => {
-    setCartQuantities((prev) => ({
-      ...prev,
-      [product.id]: newQty,
-    }));
+    updateQuantity(product, newQty);
   };
 
   const handleSelectCategory = (catSlug: string) => {

@@ -42,6 +42,14 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const pathname = request.nextUrl.pathname;
+  const isAuthRequiredProduction = process.env.NEXT_PUBLIC_AUTH_REQUIRED === "true";
+
+  // Production Auth Requirement: Protect customer routes when AUTH_REQUIRED=true
+  if (isAuthRequiredProduction && !user && !pathname.startsWith("/login")) {
+    const url = new URL("/login", request.url);
+    url.searchParams.set("redirect", pathname);
+    return NextResponse.redirect(url);
+  }
 
   // Protect /admin routes (Store Admin role required)
   if (pathname.startsWith("/admin")) {

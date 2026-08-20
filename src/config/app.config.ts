@@ -8,6 +8,7 @@ export const appConfig = {
   defaultStoreId: "store-x",
   defaultStoreName: "Store X (Off-Campus Hub)",
   deliveryTargetMins: "10-15",
+  authRequired: process.env.NEXT_PUBLIC_AUTH_REQUIRED === "true",
   navigationTabs: [
     { label: "Home", href: "/", icon: "home" },
     { label: "Categories", href: "/#categories", icon: "grid" },

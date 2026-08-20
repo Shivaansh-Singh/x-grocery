@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
+import { useCart } from "@/components/providers/CartProvider";
 
 export interface ProductItem {
   id: string;
@@ -32,13 +33,15 @@ interface ProductCardProps {
 
 export function ProductCard({
   product,
-  quantity = 0,
+  quantity,
   onUpdateQuantity,
   onSelectProduct,
 }: ProductCardProps) {
   const [imageError, setImageError] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const { getQuantity, updateQuantity } = useCart();
 
+  const currentQty = quantity !== undefined ? quantity : getQuantity(product.id);
   const isOutOfStock = product.stock <= 0;
   const isLowStock = product.stock > 0 && product.stock <= 5;
 
@@ -58,21 +61,27 @@ export function ProductCard({
     if (isOutOfStock) return;
     if (onUpdateQuantity) {
       onUpdateQuantity(product, 1);
+    } else {
+      updateQuantity(product, 1);
     }
   };
 
   const handleIncrement = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (quantity >= product.stock) return;
+    if (currentQty >= product.stock) return;
     if (onUpdateQuantity) {
-      onUpdateQuantity(product, quantity + 1);
+      onUpdateQuantity(product, currentQty + 1);
+    } else {
+      updateQuantity(product, currentQty + 1);
     }
   };
 
   const handleDecrement = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (onUpdateQuantity) {
-      onUpdateQuantity(product, Math.max(0, quantity - 1));
+      onUpdateQuantity(product, Math.max(0, currentQty - 1));
+    } else {
+      updateQuantity(product, Math.max(0, currentQty - 1));
     }
   };
 
@@ -190,7 +199,7 @@ export function ProductCard({
             >
               Sold Out
             </button>
-          ) : quantity > 0 ? (
+          ) : currentQty > 0 ? (
             <div
               onClick={(e) => e.stopPropagation()}
               className="flex items-center gap-2 bg-gradient-to-r from-[#FF6B1A] to-[#2D6CFF] text-white rounded-xl px-2 py-1 shadow-sm"
@@ -202,11 +211,11 @@ export function ProductCard({
               >
                 -
               </button>
-              <span className="text-xs font-black w-4 text-center">{quantity}</span>
+              <span className="text-xs font-black w-4 text-center">{currentQty}</span>
               <button
                 type="button"
                 onClick={handleIncrement}
-                disabled={quantity >= product.stock}
+                disabled={currentQty >= product.stock}
                 className="w-5 h-5 flex items-center justify-center font-bold text-sm hover:bg-black/20 rounded-md transition-colors disabled:opacity-40"
               >
                 +
