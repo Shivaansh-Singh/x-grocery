@@ -10,7 +10,7 @@ export async function middleware(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
 
-  // 1. Check cookies for role and email
+  // 1. Read cookies for role and email
   const roleCookie = request.cookies.get("rushd_user_role")?.value;
   const emailCookie = request.cookies.get("rushd_user_email")?.value;
 
@@ -42,8 +42,29 @@ export async function middleware(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (user) {
-      userRole = user.user_metadata?.role || userRole || "CUSTOMER";
       userEmail = user.email || userEmail;
+      if (user.user_metadata?.role) {
+        userRole = user.user_metadata.role;
+      } else if (!userRole && user.email) {
+        if (user.email.includes("admin") || user.email === "store@rushd.com") {
+          userRole = "STORE_ADMIN";
+        } else if (user.email.includes("delivery") || user.email.includes("rider")) {
+          userRole = "DELIVERY_PARTNER";
+        } else {
+          userRole = "CUSTOMER";
+        }
+      }
+    }
+  }
+
+  // 3. Fallback role inference from email if roleCookie was empty
+  if (!userRole && userEmail) {
+    if (userEmail.includes("admin") || userEmail === "store@rushd.com") {
+      userRole = "STORE_ADMIN";
+    } else if (userEmail.includes("delivery") || userEmail.includes("rider")) {
+      userRole = "DELIVERY_PARTNER";
+    } else {
+      userRole = "CUSTOMER";
     }
   }
 

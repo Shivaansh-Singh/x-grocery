@@ -57,6 +57,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     document.cookie = "rushd_user_email=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
   };
 
+  // Helper to fetch authoritative role from Database API
+  const fetchAuthoritativeRole = async (email: string): Promise<{ id: string; name: string; role: Role } | null> => {
+    try {
+      const res = await fetch(`/api/auth/role?email=${encodeURIComponent(email)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.user) {
+          return {
+            id: data.user.id,
+            name: data.user.name,
+            role: data.user.role as Role,
+          };
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching authoritative role:", err);
+    }
+    return null;
+  };
+
   useEffect(() => {
     async function loadAuthSession() {
       try {
@@ -68,13 +88,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (currentSession?.user) {
           setSession(currentSession);
           setUser(currentSession.user);
-          const detectedRole = (currentSession.user.user_metadata?.role as Role) || "CUSTOMER";
+          const email = currentSession.user.email || "";
+
+          // Fetch authoritative role from DB API
+          const dbAuthoritative = await fetchAuthoritativeRole(email);
+          const detectedRole: Role =
+            dbAuthoritative?.role || (currentSession.user.user_metadata?.role as Role) || "CUSTOMER";
+
           const userObj: ActiveUser = {
-            id: currentSession.user.id,
-            email: currentSession.user.email || "",
-            name: currentSession.user.user_metadata?.name || currentSession.user.email?.split("@")[0] || "User",
+            id: dbAuthoritative?.id || currentSession.user.id,
+            email,
+            name: dbAuthoritative?.name || currentSession.user.user_metadata?.name || email.split("@")[0] || "User",
             role: detectedRole,
           };
+
           setActiveUser(userObj);
           setRole(detectedRole);
           setRoleCookie(detectedRole, userObj.email);
@@ -87,9 +114,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const storedUser = localStorage.getItem("rushd_active_user");
           if (storedUser) {
             const parsed: ActiveUser = JSON.parse(storedUser);
-            setActiveUser(parsed);
-            setRole(parsed.role);
-            setRoleCookie(parsed.role, parsed.email);
+            // Verify role against DB
+            const dbAuthoritative = await fetchAuthoritativeRole(parsed.email);
+            const verifiedRole = dbAuthoritative?.role || parsed.role;
+            const updatedUserObj: ActiveUser = {
+              ...parsed,
+              id: dbAuthoritative?.id || parsed.id,
+              role: verifiedRole,
+            };
+
+            setActiveUser(updatedUserObj);
+            setRole(verifiedRole);
+            setRoleCookie(verifiedRole, updatedUserObj.email);
+            localStorage.setItem("rushd_active_user", JSON.stringify(updatedUserObj));
           }
         }
       } catch (err) {
@@ -103,17 +140,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, currentSession) => {
+    } = supabase.auth.onAuthStateChange(async (_event, currentSession) => {
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
       if (currentSession?.user) {
-        const detectedRole = (currentSession.user.user_metadata?.role as Role) || "CUSTOMER";
+        const email = currentSession.user.email || "";
+        const dbAuthoritative = await fetchAuthoritativeRole(email);
+        const detectedRole: Role =
+          dbAuthoritative?.role || (currentSession.user.user_metadata?.role as Role) || "CUSTOMER";
+
         const userObj: ActiveUser = {
-          id: currentSession.user.id,
-          email: currentSession.user.email || "",
-          name: currentSession.user.user_metadata?.name || currentSession.user.email?.split("@")[0] || "User",
+          id: dbAuthoritative?.id || currentSession.user.id,
+          email,
+          name: dbAuthoritative?.name || currentSession.user.user_metadata?.name || email.split("@")[0] || "User",
           role: detectedRole,
         };
+
         setActiveUser(userObj);
         setRole(detectedRole);
         setRoleCookie(detectedRole, userObj.email);
@@ -127,69 +169,77 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password?: string, targetRedirect?: string | null) => {
     setLoading(true);
+    const cleanEmail = email.toLowerCase().trim();
+
     try {
-      // 1. Try Supabase Auth if credentials provided
+      // 1. Authoritative Role Resolution via Database API
+      const dbAuthoritative = await fetchAuthoritativeRole(cleanEmail);
+
+      // 2. Try Supabase Auth if credentials provided
       if (password && process.env.NEXT_PUBLIC_SUPABASE_URL && !process.env.NEXT_PUBLIC_SUPABASE_URL.includes("placeholder")) {
         const { data, error } = await supabase.auth.signInWithPassword({
-          email,
+          email: cleanEmail,
           password,
         });
 
         if (!error && data.user) {
-          const userRole = (data.user.user_metadata?.role as Role) || "CUSTOMER";
+          const userRole: Role =
+            dbAuthoritative?.role || (data.user.user_metadata?.role as Role) || "CUSTOMER";
+
           const userObj: ActiveUser = {
-            id: data.user.id,
-            email: data.user.email || email,
-            name: data.user.user_metadata?.name || email.split("@")[0],
+            id: dbAuthoritative?.id || data.user.id,
+            email: data.user.email || cleanEmail,
+            name: dbAuthoritative?.name || data.user.user_metadata?.name || cleanEmail.split("@")[0],
             role: userRole,
           };
+
           setActiveUser(userObj);
           setRole(userRole);
-          setRoleCookie(userRole, email);
+          setRoleCookie(userRole, cleanEmail);
           if (typeof window !== "undefined") {
             localStorage.setItem("rushd_active_user", JSON.stringify(userObj));
           }
+
+          console.log("AUTH SUCCESS (Supabase):", { userObj, targetRedirect });
           redirectAfterLogin(userRole, targetRedirect);
           return { success: true };
         }
       }
 
-      // 2. Direct Role Resolution based on email domain / credentials
-      let assignedRole: Role = "CUSTOMER";
-      let name = email.split("@")[0];
-      const cleanEmail = email.toLowerCase().trim();
+      // 3. Fallback direct authentication for seed accounts & dev mode
+      let fallbackRole: Role = "CUSTOMER";
+      let fallbackName = cleanEmail.split("@")[0];
+      let fallbackId = `user-${cleanEmail.replace(/[^a-z0-9]/g, "-")}`;
 
       if (cleanEmail.includes("admin") || cleanEmail === "store@rushd.com") {
-        assignedRole = "STORE_ADMIN";
-        name = "Store Admin X";
+        fallbackRole = "STORE_ADMIN";
+        fallbackName = "Store Admin X";
       } else if (cleanEmail.includes("delivery") || cleanEmail.includes("rider")) {
-        assignedRole = "DELIVERY_PARTNER";
-        name = cleanEmail.includes("1") ? "Ramesh Kumar (Rider 1)" : cleanEmail.includes("2") ? "Suresh Singh (Rider 2)" : "Vikas Sharma (Rider 3)";
+        fallbackRole = "DELIVERY_PARTNER";
+        fallbackName = cleanEmail.includes("1") ? "Ramesh Kumar (Rider 1)" : cleanEmail.includes("2") ? "Suresh Singh (Rider 2)" : "Vikas Sharma (Rider 3)";
+        fallbackId = cleanEmail.includes("delivery1") ? "rider-1" : cleanEmail.includes("delivery2") ? "rider-2" : "rider-3";
       }
 
-      const generatedId = cleanEmail.includes("delivery1")
-        ? "rider-1"
-        : cleanEmail.includes("delivery2")
-        ? "rider-2"
-        : cleanEmail.includes("delivery3")
-        ? "rider-3"
-        : `user-${cleanEmail.replace(/[^a-z0-9]/g, "-")}`;
+      const finalRole: Role = dbAuthoritative?.role || fallbackRole;
+      const finalName = dbAuthoritative?.name || fallbackName;
+      const finalId = dbAuthoritative?.id || fallbackId;
 
       const userObj: ActiveUser = {
-        id: generatedId,
+        id: finalId,
         email: cleanEmail,
-        name,
-        role: assignedRole,
+        name: finalName,
+        role: finalRole,
       };
 
       setActiveUser(userObj);
-      setRole(assignedRole);
-      setRoleCookie(assignedRole, cleanEmail);
+      setRole(finalRole);
+      setRoleCookie(finalRole, cleanEmail);
       if (typeof window !== "undefined") {
         localStorage.setItem("rushd_active_user", JSON.stringify(userObj));
       }
 
-      redirectAfterLogin(assignedRole, targetRedirect);
+      console.log("AUTH SUCCESS (Local DB):", { userObj, targetRedirect });
+      redirectAfterLogin(finalRole, targetRedirect);
       return { success: true };
     } catch (err) {
       console.error("SignIn error:", err);
@@ -228,6 +278,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const redirectAfterLogin = (userRole: Role, targetRedirect?: string | null) => {
+    console.log("REDIRECTING AFTER LOGIN:", { userRole, targetRedirect });
     if (userRole === "STORE_ADMIN") {
       if (targetRedirect && targetRedirect.startsWith("/admin")) {
         router.push(targetRedirect);
