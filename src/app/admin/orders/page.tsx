@@ -46,7 +46,14 @@ function AdminOrdersContent() {
       const localRiders = getLocalRiders();
       const riderMap = new Map<string, DeliveryStaffRider>();
       [...localRiders, ...apiRiders].forEach((r) => riderMap.set(r.id, r));
-      setRiders(Array.from(riderMap.values()));
+      
+      // Deduplicate riders by ID/email
+      const uniqueRiders = Array.from(riderMap.values()).filter(
+        (rider, index, self) =>
+          index === self.findIndex((r) => r.id === rider.id || (r.email && r.email === rider.email))
+      );
+
+      setRiders(uniqueRiders);
     } catch (err) {
       console.error("Error loading admin orders:", err);
       setOrders(getLocalOrders());
@@ -69,9 +76,18 @@ function AdminOrdersContent() {
       loadOrdersAndRiders();
     }, 4000);
 
+    // Cross-tab storage listener for real-time reactivity
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "rushd_orders" || e.key === "x_grocery_orders" || e.key === "rushd_riders") {
+        loadOrdersAndRiders();
+      }
+    };
+    window.addEventListener("storage", handleStorageChange);
+
     return () => {
       ignore = true;
       clearInterval(interval);
+      window.removeEventListener("storage", handleStorageChange);
     };
   }, []);
 
@@ -82,8 +98,19 @@ function AdminOrdersContent() {
     rejectionReason?: string
   ) => {
     try {
+      console.log("ADMIN ASSIGNMENT:", {
+        orderId,
+        selectedRiderId: deliveryPartnerId,
+        newStatus,
+      });
+
       // 1. Update local storage immediately for fast client reactivity
-      const updates: Partial<OrderRecord> = { status: newStatus as OrderRecord["status"] };
+      const updates: Partial<OrderRecord> = {
+        status: newStatus as OrderRecord["status"],
+        assignedRiderId: deliveryPartnerId || undefined,
+        deliveryPartnerId: deliveryPartnerId || undefined,
+      };
+
       if (deliveryPartnerId) {
         const matchedRider = riders.find((r) => r.id === deliveryPartnerId);
         if (matchedRider) {
@@ -95,15 +122,17 @@ function AdminOrdersContent() {
           updateRiderStatus(matchedRider.id, "ASSIGNED");
         }
       }
+
       if (rejectionReason) {
         updates.notes = `Rejected by Admin: ${rejectionReason}`;
       }
+
       updateLocalOrderStatus(orderId, updates);
 
       // 2. Sync to Backend API
       await fetch(`/api/admin/orders/${orderId}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-[#Type]": "application/json", "Content-Type": "application/json" },
         body: JSON.stringify({
           status: newStatus,
           deliveryPartnerId,

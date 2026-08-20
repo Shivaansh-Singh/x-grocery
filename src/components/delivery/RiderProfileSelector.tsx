@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { DEFAULT_RIDERS, getLocalRiders, DeliveryStaffRider } from "@/lib/orderSync";
+import { DEFAULT_RIDERS, getLocalRiders } from "@/lib/orderSync";
 
 export interface DeliveryRiderStaff {
   id: string;
@@ -29,9 +29,14 @@ export function RiderProfileSelector({
         const res = await fetch("/api/admin/delivery-staff");
         const data = await res.json();
         if (!ignore && data.riders && Array.isArray(data.riders) && data.riders.length > 0) {
-          setRiders(data.riders);
-          if (!selectedRiderId) {
-            onSelectRider(data.riders[0]);
+          // Deduplicate by ID and email
+          const unique = data.riders.filter(
+            (r: DeliveryRiderStaff, index: number, self: DeliveryRiderStaff[]) =>
+              index === self.findIndex((x) => x.id === r.id || (x.email && x.email === r.email))
+          );
+          setRiders(unique);
+          if (!selectedRiderId && unique.length > 0) {
+            onSelectRider(unique[0]);
           }
         }
       } catch (err) {

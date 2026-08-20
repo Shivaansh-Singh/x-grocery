@@ -19,6 +19,12 @@ export function RiderAssignModal({
 }: RiderAssignModalProps) {
   const [selectedRiderId, setSelectedRiderId] = useState<string>("");
 
+  // Deduplicate riders by ID and email
+  const uniqueRiders = riders.filter(
+    (rider, index, self) =>
+      index === self.findIndex((r) => r.id === rider.id || (r.email && r.email === rider.email))
+  );
+
   const handleConfirm = () => {
     if (!selectedRiderId) return;
     onAssignRider(order.id, selectedRiderId);
@@ -63,7 +69,7 @@ export function RiderAssignModal({
           </span>
 
           <div className="space-y-2 max-h-60 overflow-y-auto no-scrollbar">
-            {riders.map((rider) => {
+            {uniqueRiders.map((rider) => {
               const status = rider.status || "AVAILABLE";
               const isAvailable = status === "AVAILABLE";
               const isSelected = selectedRiderId === rider.id;

@@ -76,9 +76,22 @@ export function updateLocalOrderStatus(
 ): OrderRecord | null {
   const existing = getLocalOrders();
   let updatedOrder: OrderRecord | null = null;
+
+  const targetRiderId =
+    updates.assignedRiderId ||
+    updates.deliveryPartnerId ||
+    updates.deliveryPartner?.id;
+
   const updatedList: OrderRecord[] = existing.map((o) => {
     if (o.id === orderId || o.orderNumber === orderId) {
-      updatedOrder = { ...o, ...updates, updatedAt: new Date().toISOString() };
+      const finalRiderId = targetRiderId || o.assignedRiderId || o.deliveryPartnerId || o.deliveryPartner?.id || null;
+      updatedOrder = {
+        ...o,
+        ...updates,
+        assignedRiderId: finalRiderId,
+        deliveryPartnerId: finalRiderId,
+        updatedAt: new Date().toISOString(),
+      };
       return updatedOrder;
     }
     return o;
@@ -98,6 +111,14 @@ export function updateLocalOrderStatus(
       }
     }
   }
+
+  console.log("UPDATED LOCAL ORDER STATUS:", {
+    orderId,
+    newStatus: updates.status,
+    assignedRiderId: targetRiderId,
+    updatedOrder,
+  });
+
   return updatedOrder;
 }
 
@@ -107,7 +128,14 @@ export function getLocalRiders(): DeliveryStaffRider[] {
     const saved = localStorage.getItem("rushd_riders");
     if (saved) {
       const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        // Deduplicate riders by ID/email
+        const unique = parsed.filter(
+          (r, index, self) =>
+            index === self.findIndex((x) => x.id === r.id || (x.email && x.email === r.email))
+        );
+        return unique;
+      }
     }
   } catch (e) {
     console.error("Failed to read local riders", e);

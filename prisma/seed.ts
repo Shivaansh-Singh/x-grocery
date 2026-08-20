@@ -35,6 +35,7 @@ async function main() {
     where: { email: "delivery1@x-grocery.com" },
     update: {},
     create: {
+      id: "rider-1",
       email: "delivery1@x-grocery.com",
       name: "Ramesh Kumar (Rider 1)",
       phone: "+91 98123 45678",
@@ -46,9 +47,22 @@ async function main() {
     where: { email: "delivery2@x-grocery.com" },
     update: {},
     create: {
+      id: "rider-2",
       email: "delivery2@x-grocery.com",
       name: "Suresh Singh (Rider 2)",
       phone: "+91 98234 56789",
+      role: Role.DELIVERY_PARTNER,
+    },
+  });
+
+  const delivery3 = await prisma.user.upsert({
+    where: { email: "delivery3@x-grocery.com" },
+    update: {},
+    create: {
+      id: "rider-3",
+      email: "delivery3@x-grocery.com",
+      name: "Vikas Sharma (Rider 3)",
+      phone: "+91 98345 67890",
       role: Role.DELIVERY_PARTNER,
     },
   });

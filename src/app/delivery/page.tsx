@@ -34,28 +34,39 @@ export default function DeliveryPartnerPage() {
       [...localOrders, ...apiOrders].forEach((o) => orderMap.set(o.id, o));
       const allOrders = Array.from(orderMap.values());
 
-      // STRICT FILTER: Rider ONLY sees orders assigned to them!
+      // STRICT AUTHORITATIVE FILTER BY RIDER ID
       const assignedOrders = riderId
-        ? allOrders.filter(
-            (o) =>
-              o.deliveryPartnerId === riderId ||
-              o.deliveryPartner?.id === riderId ||
-              (activeRider?.name && o.deliveryPartner?.name === activeRider.name)
-          )
-        : allOrders.filter((o) => o.deliveryPartnerId || o.deliveryPartner);
+        ? allOrders.filter((order) => {
+            const orderRiderId =
+              order.assignedRiderId || order.deliveryPartnerId || order.deliveryPartner?.id;
+            return orderRiderId === riderId;
+          })
+        : [];
+
+      console.log("RIDER PORTAL:", {
+        currentRiderId: riderId,
+        currentRiderName: activeRider?.name,
+        allOrdersCount: allOrders.length,
+        filteredAssignedOrdersCount: assignedOrders.length,
+        assignedOrdersSummary: assignedOrders.map((o) => ({
+          orderNumber: o.orderNumber,
+          status: o.status,
+          assignedRiderId: o.assignedRiderId || o.deliveryPartnerId || o.deliveryPartner?.id,
+        })),
+      });
 
       setOrders(assignedOrders);
     } catch (err) {
       console.error("Error loading rider orders:", err);
       const localOrders = getLocalOrders();
+      const riderId = activeRider?.id;
       const assignedOrders = riderId
-        ? localOrders.filter(
-            (o) =>
-              o.deliveryPartnerId === riderId ||
-              o.deliveryPartner?.id === riderId ||
-              (activeRider?.name && o.deliveryPartner?.name === activeRider.name)
-          )
-        : localOrders.filter((o) => o.deliveryPartnerId || o.deliveryPartner);
+        ? localOrders.filter((order) => {
+            const orderRiderId =
+              order.assignedRiderId || order.deliveryPartnerId || order.deliveryPartner?.id;
+            return orderRiderId === riderId;
+          })
+        : [];
       setOrders(assignedOrders);
     } finally {
       setLoading(false);
@@ -75,9 +86,17 @@ export default function DeliveryPartnerPage() {
       fetchRiderOrders();
     }, 4000);
 
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "rushd_orders" || e.key === "x_grocery_orders" || e.key === "rushd_riders") {
+        fetchRiderOrders();
+      }
+    };
+    window.addEventListener("storage", handleStorageChange);
+
     return () => {
       ignore = true;
       clearInterval(interval);
+      window.removeEventListener("storage", handleStorageChange);
     };
   }, [fetchRiderOrders]);
 

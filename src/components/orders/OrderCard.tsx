@@ -21,6 +21,7 @@ export interface OrderRecord {
   createdAt: string;
   updatedAt?: string;
   deliveryPartnerId?: string | null;
+  assignedRiderId?: string | null;
   notes?: string | null;
   items: OrderItemRecord[];
   deliveryPartner?: {
