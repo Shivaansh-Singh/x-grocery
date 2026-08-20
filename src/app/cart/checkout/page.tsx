@@ -7,6 +7,7 @@ import { useCart } from "@/components/providers/CartProvider";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { OffCampusAddressForm, AddressDetails } from "@/components/checkout/OffCampusAddressForm";
 import { PaymentMethodSelector, PaymentChoice } from "@/components/checkout/PaymentMethodSelector";
+import { addLocalOrder } from "@/lib/orderSync";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -27,8 +28,8 @@ export default function CheckoutPage() {
   if (itemCount === 0) {
     return (
       <div className="space-y-6 pt-6 text-center">
-        <div className="bg-[#141822] rounded-2xl p-8 border border-white/8 shadow-md space-y-4 max-w-md mx-auto text-[#F5F6FA]">
-          <h2 className="text-lg font-bold text-[#F5F6FA]">
+        <div className="glass-card rounded-[24px] p-8 border border-white/8 shadow-xl space-y-4 max-w-md mx-auto text-[#F5F6FA]">
+          <h2 className="font-display font-black text-lg text-[#F5F6FA]">
             No items in cart for checkout
           </h2>
           <p className="text-xs text-[#8A90A3] max-w-xs mx-auto">
@@ -36,7 +37,7 @@ export default function CheckoutPage() {
           </p>
           <Link
             href="/"
-            className="inline-block px-6 py-3 bg-gradient-to-r from-[#FF6B1A] to-[#2D6CFF] hover:opacity-90 text-white rounded-xl font-bold text-xs shadow-sm transition-all"
+            className="inline-block px-6 py-3 bg-gradient-to-r from-[#FF6B1A] to-[#2D6CFF] hover:opacity-90 text-white rounded-xl font-extrabold text-xs shadow-md transition-all"
           >
             Browse Products
           </Link>
@@ -93,9 +94,9 @@ export default function CheckoutPage() {
         throw new Error(data.error || "Order placement failed");
       }
 
-      // Save order to localStorage backup for tracking fallback
+      // Save order to localStorage backup for tracking and immediate Admin/Rider board visibility
       if (data.order) {
-        localStorage.setItem("x_grocery_last_order", JSON.stringify(data.order));
+        addLocalOrder(data.order);
       }
 
       // Clear cart & navigate to live tracking
@@ -117,7 +118,7 @@ export default function CheckoutPage() {
       {/* Header */}
       <div className="flex items-center justify-between border-b border-white/8 pb-2.5">
         <div>
-          <h1 className="text-xl font-black text-[#F5F6FA] tracking-tight">
+          <h1 className="font-display font-black text-xl text-[#F5F6FA] tracking-tight">
             Off-Campus Checkout
           </h1>
           <p className="text-xs text-[#8A90A3]">
@@ -130,7 +131,7 @@ export default function CheckoutPage() {
       </div>
 
       {errorMessage && (
-        <div className="p-3.5 bg-[#141822] border border-[#FF4D4D] text-[#FF4D4D] rounded-2xl text-xs font-bold">
+        <div className="p-3.5 glass-card border border-[#FF4D4D] text-[#FF4D4D] rounded-2xl text-xs font-bold">
           {errorMessage}
         </div>
       )}
@@ -142,8 +143,8 @@ export default function CheckoutPage() {
       <PaymentMethodSelector selectedMethod={paymentMethod} onChange={setPaymentMethod} />
 
       {/* Step 3: Order Summary & Bill Breakdown */}
-      <div className="bg-[#141822] p-4 rounded-2xl border border-white/8 shadow-md space-y-3">
-        <h3 className="font-extrabold text-xs text-[#F5F6FA] uppercase tracking-wider">
+      <div className="glass-card p-4 rounded-2xl border border-white/8 shadow-md space-y-3">
+        <h3 className="font-display font-extrabold text-xs text-[#F5F6FA] uppercase tracking-wider">
           Order Summary ({itemCount} {itemCount === 1 ? "Item" : "Items"})
         </h3>
 
@@ -174,7 +175,7 @@ export default function CheckoutPage() {
             <span>Delivery Fee</span>
             <span>
               {deliveryFee === 0 ? (
-                <span className="font-bold text-[#3DD68C]">FREE</span>
+                <span className="font-bold text-[#2D6CFF]">FREE</span>
               ) : (
                 <span>₹15</span>
               )}

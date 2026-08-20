@@ -4,22 +4,29 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AdminHeader } from "@/components/admin/AdminHeader";
 import type { OrderRecord } from "@/components/orders/OrderCard";
+import { getLocalOrders } from "@/lib/orderSync";
 
 interface DashboardStats {
-  todayRevenue: number;
-  pendingCount: number;
-  activeCount: number;
+  totalSales: number;
+  newOrdersCount: number;
+  acceptedCount: number;
+  preparingCount: number;
+  readyCount: number;
+  outForDeliveryCount: number;
+  deliveredCount: number;
   lowStockCount: number;
-  recentOrders: OrderRecord[];
 }
 
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState<DashboardStats>({
-    todayRevenue: 0,
-    pendingCount: 0,
-    activeCount: 0,
+    totalSales: 0,
+    newOrdersCount: 0,
+    acceptedCount: 0,
+    preparingCount: 0,
+    readyCount: 0,
+    outForDeliveryCount: 0,
+    deliveredCount: 0,
     lowStockCount: 0,
-    recentOrders: [],
   });
   const [loading, setLoading] = useState(true);
 
@@ -37,26 +44,36 @@ export default function AdminDashboardPage() {
         const productsData = await productsRes.json();
 
         if (!ignore) {
-          const orders: OrderRecord[] = ordersData.orders || [];
+          // Merge API orders with local orders backup
+          const apiOrders: OrderRecord[] = ordersData.orders || [];
+          const localOrders = getLocalOrders();
+          const orderMap = new Map<string, OrderRecord>();
+          [...localOrders, ...apiOrders].forEach((o) => orderMap.set(o.id, o));
+          const orders = Array.from(orderMap.values());
+
           const products = productsData.products || [];
 
-          // Revenue sum
-          const todayRevenue = orders
+          const totalSales = orders
             .filter((o) => o.status !== "CANCELLED" && o.status !== "REJECTED")
             .reduce((sum, o) => sum + o.totalAmount, 0);
 
-          const pendingCount = orders.filter((o) => o.status === "PENDING").length;
-          const activeCount = orders.filter(
-            (o) => o.status === "OUT_FOR_DELIVERY" || o.status === "ASSIGNED"
-          ).length;
+          const newOrdersCount = orders.filter((o) => o.status === "PENDING").length;
+          const acceptedCount = orders.filter((o) => o.status === "ACCEPTED").length;
+          const preparingCount = orders.filter((o) => o.status === "PREPARING").length;
+          const readyCount = orders.filter((o) => o.status === "ASSIGNED").length;
+          const outForDeliveryCount = orders.filter((o) => o.status === "OUT_FOR_DELIVERY").length;
+          const deliveredCount = orders.filter((o) => o.status === "DELIVERED").length;
           const lowStockCount = products.filter((p: { stock: number }) => p.stock <= 5).length;
 
           setStats({
-            todayRevenue,
-            pendingCount,
-            activeCount,
+            totalSales,
+            newOrdersCount,
+            acceptedCount,
+            preparingCount,
+            readyCount,
+            outForDeliveryCount,
+            deliveredCount,
             lowStockCount,
-            recentOrders: orders.slice(0, 3),
           });
         }
       } catch (err) {
@@ -70,7 +87,7 @@ export default function AdminDashboardPage() {
 
     const interval = setInterval(() => {
       loadDashboardStats();
-    }, 5000);
+    }, 4000);
 
     return () => {
       ignore = true;
@@ -79,138 +96,175 @@ export default function AdminDashboardPage() {
   }, []);
 
   return (
-    <div className="space-y-4 pt-1 pb-8">
+    <div className="space-y-4 pt-1 pb-8 text-[#F5F6FA]">
       {/* Dedicated Admin Header */}
-      <AdminHeader pendingOrdersCount={stats.pendingCount} />
+      <AdminHeader pendingOrdersCount={stats.newOrdersCount} />
 
-      {/* Overview Banner */}
-      <div className="bg-[#111315] text-white p-5 rounded-2xl shadow-2xs border border-[#1646C7]/30 space-y-2">
-        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-[#1646C7] text-white">
-          Store Partner Dashboard
-        </span>
-        <h1 className="text-xl font-black leading-tight text-white">
-          Fulfillment & Inventory Hub
-        </h1>
-        <p className="text-xs text-[#666A70] leading-relaxed max-w-sm font-medium">
-          Manage product catalog, process incoming orders, track inventory levels, and assign riders for 10-15 minute doorstep delivery.
-        </p>
+      {/* Overview Banner - Electric Dusk Theme */}
+      <div className="glass-card rounded-[22px] p-5 shadow-xl relative overflow-hidden rushd-speed-slash">
+        <div className="absolute -top-12 -left-12 w-56 h-56 rounded-full bg-gradient-to-br from-[#FF6B1A]/15 to-[#2D6CFF]/15 blur-3xl pointer-events-none" />
+
+        <div className="relative z-10 space-y-2">
+          <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-gradient-to-r from-[#FF6B1A] to-[#2D6CFF] text-white shadow-xs">
+            Shop Owner / Admin Control Center
+          </span>
+          <h1 className="font-display font-black text-xl text-[#F5F6FA]">
+            RushD Store Operations Dashboard
+          </h1>
+          <p className="text-xs text-[#8A90A3] leading-relaxed max-w-md font-medium">
+            Manage incoming student orders, accept orders, control preparation workflow, and assign active delivery riders.
+          </p>
+        </div>
       </div>
 
-      {/* Metrics Grid */}
-      <div className="grid grid-cols-2 gap-3">
-        {/* Today's Revenue */}
-        <div className="bg-[#FFFFFF] p-4 rounded-2xl border border-[#D9D7D2] shadow-2xs space-y-1">
-          <div className="text-xs text-[#666A70] font-semibold">
-            Today&apos;s Revenue
-          </div>
-          <div className="text-xl font-black text-[#FF5A1F]">
-            {loading ? "..." : `₹${stats.todayRevenue.toFixed(0)}`}
-          </div>
-          <span className="text-[10px] text-[#666A70] block">Store sales today</span>
-        </div>
-
-        {/* Pending Orders */}
+      {/* Primary Metrics Grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {/* New Orders */}
         <Link
-          href="/admin/orders"
-          className={`bg-[#FFFFFF] p-4 rounded-2xl border shadow-2xs space-y-1 transition-all ${
-            stats.pendingCount > 0
-              ? "border-[#D9822B] ring-2 ring-[#D9822B]/20"
-              : "border-[#D9D7D2]"
+          href="/admin/orders?tab=pending"
+          className={`glass-card p-4 rounded-[20px] shadow-sm transition-all block ${
+            stats.newOrdersCount > 0
+              ? "border-[#FF6B1A]/60 shadow-[0_0_16px_rgba(255,107,26,0.2)]"
+              : ""
           }`}
         >
-          <div className="text-xs text-[#666A70] font-semibold">
-            Pending Orders
+          <div className="text-[10px] font-bold text-[#8A90A3] uppercase tracking-wider">
+            New Orders
           </div>
-          <div className="text-xl font-black text-[#D9822B] flex items-center gap-1.5">
-            <span>{loading ? "..." : stats.pendingCount}</span>
-            {stats.pendingCount > 0 && (
-              <span className="text-[10px] px-1.5 py-0.2 bg-[#D9822B] text-white rounded font-bold">
+          <div className="text-2xl font-black text-[#FF6B1A] mt-1 flex items-center justify-between">
+            <span>{loading ? "..." : stats.newOrdersCount}</span>
+            {stats.newOrdersCount > 0 && (
+              <span className="text-[9px] px-1.5 py-0.5 bg-[#FF6B1A] text-white rounded-md font-black">
                 ACTION
               </span>
             )}
           </div>
-          <span className="text-[10px] text-[#666A70] block">Requires 1-tap approval</span>
+          <span className="text-[10px] text-[#8A90A3] block mt-1">Requires approval</span>
         </Link>
 
-        {/* Active Deliveries */}
+        {/* Accepted & Preparing */}
         <Link
-          href="/admin/orders"
-          className="bg-[#FFFFFF] p-4 rounded-2xl border border-[#D9D7D2] shadow-2xs space-y-1"
+          href="/admin/orders?tab=accepted"
+          className="glass-card p-4 rounded-[20px] shadow-sm block hover:border-white/20 transition-all"
         >
-          <div className="text-xs text-[#666A70] font-semibold">
-            Riders Out
+          <div className="text-[10px] font-bold text-[#8A90A3] uppercase tracking-wider">
+            Accepted / Preparing
           </div>
-          <div className="text-xl font-black text-[#1646C7]">
-            {loading ? "..." : stats.activeCount}
+          <div className="text-2xl font-black text-[#2D6CFF] mt-1">
+            {loading ? "..." : stats.acceptedCount + stats.preparingCount}
           </div>
-          <span className="text-[10px] text-[#666A70] block">Active deliveries en route</span>
+          <span className="text-[10px] text-[#8A90A3] block mt-1">In packing workflow</span>
         </Link>
 
-        {/* Low Stock Alert */}
+        {/* Ready / Assigned */}
         <Link
-          href="/admin/products"
-          className="bg-[#FFFFFF] p-4 rounded-2xl border border-[#D9D7D2] shadow-2xs space-y-1"
+          href="/admin/orders?tab=ready"
+          className="glass-card p-4 rounded-[20px] shadow-sm block hover:border-white/20 transition-all"
         >
-          <div className="text-xs text-[#666A70] font-semibold">
-            Low Stock Items
+          <div className="text-[10px] font-bold text-[#8A90A3] uppercase tracking-wider">
+            Ready / Assigned
           </div>
-          <div className="text-xl font-black text-[#C63D3D]">
-            {loading ? "..." : stats.lowStockCount}
+          <div className="text-2xl font-black text-[#F5F6FA] mt-1">
+            {loading ? "..." : stats.readyCount}
           </div>
-          <span className="text-[10px] text-[#666A70] block">Items with &le; 5 units left</span>
+          <span className="text-[10px] text-[#8A90A3] block mt-1">Awaiting rider pickup</span>
+        </Link>
+
+        {/* Out for Delivery */}
+        <Link
+          href="/admin/orders?tab=delivery"
+          className="glass-card p-4 rounded-[20px] shadow-sm block hover:border-white/20 transition-all"
+        >
+          <div className="text-[10px] font-bold text-[#8A90A3] uppercase tracking-wider">
+            Out for Delivery
+          </div>
+          <div className="text-2xl font-black text-[#2D6CFF] mt-1">
+            {loading ? "..." : stats.outForDeliveryCount}
+          </div>
+          <span className="text-[10px] text-[#8A90A3] block mt-1">En route to student</span>
         </Link>
       </div>
 
-      {/* Quick Action Cards */}
-      <div className="space-y-2">
-        <h3 className="font-bold text-xs text-[#111315] uppercase tracking-wider">
-          Quick Management Tools
+      {/* Secondary Metrics Summary */}
+      <div className="grid grid-cols-3 gap-3">
+        <div className="glass-card p-3.5 rounded-[18px]">
+          <span className="text-[10px] font-bold text-[#8A90A3] uppercase tracking-wider block">
+            Delivered
+          </span>
+          <span className="text-lg font-black text-[#F5F6FA] mt-0.5 block">
+            {loading ? "..." : stats.deliveredCount}
+          </span>
+        </div>
+
+        <div className="glass-card p-3.5 rounded-[18px]">
+          <span className="text-[10px] font-bold text-[#8A90A3] uppercase tracking-wider block">
+            Total Sales
+          </span>
+          <span className="text-lg font-black text-[#FF6B1A] mt-0.5 block">
+            {loading ? "..." : `₹${stats.totalSales.toFixed(0)}`}
+          </span>
+        </div>
+
+        <Link href="/admin/products" className="glass-card p-3.5 rounded-[18px] block hover:border-white/20">
+          <span className="text-[10px] font-bold text-[#8A90A3] uppercase tracking-wider block">
+            Low Stock (&le;5)
+          </span>
+          <span className="text-lg font-black text-[#FF4D4D] mt-0.5 block">
+            {loading ? "..." : stats.lowStockCount}
+          </span>
+        </Link>
+      </div>
+
+      {/* Quick Management Tools */}
+      <div className="space-y-2 pt-2">
+        <h3 className="font-display font-black text-xs text-[#F5F6FA] uppercase tracking-wider">
+          Admin Management Hub
         </h3>
 
         <div className="grid grid-cols-1 gap-2.5">
           <Link
-            href="/admin/products"
-            className="p-4 bg-[#FFFFFF] rounded-2xl border border-[#D9D7D2] shadow-2xs hover:shadow-xs transition-all flex items-center justify-between"
+            href="/admin/orders"
+            className="glass-card p-4 rounded-[20px] shadow-sm hover:border-[#FF6B1A]/40 transition-all flex items-center justify-between"
           >
             <div>
-              <h4 className="font-bold text-xs text-[#111315]">
-                Catalog & Inventory Manager
+              <h4 className="font-display font-black text-sm text-[#F5F6FA]">
+                Incoming Orders & Rider Assignment Board
               </h4>
-              <p className="text-[11px] text-[#666A70] mt-0.5">
-                Inline stock steppers, price updates, and new products
+              <p className="text-xs text-[#8A90A3] mt-0.5 font-medium">
+                Accept new orders, start packing, and assign riders
               </p>
             </div>
-            <span className="text-xs font-bold text-[#FF5A1F]">Manage →</span>
+            <span className="text-xs font-black text-[#FF6B1A]">Open Board →</span>
           </Link>
 
           <Link
-            href="/admin/orders"
-            className="p-4 bg-[#FFFFFF] rounded-2xl border border-[#D9D7D2] shadow-2xs hover:shadow-xs transition-all flex items-center justify-between"
+            href="/admin/products"
+            className="glass-card p-4 rounded-[20px] shadow-sm hover:border-[#2D6CFF]/40 transition-all flex items-center justify-between"
           >
             <div>
-              <h4 className="font-bold text-xs text-[#111315]">
-                Incoming Orders Board
+              <h4 className="font-display font-black text-sm text-[#F5F6FA]">
+                Catalog & Inventory Manager
               </h4>
-              <p className="text-[11px] text-[#666A70] mt-0.5">
-                1-tap Accept/Reject, status progression, and rider assignment
+              <p className="text-xs text-[#8A90A3] mt-0.5 font-medium">
+                Update stock levels, edit prices, and manage products
               </p>
             </div>
-            <span className="text-xs font-bold text-[#FF5A1F]">Open Board →</span>
+            <span className="text-xs font-black text-[#2D6CFF]">Manage Products →</span>
           </Link>
 
           <Link
             href="/admin/delivery-staff"
-            className="p-4 bg-[#FFFFFF] rounded-2xl border border-[#D9D7D2] shadow-2xs hover:shadow-xs transition-all flex items-center justify-between"
+            className="glass-card p-4 rounded-[20px] shadow-sm hover:border-white/20 transition-all flex items-center justify-between"
           >
             <div>
-              <h4 className="font-bold text-xs text-[#111315]">
+              <h4 className="font-display font-black text-sm text-[#F5F6FA]">
                 Delivery Staff Roster
               </h4>
-              <p className="text-[11px] text-[#666A70] mt-0.5">
-                Onboard new riders and view RushD delivery partners
+              <p className="text-xs text-[#8A90A3] mt-0.5 font-medium">
+                View active rider status and onboard new delivery partners
               </p>
             </div>
-            <span className="text-xs font-bold text-[#FF5A1F]">View Staff →</span>
+            <span className="text-xs font-black text-[#8A90A3]">View Roster →</span>
           </Link>
         </div>
       </div>

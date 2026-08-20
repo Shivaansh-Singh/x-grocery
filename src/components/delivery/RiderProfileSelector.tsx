@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { DEFAULT_RIDERS, getLocalRiders, DeliveryStaffRider } from "@/lib/orderSync";
 
 export interface DeliveryRiderStaff {
   id: string;
   name: string;
   phone?: string | null;
-  email: string;
+  email?: string | null;
+  status?: string;
 }
 
 interface RiderProfileSelectorProps {
@@ -18,7 +20,7 @@ export function RiderProfileSelector({
   selectedRiderId,
   onSelectRider,
 }: RiderProfileSelectorProps) {
-  const [riders, setRiders] = useState<DeliveryRiderStaff[]>([]);
+  const [riders, setRiders] = useState<DeliveryRiderStaff[]>(() => getLocalRiders());
 
   useEffect(() => {
     let ignore = false;
@@ -26,23 +28,28 @@ export function RiderProfileSelector({
       try {
         const res = await fetch("/api/admin/delivery-staff");
         const data = await res.json();
-        if (!ignore && data.riders && Array.isArray(data.riders)) {
+        if (!ignore && data.riders && Array.isArray(data.riders) && data.riders.length > 0) {
           setRiders(data.riders);
-          if (!selectedRiderId && data.riders.length > 0) {
+          if (!selectedRiderId) {
             onSelectRider(data.riders[0]);
           }
         }
       } catch (err) {
-        console.error("Failed to load delivery staff riders:", err);
+        console.error("Failed to load delivery staff riders from API, using fallback roster:", err);
+        const fallback = getLocalRiders();
+        setRiders(fallback);
+        if (!selectedRiderId && fallback.length > 0) {
+          onSelectRider(fallback[0]);
+        }
       }
     }
     loadRiders();
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [onSelectRider, selectedRiderId]);
 
-  const activeRider = riders.find((r) => r.id === selectedRiderId) || riders[0];
+  const activeRider = riders.find((r) => r.id === selectedRiderId) || riders[0] || DEFAULT_RIDERS[0];
 
   return (
     <div className="bg-[#141822] text-[#F5F6FA] p-3.5 rounded-2xl border border-white/8 flex items-center justify-between gap-3 shadow-md">
@@ -54,23 +61,22 @@ export function RiderProfileSelector({
         </div>
         <div className="min-w-0">
           <span className="text-[10px] text-[#8A90A3] uppercase font-bold tracking-wider block">
-            Active Rider Profile
+            Active Assigned Rider
           </span>
           <h3 className="font-extrabold text-xs text-[#F5F6FA] truncate">
-            {activeRider ? activeRider.name : "Select Rider..."}
+            {activeRider ? activeRider.name : "Ramesh Kumar (Rider 1)"}
           </h3>
         </div>
       </div>
 
       <select
-        value={selectedRiderId}
+        value={selectedRiderId || (activeRider ? activeRider.id : "")}
         onChange={(e) => {
           const target = riders.find((r) => r.id === e.target.value);
           if (target) onSelectRider(target);
         }}
         className="px-3 py-1.5 rounded-xl border border-white/8 bg-[#1A1F2C] text-xs font-bold text-[#F5F6FA] focus:outline-none focus:border-[#2D6CFF] cursor-pointer"
       >
-        <option value="">Switch Rider...</option>
         {riders.map((r) => (
           <option key={r.id} value={r.id} className="bg-[#141822] text-[#F5F6FA]">
             {r.name}

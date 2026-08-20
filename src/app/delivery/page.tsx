@@ -5,68 +5,97 @@ import Link from "next/link";
 import { RiderProfileSelector, DeliveryRiderStaff } from "@/components/delivery/RiderProfileSelector";
 import { DeliveryTaskCard } from "@/components/delivery/DeliveryTaskCard";
 import { DoorstepPaymentModal } from "@/components/delivery/DoorstepPaymentModal";
+import { OrderDetailsModal } from "@/components/admin/OrderDetailsModal";
 import type { OrderRecord } from "@/components/orders/OrderCard";
 import { RushDLogo } from "@/components/ui/RushDLogo";
+import { getLocalOrders, updateLocalOrderStatus, updateRiderStatus } from "@/lib/orderSync";
 
 export default function DeliveryPartnerPage() {
   const [activeRider, setActiveRider] = useState<DeliveryRiderStaff | null>(null);
   const [orders, setOrders] = useState<OrderRecord[]>([]);
   const [activeTab, setActiveTab] = useState<"active" | "completed">("active");
   const [loading, setLoading] = useState(true);
-  const [paymentModalOrder, setPaymentModalOrder] = useState<OrderRecord | null>(null);
 
-  const fetchRiderOrders = useCallback(async (riderId?: string) => {
+  // Modals
+  const [paymentModalOrder, setPaymentModalOrder] = useState<OrderRecord | null>(null);
+  const [selectedOrderDetails, setSelectedOrderDetails] = useState<OrderRecord | null>(null);
+
+  const fetchRiderOrders = useCallback(async () => {
+    const riderId = activeRider?.id;
     try {
       const url = riderId ? `/api/delivery/orders?riderId=${riderId}` : "/api/delivery/orders";
       const res = await fetch(url);
       const data = await res.json();
-      if (data.orders) setOrders(data.orders);
+      const apiOrders: OrderRecord[] = data.orders || [];
+
+      // Merge with local storage orders
+      const localOrders = getLocalOrders();
+      const orderMap = new Map<string, OrderRecord>();
+      [...localOrders, ...apiOrders].forEach((o) => orderMap.set(o.id, o));
+      const allOrders = Array.from(orderMap.values());
+
+      // STRICT FILTER: Rider ONLY sees orders assigned to them!
+      const assignedOrders = riderId
+        ? allOrders.filter(
+            (o) =>
+              o.deliveryPartnerId === riderId ||
+              o.deliveryPartner?.id === riderId ||
+              (activeRider?.name && o.deliveryPartner?.name === activeRider.name)
+          )
+        : allOrders.filter((o) => o.deliveryPartnerId || o.deliveryPartner);
+
+      setOrders(assignedOrders);
     } catch (err) {
       console.error("Error loading rider orders:", err);
+      const localOrders = getLocalOrders();
+      const assignedOrders = riderId
+        ? localOrders.filter(
+            (o) =>
+              o.deliveryPartnerId === riderId ||
+              o.deliveryPartner?.id === riderId ||
+              (activeRider?.name && o.deliveryPartner?.name === activeRider.name)
+          )
+        : localOrders.filter((o) => o.deliveryPartnerId || o.deliveryPartner);
+      setOrders(assignedOrders);
+    } finally {
+      setLoading(false);
     }
-  }, []);
+  }, [activeRider]);
 
   useEffect(() => {
     let ignore = false;
-
-    async function loadRiderOrders() {
-      try {
-        const url = activeRider?.id
-          ? `/api/delivery/orders?riderId=${activeRider.id}`
-          : "/api/delivery/orders";
-        const res = await fetch(url);
-        const data = await res.json();
-        if (!ignore && data.orders) setOrders(data.orders);
-      } catch (err) {
-        console.error("Error loading rider orders:", err);
-      } finally {
-        if (!ignore) setLoading(false);
+    async function init() {
+      if (!ignore) {
+        await fetchRiderOrders();
       }
     }
-
-    loadRiderOrders();
+    init();
 
     const interval = setInterval(() => {
-      loadRiderOrders();
+      fetchRiderOrders();
     }, 4000);
 
     return () => {
       ignore = true;
       clearInterval(interval);
     };
-  }, [activeRider?.id]);
+  }, [fetchRiderOrders]);
 
   const handleStartDelivery = async (orderId: string) => {
     try {
-      const res = await fetch(`/api/delivery/orders/${orderId}`, {
+      // Update local status for immediate UI sync
+      updateLocalOrderStatus(orderId, { status: "OUT_FOR_DELIVERY" });
+      if (activeRider) {
+        updateRiderStatus(activeRider.id, "ON_DELIVERY");
+      }
+
+      await fetch(`/api/delivery/orders/${orderId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "OUT_FOR_DELIVERY" }),
       });
 
-      if (res.ok) {
-        fetchRiderOrders(activeRider?.id);
-      }
+      fetchRiderOrders();
     } catch (err) {
       console.error("Error starting delivery:", err);
     }
@@ -74,7 +103,13 @@ export default function DeliveryPartnerPage() {
 
   const handleConfirmDelivery = async (orderId: string) => {
     try {
-      const res = await fetch(`/api/delivery/orders/${orderId}`, {
+      // Update local status for immediate UI sync
+      updateLocalOrderStatus(orderId, { status: "DELIVERED", paymentStatus: "COMPLETED" });
+      if (activeRider) {
+        updateRiderStatus(activeRider.id, "AVAILABLE");
+      }
+
+      await fetch(`/api/delivery/orders/${orderId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -83,10 +118,8 @@ export default function DeliveryPartnerPage() {
         }),
       });
 
-      if (res.ok) {
-        setPaymentModalOrder(null);
-        fetchRiderOrders(activeRider?.id);
-      }
+      setPaymentModalOrder(null);
+      fetchRiderOrders();
     } catch (err) {
       console.error("Error completing delivery:", err);
     }
@@ -107,10 +140,10 @@ export default function DeliveryPartnerPage() {
           <RushDLogo size="sm" href="/delivery" />
           <div className="border-l border-white/8 pl-2.5">
             <h1 className="text-sm font-black text-[#F5F6FA] tracking-tight">
-              Rider Portal
+              Assigned Rider Portal
             </h1>
             <p className="text-[10px] text-[#8A90A3]">
-              Mobile Rider Operations
+              Mobile Delivery Operations
             </p>
           </div>
         </div>
@@ -127,7 +160,6 @@ export default function DeliveryPartnerPage() {
         selectedRiderId={activeRider?.id || ""}
         onSelectRider={(rider) => {
           setActiveRider(rider);
-          fetchRiderOrders(rider.id);
         }}
       />
 
@@ -141,7 +173,7 @@ export default function DeliveryPartnerPage() {
               : "text-[#8A90A3] hover:text-[#F5F6FA]"
           }`}
         >
-          Active Deliveries ({activeDeliveries.length})
+          My Assigned Deliveries ({activeDeliveries.length})
           {activeDeliveries.length > 0 && (
             <span className="ml-1.5 px-1.5 py-0.2 text-[10px] bg-[#FF6B1A] text-white rounded font-black">
               LIVE
@@ -164,31 +196,51 @@ export default function DeliveryPartnerPage() {
       {loading ? (
         <div className="space-y-3 animate-pulse">
           {[1, 2].map((i) => (
-            <div key={i} className="h-44 bg-[#141822] border border-white/8 rounded-2xl" />
+            <div key={i} className="h-44 glass-card rounded-2xl" />
           ))}
         </div>
       ) : currentList.length === 0 ? (
-        <div className="bg-[#141822] rounded-2xl p-8 border border-white/8 text-center space-y-2 shadow-md">
+        <div className="glass-card rounded-2xl p-8 text-center space-y-2 shadow-md">
           <h3 className="font-bold text-sm text-[#F5F6FA]">
-            No {activeTab} delivery tasks
+            No {activeTab} assigned orders
           </h3>
           <p className="text-xs text-[#8A90A3] max-w-xs mx-auto">
             {activeTab === "active"
-              ? "No active deliveries currently assigned to your rider profile."
+              ? "No active orders currently assigned to you by Admin. When Admin assigns an order, it will appear here."
               : "No delivered orders recorded for today's shift yet."}
           </p>
         </div>
       ) : (
         <div className="space-y-3">
           {currentList.map((order) => (
-            <DeliveryTaskCard
-              key={order.id}
-              order={order}
-              onStartDelivery={handleStartDelivery}
-              onOpenPaymentModal={(ord) => setPaymentModalOrder(ord)}
-            />
+            <div key={order.id} className="relative">
+              <DeliveryTaskCard
+                order={order}
+                onStartDelivery={handleStartDelivery}
+                onOpenPaymentModal={(ord) => setPaymentModalOrder(ord)}
+              />
+              <button
+                onClick={() => setSelectedOrderDetails(order)}
+                className="mt-2 text-xs font-bold text-[#2D6CFF] hover:underline block text-right w-full pr-2"
+              >
+                View Full Order Details →
+              </button>
+            </div>
           ))}
         </div>
+      )}
+
+      {/* Order Details Modal */}
+      {selectedOrderDetails && (
+        <OrderDetailsModal
+          order={selectedOrderDetails}
+          onClose={() => setSelectedOrderDetails(null)}
+          onUpdateStatus={(orderId, newStatus) => {
+            if (newStatus === "OUT_FOR_DELIVERY") handleStartDelivery(orderId);
+            if (newStatus === "DELIVERED") handleConfirmDelivery(orderId);
+          }}
+          isRiderView
+        />
       )}
 
       {/* Doorstep Payment Modal */}

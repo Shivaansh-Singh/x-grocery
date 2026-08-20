@@ -19,8 +19,12 @@ export interface OrderRecord {
   totalAmount: number;
   deliveryAddress: string;
   createdAt: string;
+  updatedAt?: string;
+  deliveryPartnerId?: string | null;
+  notes?: string | null;
   items: OrderItemRecord[];
   deliveryPartner?: {
+    id?: string;
     name: string;
     phone?: string | null;
   } | null;

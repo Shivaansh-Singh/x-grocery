@@ -1,24 +1,29 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { RejectionReasonModal } from "@/components/admin/RejectionReasonModal";
+import { OrderDetailsModal } from "@/components/admin/OrderDetailsModal";
+import { RiderAssignModal } from "@/components/admin/RiderAssignModal";
 import type { OrderRecord } from "@/components/orders/OrderCard";
+import { getLocalOrders, updateLocalOrderStatus, getLocalRiders, updateRiderStatus, DeliveryStaffRider } from "@/lib/orderSync";
 
-interface DeliveryRider {
-  id: string;
-  name: string;
-  phone?: string | null;
-}
+function AdminOrdersContent() {
+  const searchParams = useSearchParams();
+  const initialTab = (searchParams.get("tab") as string) || "all";
 
-export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<OrderRecord[]>([]);
-  const [riders, setRiders] = useState<DeliveryRider[]>([]);
-  const [activeTab, setActiveTab] = useState<"pending" | "active" | "history">("pending");
+  const [riders, setRiders] = useState<DeliveryStaffRider[]>([]);
+  const [activeTab, setActiveTab] = useState<string>(initialTab);
   const [loading, setLoading] = useState(true);
+
+  // Modals state
+  const [selectedOrderDetails, setSelectedOrderDetails] = useState<OrderRecord | null>(null);
+  const [assigningOrder, setAssigningOrder] = useState<OrderRecord | null>(null);
   const [rejectingOrder, setRejectingOrder] = useState<OrderRecord | null>(null);
 
-  const fetchOrdersAndRiders = async () => {
+  const loadOrdersAndRiders = async () => {
     try {
       const [ordersRes, ridersRes] = await Promise.all([
         fetch("/api/orders"),
@@ -28,41 +33,41 @@ export default function AdminOrdersPage() {
       const ordersData = await ordersRes.json();
       const ridersData = await ridersRes.json();
 
-      if (ordersData.orders) setOrders(ordersData.orders);
-      if (ridersData.riders) setRiders(ridersData.riders);
+      const apiOrders: OrderRecord[] = ordersData.orders || [];
+      const localOrders = getLocalOrders();
+
+      const orderMap = new Map<string, OrderRecord>();
+      [...localOrders, ...apiOrders].forEach((o) => orderMap.set(o.id, o));
+      const mergedOrders = Array.from(orderMap.values());
+
+      setOrders(mergedOrders);
+
+      const apiRiders: DeliveryStaffRider[] = ridersData.riders || [];
+      const localRiders = getLocalRiders();
+      const riderMap = new Map<string, DeliveryStaffRider>();
+      [...localRiders, ...apiRiders].forEach((r) => riderMap.set(r.id, r));
+      setRiders(Array.from(riderMap.values()));
     } catch (err) {
-      console.error("Error loading admin orders board data:", err);
+      console.error("Error loading admin orders:", err);
+      setOrders(getLocalOrders());
+      setRiders(getLocalRiders());
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     let ignore = false;
-
-    async function loadData() {
-      try {
-        const [ordersRes, ridersRes] = await Promise.all([
-          fetch("/api/orders"),
-          fetch("/api/admin/delivery-staff"),
-        ]);
-
-        const ordersData = await ordersRes.json();
-        const ridersData = await ridersRes.json();
-
-        if (!ignore && ordersData.orders) setOrders(ordersData.orders);
-        if (!ignore && ridersData.riders) setRiders(ridersData.riders);
-      } catch (err) {
-        console.error("Error loading admin orders board data:", err);
-      } finally {
-        if (!ignore) setLoading(false);
+    async function init() {
+      if (!ignore) {
+        await loadOrdersAndRiders();
       }
     }
+    init();
 
-    loadData();
-
-    // Auto-refresh incoming orders every 5 seconds
     const interval = setInterval(() => {
-      loadData();
-    }, 5000);
+      loadOrdersAndRiders();
+    }, 4000);
 
     return () => {
       ignore = true;
@@ -77,7 +82,26 @@ export default function AdminOrdersPage() {
     rejectionReason?: string
   ) => {
     try {
-      const res = await fetch(`/api/admin/orders/${orderId}`, {
+      // 1. Update local storage immediately for fast client reactivity
+      const updates: Partial<OrderRecord> = { status: newStatus as OrderRecord["status"] };
+      if (deliveryPartnerId) {
+        const matchedRider = riders.find((r) => r.id === deliveryPartnerId);
+        if (matchedRider) {
+          updates.deliveryPartner = {
+            id: matchedRider.id,
+            name: matchedRider.name,
+            phone: matchedRider.phone || null,
+          };
+          updateRiderStatus(matchedRider.id, "ASSIGNED");
+        }
+      }
+      if (rejectionReason) {
+        updates.notes = `Rejected by Admin: ${rejectionReason}`;
+      }
+      updateLocalOrderStatus(orderId, updates);
+
+      // 2. Sync to Backend API
+      await fetch(`/api/admin/orders/${orderId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -87,227 +111,266 @@ export default function AdminOrdersPage() {
         }),
       });
 
-      if (res.ok) {
-        fetchOrdersAndRiders();
-      }
+      loadOrdersAndRiders();
     } catch (err) {
       console.error("Error updating order status:", err);
     }
   };
 
+  const handleAssignRider = (orderId: string, riderId: string) => {
+    handleUpdateStatus(orderId, "ASSIGNED", riderId);
+  };
+
+  // Filter categorizations
   const pendingOrders = orders.filter((o) => o.status === "PENDING");
-  const inProgressOrders = orders.filter(
-    (o) =>
-      o.status === "ACCEPTED" ||
-      o.status === "PREPARING" ||
-      o.status === "ASSIGNED" ||
-      o.status === "OUT_FOR_DELIVERY"
-  );
-  const historyOrders = orders.filter(
+  const acceptedOrders = orders.filter((o) => o.status === "ACCEPTED");
+  const preparingOrders = orders.filter((o) => o.status === "PREPARING");
+  const readyOrders = orders.filter((o) => o.status === "ASSIGNED");
+  const deliveryOrders = orders.filter((o) => o.status === "OUT_FOR_DELIVERY");
+  const completedOrders = orders.filter(
     (o) => o.status === "DELIVERED" || o.status === "CANCELLED" || o.status === "REJECTED"
   );
 
-  const currentList =
-    activeTab === "pending"
-      ? pendingOrders
-      : activeTab === "active"
-      ? inProgressOrders
-      : historyOrders;
+  const getTabOrders = () => {
+    switch (activeTab) {
+      case "pending":
+        return pendingOrders;
+      case "accepted":
+        return acceptedOrders;
+      case "preparing":
+        return preparingOrders;
+      case "ready":
+        return readyOrders;
+      case "delivery":
+        return deliveryOrders;
+      case "completed":
+        return completedOrders;
+      default:
+        return orders;
+    }
+  };
+
+  const currentOrdersList = getTabOrders();
 
   return (
-    <div className="space-y-4 pt-1 pb-8">
-      {/* Header */}
-      <div className="flex items-center justify-between border-b border-[#D9D7D2] pb-2">
+    <div className="space-y-4 pt-1 pb-8 text-[#F5F6FA]">
+      {/* Header Bar */}
+      <div className="flex items-center justify-between border-b border-white/8 pb-2.5">
         <div>
-          <h1 className="text-xl font-bold text-[#111315]">
-            Incoming Orders Board
+          <h1 className="font-display font-black text-xl text-[#F5F6FA] tracking-tight">
+            Incoming Orders Control Board
           </h1>
-          <p className="text-xs text-[#666A70]">
-            Live fulfillment & rider assignment
+          <p className="text-xs text-[#8A90A3]">
+            Accept orders, control prep, and assign riders
           </p>
         </div>
         <Link
           href="/admin"
-          className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-[#D9D7D2] text-[#666A70] hover:text-[#111315]"
+          className="text-xs font-bold text-[#FF6B1A] hover:underline"
         >
           ← Admin Hub
         </Link>
       </div>
 
-      {/* Tabs */}
-      <div className="flex rounded-xl bg-[#ECEAE5] p-1">
-        <button
-          onClick={() => setActiveTab("pending")}
-          className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors relative ${
-            activeTab === "pending"
-              ? "bg-[#111315] text-white shadow-2xs"
-              : "text-[#666A70] hover:text-[#111315]"
-          }`}
-        >
-          Pending ({pendingOrders.length})
-          {pendingOrders.length > 0 && (
-            <span className="ml-1 px-1.5 py-0.2 text-[10px] bg-[#FF5A1F] text-white rounded font-extrabold">
-              NEW
-            </span>
-          )}
-        </button>
-        <button
-          onClick={() => setActiveTab("active")}
-          className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${
-            activeTab === "active"
-              ? "bg-[#111315] text-white shadow-2xs"
-              : "text-[#666A70] hover:text-[#111315]"
-          }`}
-        >
-          In Delivery ({inProgressOrders.length})
-        </button>
-        <button
-          onClick={() => setActiveTab("history")}
-          className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${
-            activeTab === "history"
-              ? "bg-[#111315] text-white shadow-2xs"
-              : "text-[#666A70] hover:text-[#111315]"
-          }`}
-        >
-          Completed ({historyOrders.length})
-        </button>
+      {/* Filter Tabs */}
+      <div className="flex overflow-x-auto gap-1.5 p-1.5 rounded-2xl bg-[#141822] border border-white/8 no-scrollbar">
+        {[
+          { key: "all", label: `All (${orders.length})` },
+          { key: "pending", label: `New (${pendingOrders.length})`, badge: pendingOrders.length > 0 },
+          { key: "accepted", label: `Accepted (${acceptedOrders.length})` },
+          { key: "preparing", label: `Packing (${preparingOrders.length})` },
+          { key: "ready", label: `Ready (${readyOrders.length})` },
+          { key: "delivery", label: `Out (${deliveryOrders.length})` },
+          { key: "completed", label: `Delivered (${completedOrders.length})` },
+        ].map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all shrink-0 relative ${
+              activeTab === tab.key
+                ? "bg-gradient-to-r from-[#FF6B1A] to-[#2D6CFF] text-white shadow-sm"
+                : "text-[#8A90A3] hover:text-[#F5F6FA]"
+            }`}
+          >
+            {tab.label}
+            {tab.badge && (
+              <span className="ml-1 px-1 py-0.2 text-[9px] bg-[#FF6B1A] text-white rounded font-black">
+                NEW
+              </span>
+            )}
+          </button>
+        ))}
       </div>
 
       {/* Orders List */}
       {loading ? (
         <div className="space-y-3 animate-pulse">
           {[1, 2].map((i) => (
-            <div key={i} className="h-44 bg-zinc-200 rounded-2xl" />
+            <div key={i} className="h-44 glass-card rounded-2xl" />
           ))}
         </div>
-      ) : currentList.length === 0 ? (
-        <div className="bg-[#FFFFFF] rounded-2xl p-8 border border-[#D9D7D2] text-center space-y-2">
-          <h3 className="font-bold text-sm text-[#111315]">
-            No {activeTab} orders
+      ) : currentOrdersList.length === 0 ? (
+        <div className="glass-card rounded-[22px] p-8 text-center space-y-2 my-4 shadow-md">
+          <h3 className="font-display font-extrabold text-sm text-[#F5F6FA]">
+            No orders in &quot;{activeTab.toUpperCase()}&quot;
           </h3>
-          <p className="text-xs text-[#666A70]">
-            Incoming student orders will appear here automatically in real-time.
+          <p className="text-xs text-[#8A90A3] max-w-xs mx-auto">
+            Incoming customer orders will appear here automatically in real-time.
           </p>
         </div>
       ) : (
         <div className="space-y-3">
-          {currentList.map((order) => (
-            <div
-              key={order.id}
-              className="bg-[#FFFFFF] p-4 rounded-2xl border border-[#D9D7D2] shadow-2xs space-y-3"
-            >
-              {/* Card Header */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-black text-sm text-[#111315]">
-                      #{order.orderNumber}
-                    </span>
-                    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#ECEAE5] text-[#111315]">
-                      {order.status}
+          {currentOrdersList.map((order) => {
+            const isPending = order.status === "PENDING";
+            const isAccepted = order.status === "ACCEPTED";
+            const isPreparing = order.status === "PREPARING";
+            const isReady = order.status === "ASSIGNED";
+            const isOutForDelivery = order.status === "OUT_FOR_DELIVERY";
+
+            return (
+              <div
+                key={order.id}
+                className="glass-card p-4 rounded-[22px] shadow-md space-y-3 hover:border-white/20 transition-all"
+              >
+                {/* Order Top Header */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-display font-black text-sm text-[#F5F6FA]">
+                        #{order.orderNumber}
+                      </h3>
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-gradient-to-r from-[#FF6B1A] to-[#2D6CFF] text-white">
+                        {order.status}
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-[#8A90A3] block mt-0.5 font-medium">
+                      {order.deliveryAddress}
                     </span>
                   </div>
-                  <span className="text-[11px] text-[#666A70] block mt-0.5">
-                    {order.deliveryAddress}
-                  </span>
-                </div>
 
-                <div className="text-right">
-                  <span className="text-sm font-black text-[#FF5A1F] block">
-                    ₹{order.totalAmount.toFixed(0)}
-                  </span>
-                  <span className="text-[10px] font-semibold text-[#1646C7] px-2 py-0.5 rounded bg-[#F5F3EE]">
-                    {order.paymentMethod === "COD" ? "Cash on Delivery" : "UPI on Delivery"}
-                  </span>
-                </div>
-              </div>
-
-              {/* Items List */}
-              <div className="bg-[#F5F3EE] p-2.5 rounded-xl border border-[#D9D7D2] text-xs space-y-1">
-                {order.items.map((item) => (
-                  <div key={item.id} className="flex justify-between">
-                    <span className="text-[#111315] font-medium">
-                      {item.productName}
+                  <div className="text-right">
+                    <span className="text-sm font-black text-[#FF6B1A] block">
+                      ₹{order.totalAmount.toFixed(0)}
                     </span>
-                    <span className="text-[#666A70] font-bold">
-                      x{item.quantity} • ₹{item.subtotal.toFixed(0)}
+                    <span className="text-[10px] font-bold text-[#8A90A3] px-2 py-0.5 rounded bg-[#1A1F2C] border border-white/8 inline-block mt-0.5">
+                      {order.paymentMethod === "COD" ? "Cash" : "UPI QR"}
                     </span>
                   </div>
-                ))}
-              </div>
+                </div>
 
-              {/* Rider Selector Dropdown (when PREPARING / ASSIGNED) */}
-              {(order.status === "PREPARING" || order.status === "ASSIGNED") && (
-                <div className="flex items-center gap-2 bg-[#F5F3EE] p-2 rounded-xl border border-[#D9D7D2]">
-                  <span className="text-xs font-bold text-[#111315] shrink-0">
-                    Assign Rider:
+                {/* Items Summary Pill */}
+                <div className="bg-[#1A1F2C] p-3 rounded-xl border border-white/8 text-xs space-y-1">
+                  <span className="text-[10px] font-bold text-[#8A90A3] uppercase tracking-wider block">
+                    Items ({order.items.length})
                   </span>
-                  <select
-                    value={order.deliveryPartner?.name ? riders.find(r => r.name === order.deliveryPartner?.name)?.id || "" : ""}
-                    onChange={(e) =>
-                      handleUpdateStatus(order.id, "ASSIGNED", e.target.value)
-                    }
-                    className="flex-1 px-2.5 py-1 text-xs rounded-lg border border-[#D9D7D2] bg-[#FFFFFF] text-[#111315] font-semibold focus:outline-none focus:border-[#FF5A1F]"
-                  >
-                    <option value="">Select Delivery Rider...</option>
-                    {riders.map((r) => (
-                      <option key={r.id} value={r.id}>
-                        {r.name} ({r.phone || "No phone"})
-                      </option>
+                  <div className="space-y-1">
+                    {order.items.map((item) => (
+                      <div key={item.id} className="flex justify-between text-[#F5F6FA]">
+                        <span className="font-medium truncate max-w-[220px]">
+                          {item.productName}
+                        </span>
+                        <span className="font-bold text-[#8A90A3]">
+                          x{item.quantity} • ₹{item.subtotal.toFixed(0)}
+                        </span>
+                      </div>
                     ))}
-                  </select>
+                  </div>
                 </div>
-              )}
 
-              {/* Action Buttons */}
-              <div className="flex gap-2 pt-1">
-                {order.status === "PENDING" && (
-                  <>
+                {/* Assigned Rider Indicator */}
+                {order.deliveryPartner && (
+                  <div className="flex items-center justify-between bg-[#1A1F2C] px-3 py-2 rounded-xl border border-white/8 text-xs">
+                    <span className="text-[10px] font-bold text-[#8A90A3] uppercase">
+                      Assigned Rider:
+                    </span>
+                    <span className="font-bold text-[#2D6CFF]">
+                      🛵 {order.deliveryPartner.name}
+                    </span>
+                  </div>
+                )}
+
+                {/* Admin Workflow Action Buttons */}
+                <div className="flex flex-wrap gap-2 pt-1">
+                  <button
+                    onClick={() => setSelectedOrderDetails(order)}
+                    className="px-3.5 py-2 rounded-xl bg-[#1A1F2C] hover:bg-white/10 text-[#F5F6FA] font-bold text-xs transition-all border border-white/8"
+                  >
+                    View Details
+                  </button>
+
+                  {isPending && (
+                    <>
+                      <button
+                        onClick={() => setRejectingOrder(order)}
+                        className="py-2 px-3 rounded-xl bg-[#1A1F2C] hover:bg-[#FF4D4D]/20 text-[#FF4D4D] font-bold text-xs transition-all border border-[#FF4D4D]/30"
+                      >
+                        Reject
+                      </button>
+                      <button
+                        onClick={() => handleUpdateStatus(order.id, "ACCEPTED")}
+                        className="flex-1 py-2 rounded-xl bg-gradient-to-r from-[#FF6B1A] to-[#2D6CFF] text-white font-extrabold text-xs shadow-md hover:opacity-90 transition-all"
+                      >
+                        ACCEPT ORDER ✓
+                      </button>
+                    </>
+                  )}
+
+                  {isAccepted && (
                     <button
-                      onClick={() => setRejectingOrder(order)}
-                      className="flex-1 py-2 rounded-xl bg-[#ECEAE5] hover:bg-[#C63D3D] hover:text-white text-[#C63D3D] font-bold text-xs transition-colors"
+                      onClick={() => handleUpdateStatus(order.id, "PREPARING")}
+                      className="flex-1 py-2 rounded-xl bg-[#2D6CFF] text-white font-extrabold text-xs shadow-md hover:opacity-90 transition-all"
                     >
-                      Reject Order
+                      Start Packing Items 📦
                     </button>
+                  )}
+
+                  {isPreparing && (
                     <button
-                      onClick={() => handleUpdateStatus(order.id, "ACCEPTED")}
-                      className="flex-1 py-2 rounded-xl bg-[#168A5B] hover:bg-[#111315] text-white font-bold text-xs shadow-2xs transition-colors"
+                      onClick={() => handleUpdateStatus(order.id, "ASSIGNED")}
+                      className="flex-1 py-2 rounded-xl bg-[#FF6B1A] text-white font-extrabold text-xs shadow-md hover:opacity-90 transition-all"
                     >
-                      Accept Order ✓
+                      Mark Ready for Pickup ⚡
                     </button>
-                  </>
-                )}
+                  )}
 
-                {order.status === "ACCEPTED" && (
-                  <button
-                    onClick={() => handleUpdateStatus(order.id, "PREPARING")}
-                    className="w-full py-2 rounded-xl bg-[#1646C7] hover:bg-[#111315] text-white font-bold text-xs shadow-2xs transition-colors"
-                  >
-                    Start Packing Items
-                  </button>
-                )}
+                  {(isAccepted || isPreparing || isReady) && (
+                    <button
+                      onClick={() => setAssigningOrder(order)}
+                      className="py-2 px-4 rounded-xl bg-gradient-to-r from-[#FF6B1A] to-[#2D6CFF] text-white font-extrabold text-xs shadow-md hover:opacity-90 transition-all"
+                    >
+                      {order.deliveryPartner ? "Reassign Rider 🛵" : "Assign Rider 🛵"}
+                    </button>
+                  )}
 
-                {order.status === "ASSIGNED" && (
-                  <button
-                    onClick={() => handleUpdateStatus(order.id, "OUT_FOR_DELIVERY")}
-                    className="w-full py-2 rounded-xl bg-[#FF5A1F] hover:bg-[#111315] text-white font-bold text-xs shadow-2xs transition-colors"
-                  >
-                    Mark Out for Delivery
-                  </button>
-                )}
-
-                {order.status === "OUT_FOR_DELIVERY" && (
-                  <button
-                    onClick={() => handleUpdateStatus(order.id, "DELIVERED")}
-                    className="w-full py-2 rounded-xl bg-[#168A5B] hover:bg-[#111315] text-white font-bold text-xs shadow-2xs transition-colors"
-                  >
-                    Mark Delivered ✓
-                  </button>
-                )}
+                  {isOutForDelivery && (
+                    <span className="py-2 px-3 rounded-xl bg-[#2D6CFF]/15 text-[#2D6CFF] font-bold text-xs border border-[#2D6CFF]/30">
+                      Rider En Route 🛵
+                    </span>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
+      )}
+
+      {/* Details Modal */}
+      {selectedOrderDetails && (
+        <OrderDetailsModal
+          order={selectedOrderDetails}
+          onClose={() => setSelectedOrderDetails(null)}
+          onUpdateStatus={handleUpdateStatus}
+        />
+      )}
+
+      {/* Rider Selection Panel Modal */}
+      {assigningOrder && (
+        <RiderAssignModal
+          order={assigningOrder}
+          riders={riders}
+          onClose={() => setAssigningOrder(null)}
+          onAssignRider={handleAssignRider}
+        />
       )}
 
       {/* Rejection Modal */}
@@ -322,5 +385,20 @@ export default function AdminOrdersPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function AdminOrdersPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="space-y-4 pt-4 animate-pulse">
+          <div className="h-10 glass-card rounded-xl" />
+          <div className="h-44 glass-card rounded-2xl" />
+        </div>
+      }
+    >
+      <AdminOrdersContent />
+    </Suspense>
   );
 }
