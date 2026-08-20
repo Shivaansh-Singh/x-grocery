@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useRef, ReactNode } from "react";
 import type { ProductItem } from "@/components/catalog/ProductCard";
 import { useToast } from "@/components/ui/Toast";
 
@@ -40,18 +40,28 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>(() => {
     if (typeof window === "undefined") return [];
     try {
-      const saved = localStorage.getItem("x_grocery_cart");
-      return saved ? JSON.parse(saved) : [];
+      const saved = localStorage.getItem("rushd_cart") || localStorage.getItem("x_grocery_cart");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
     } catch {
-      return [];
+      // Ignore storage error on initial render
     }
+    return [];
   });
 
+  const isFirstRender = useRef(true);
   const { showToast } = useToast();
 
-  // Save cart to localStorage on change
+  // Save cart to localStorage on changes (skip initial mount effect run)
   useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
     try {
+      localStorage.setItem("rushd_cart", JSON.stringify(items));
       localStorage.setItem("x_grocery_cart", JSON.stringify(items));
     } catch (e) {
       console.error("Failed to save cart to localStorage", e);
