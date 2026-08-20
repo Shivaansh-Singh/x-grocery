@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { RushDLogo } from "@/components/ui/RushDLogo";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 interface AdminHeaderProps {
   pendingOrdersCount?: number;
@@ -10,6 +11,7 @@ interface AdminHeaderProps {
 
 export function AdminHeader({ pendingOrdersCount = 0 }: AdminHeaderProps) {
   const pathname = usePathname();
+  const { activeUser, signOut } = useAuth();
 
   const navLinks = [
     { href: "/admin", label: "Dashboard" },
@@ -32,17 +34,25 @@ export function AdminHeader({ pendingOrdersCount = 0 }: AdminHeaderProps) {
               Admin Hub
             </h2>
             <p className="text-[10px] text-[#8A90A3] font-medium">
-              Fulfillment & Staff Portal
+              Store Owner X
             </p>
           </div>
         </div>
 
-        <Link
-          href="/"
-          className="text-xs text-[#8A90A3] hover:text-white transition-colors bg-[#1A1F2C] px-3 py-1.5 rounded-xl font-bold border border-white/8"
-        >
-          Customer App ↗
-        </Link>
+        <div className="flex items-center gap-2">
+          {activeUser && (
+            <span className="text-[10px] font-bold text-[#2D6CFF] bg-[#2D6CFF]/15 border border-[#2D6CFF]/30 px-2 py-1 rounded-lg">
+              ⚡ STORE ADMIN
+            </span>
+          )}
+
+          <button
+            onClick={() => signOut()}
+            className="text-xs text-[#FF4D4D] hover:bg-[#FF4D4D]/20 transition-colors bg-[#1A1F2C] px-3 py-1.5 rounded-xl font-bold border border-[#FF4D4D]/30"
+          >
+            Sign Out
+          </button>
+        </div>
       </div>
 
       <nav className="flex items-center gap-1 overflow-x-auto no-scrollbar pt-1">

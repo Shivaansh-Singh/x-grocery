@@ -129,8 +129,20 @@ function AdminOrdersContent() {
 
       updateLocalOrderStatus(orderId, updates);
 
+      console.log("ORDER ID TYPE:", typeof orderId);
+      console.log("ORDER ID VALUE:", orderId);
+      console.log("FETCH URL:", `/api/admin/orders/${orderId}`);
+
+      const url = `/api/admin/orders/${orderId}`;
+      console.log("ADMIN PATCH DEBUG", {
+        url,
+        orderId,
+        status: newStatus,
+        deliveryPartnerId,
+      });
+
       // 2. Sync to Backend API
-      await fetch(`/api/admin/orders/${orderId}`, {
+      const response = await fetch(url, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -139,6 +151,8 @@ function AdminOrdersContent() {
           rejectionReason,
         }),
       });
+
+      console.log("PATCH RESPONSE STATUS:", response.status);
 
       loadOrdersAndRiders();
     } catch (err) {

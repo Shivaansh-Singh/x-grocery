@@ -11,6 +11,8 @@ export async function PATCH(
     const body = await request.json();
     const { status, deliveryPartnerId, rejectionReason } = body;
 
+    console.log("PATCH /api/admin/orders/[id] API HIT:", { id, status, deliveryPartnerId, rejectionReason });
+
     const existingOrder = await prisma.order.findUnique({
       where: { id },
       include: { items: true },

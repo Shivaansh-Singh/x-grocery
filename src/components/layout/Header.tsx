@@ -5,7 +5,8 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { RushDLogo } from "@/components/ui/RushDLogo";
 
 export function Header() {
-  const { user, role, signOut } = useAuth();
+  const { user, activeUser, role, signOut } = useAuth();
+  const isAuthenticated = Boolean(user || activeUser);
 
   return (
     <header className="sticky top-0 z-40 bg-[#0B0E14]/90 backdrop-blur-md border-b border-white/8 px-4 py-3 shadow-lg">
@@ -20,7 +21,7 @@ export function Header() {
           {role === "STORE_ADMIN" && (
             <Link
               href="/admin"
-              className="text-xs font-extrabold px-3.5 py-1.5 rounded-xl bg-[#2D6CFF] text-white hover:bg-[#2D6CFF]/90 transition-colors shadow-sm"
+              className="text-xs font-extrabold px-3 py-1.5 rounded-xl bg-[#2D6CFF] text-white hover:bg-[#2D6CFF]/90 transition-colors shadow-xs"
             >
               Admin Hub
             </Link>
@@ -28,13 +29,13 @@ export function Header() {
           {role === "DELIVERY_PARTNER" && (
             <Link
               href="/delivery"
-              className="text-xs font-extrabold px-3.5 py-1.5 rounded-xl bg-[#2D6CFF] text-white hover:bg-[#2D6CFF]/90 transition-colors shadow-sm"
+              className="text-xs font-extrabold px-3 py-1.5 rounded-xl bg-[#2D6CFF] text-white hover:bg-[#2D6CFF]/90 transition-colors shadow-xs"
             >
               Rider Portal
             </Link>
           )}
 
-          {user ? (
+          {isAuthenticated ? (
             <button
               onClick={() => signOut()}
               className="text-xs font-bold text-[#8A90A3] hover:text-[#F5F6FA] transition-colors px-2.5 py-1"
@@ -44,7 +45,7 @@ export function Header() {
           ) : (
             <Link
               href="/login"
-              className="text-xs font-extrabold text-[#FF6B1A] hover:text-[#FF6B1A]/90 transition-colors px-4 py-1.5 rounded-xl border border-white/8 bg-[#141822] shadow-xs"
+              className="text-xs font-extrabold text-[#FF6B1A] hover:text-[#FF6B1A]/90 transition-colors px-3.5 py-1.5 rounded-xl border border-white/8 bg-[#141822] shadow-xs"
             >
               Sign In
             </Link>
