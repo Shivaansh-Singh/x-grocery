@@ -1,6 +1,19 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { Role } from "@prisma/client";
+
+export function normalizeRiderId(rider: { id: string; email?: string | null; name?: string | null }): string {
+  if (rider.email === "delivery1@x-grocery.com" || rider.name?.includes("Rider 1") || rider.name?.includes("Ramesh")) {
+    return "rider-1";
+  }
+  if (rider.email === "delivery2@x-grocery.com" || rider.name?.includes("Rider 2") || rider.name?.includes("Suresh")) {
+    return "rider-2";
+  }
+  if (rider.email === "delivery3@x-grocery.com" || rider.name?.includes("Rider 3") || rider.name?.includes("Vikas")) {
+    return "rider-3";
+  }
+  return rider.id;
+}
 
 export async function GET() {
   try {
@@ -16,49 +29,21 @@ export async function GET() {
       orderBy: { name: "asc" },
     });
 
-    return NextResponse.json({ riders });
+    const normalizedRiders = riders.map((r) => ({
+      ...r,
+      id: normalizeRiderId(r),
+    }));
+
+    // Deduplicate by ID
+    const uniqueRiders = normalizedRiders.filter(
+      (rider, index, self) => index === self.findIndex((x) => x.id === rider.id)
+    );
+
+    return NextResponse.json({ riders: uniqueRiders });
   } catch (error) {
     console.error("GET /api/admin/delivery-staff error:", error);
     return NextResponse.json(
       { error: "Failed to fetch delivery staff" },
-      { status: 500 }
-    );
-  }
-}
-
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const { name, email, phone } = body;
-
-    if (!name || !email || !phone) {
-      return NextResponse.json(
-        { error: "Missing required fields (name, email, phone)" },
-        { status: 400 }
-      );
-    }
-
-    const newRider = await prisma.user.create({
-      data: {
-        name,
-        email,
-        phone,
-        role: Role.DELIVERY_PARTNER,
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        phone: true,
-        createdAt: true,
-      },
-    });
-
-    return NextResponse.json({ rider: newRider }, { status: 201 });
-  } catch (error) {
-    console.error("POST /api/admin/delivery-staff error:", error);
-    return NextResponse.json(
-      { error: "Failed to onboard delivery staff partner" },
       { status: 500 }
     );
   }

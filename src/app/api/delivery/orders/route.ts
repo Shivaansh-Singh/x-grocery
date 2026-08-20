@@ -9,9 +9,12 @@ export async function GET(request: NextRequest) {
     const whereCondition: Record<string, unknown> = {};
 
     if (riderId) {
-      whereCondition.deliveryPartnerId = riderId;
+      whereCondition.OR = [
+        { deliveryPartnerId: riderId },
+        { status: "ASSIGNED" },
+        { status: "OUT_FOR_DELIVERY" },
+      ];
     } else {
-      // If no rider ID is provided, query all assigned/active delivery orders
       whereCondition.OR = [
         { status: "ASSIGNED" },
         { status: "OUT_FOR_DELIVERY" },

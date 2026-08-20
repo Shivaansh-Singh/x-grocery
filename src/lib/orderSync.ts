@@ -9,6 +9,19 @@ export interface DeliveryStaffRider {
   distanceKm?: number;
 }
 
+export function normalizeRiderId(rider: { id?: string; email?: string | null; name?: string | null }): string {
+  if (rider.email === "delivery1@x-grocery.com" || rider.name?.includes("Rider 1") || rider.name?.includes("Ramesh")) {
+    return "rider-1";
+  }
+  if (rider.email === "delivery2@x-grocery.com" || rider.name?.includes("Rider 2") || rider.name?.includes("Suresh")) {
+    return "rider-2";
+  }
+  if (rider.email === "delivery3@x-grocery.com" || rider.name?.includes("Rider 3") || rider.name?.includes("Vikas")) {
+    return "rider-3";
+  }
+  return rider.id || "rider-1";
+}
+
 export const DEFAULT_RIDERS: DeliveryStaffRider[] = [
   {
     id: "rider-1",
@@ -77,14 +90,18 @@ export function updateLocalOrderStatus(
   const existing = getLocalOrders();
   let updatedOrder: OrderRecord | null = null;
 
-  const targetRiderId =
+  const rawRiderId =
     updates.assignedRiderId ||
     updates.deliveryPartnerId ||
     updates.deliveryPartner?.id;
 
+  const canonicalRiderId = rawRiderId
+    ? normalizeRiderId({ id: rawRiderId, name: updates.deliveryPartner?.name })
+    : undefined;
+
   const updatedList: OrderRecord[] = existing.map((o) => {
     if (o.id === orderId || o.orderNumber === orderId) {
-      const finalRiderId = targetRiderId || o.assignedRiderId || o.deliveryPartnerId || o.deliveryPartner?.id || null;
+      const finalRiderId = canonicalRiderId || o.assignedRiderId || o.deliveryPartnerId || o.deliveryPartner?.id || null;
       updatedOrder = {
         ...o,
         ...updates,
@@ -112,10 +129,10 @@ export function updateLocalOrderStatus(
     }
   }
 
-  console.log("UPDATED LOCAL ORDER STATUS:", {
+  console.log("ADMIN ASSIGNMENT DEBUG:", {
     orderId,
     newStatus: updates.status,
-    assignedRiderId: targetRiderId,
+    canonicalRiderId,
     updatedOrder,
   });
 
@@ -129,10 +146,13 @@ export function getLocalRiders(): DeliveryStaffRider[] {
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        // Deduplicate riders by ID/email
-        const unique = parsed.filter(
-          (r, index, self) =>
-            index === self.findIndex((x) => x.id === r.id || (x.email && x.email === r.email))
+        const normalized = parsed.map((r) => ({
+          ...r,
+          id: normalizeRiderId(r),
+        }));
+        // Deduplicate riders by canonical ID
+        const unique = normalized.filter(
+          (r, index, self) => index === self.findIndex((x) => x.id === r.id)
         );
         return unique;
       }
@@ -146,14 +166,22 @@ export function getLocalRiders(): DeliveryStaffRider[] {
 export function saveLocalRiders(riders: DeliveryStaffRider[]): void {
   if (typeof window === "undefined") return;
   try {
-    localStorage.setItem("rushd_riders", JSON.stringify(riders));
+    const normalized = riders.map((r) => ({
+      ...r,
+      id: normalizeRiderId(r),
+    }));
+    const unique = normalized.filter(
+      (r, index, self) => index === self.findIndex((x) => x.id === r.id)
+    );
+    localStorage.setItem("rushd_riders", JSON.stringify(unique));
   } catch (e) {
     console.error("Failed to save local riders", e);
   }
 }
 
 export function updateRiderStatus(riderId: string, status: DeliveryStaffRider["status"]): void {
+  const canonicalId = normalizeRiderId({ id: riderId });
   const riders = getLocalRiders();
-  const updated = riders.map((r) => (r.id === riderId ? { ...r, status } : r));
+  const updated = riders.map((r) => (r.id === canonicalId ? { ...r, status } : r));
   saveLocalRiders(updated);
 }

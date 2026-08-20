@@ -33,7 +33,11 @@ async function main() {
 
   const delivery1 = await prisma.user.upsert({
     where: { email: "delivery1@x-grocery.com" },
-    update: {},
+    update: {
+      id: "rider-1",
+      name: "Ramesh Kumar (Rider 1)",
+      phone: "+91 98123 45678",
+    },
     create: {
       id: "rider-1",
       email: "delivery1@x-grocery.com",
@@ -45,7 +49,11 @@ async function main() {
 
   const delivery2 = await prisma.user.upsert({
     where: { email: "delivery2@x-grocery.com" },
-    update: {},
+    update: {
+      id: "rider-2",
+      name: "Suresh Singh (Rider 2)",
+      phone: "+91 98234 56789",
+    },
     create: {
       id: "rider-2",
       email: "delivery2@x-grocery.com",
@@ -57,7 +65,11 @@ async function main() {
 
   const delivery3 = await prisma.user.upsert({
     where: { email: "delivery3@x-grocery.com" },
-    update: {},
+    update: {
+      id: "rider-3",
+      name: "Vikas Sharma (Rider 3)",
+      phone: "+91 98345 67890",
+    },
     create: {
       id: "rider-3",
       email: "delivery3@x-grocery.com",

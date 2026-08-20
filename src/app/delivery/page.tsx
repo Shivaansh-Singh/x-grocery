@@ -8,7 +8,7 @@ import { DoorstepPaymentModal } from "@/components/delivery/DoorstepPaymentModal
 import { OrderDetailsModal } from "@/components/admin/OrderDetailsModal";
 import type { OrderRecord } from "@/components/orders/OrderCard";
 import { RushDLogo } from "@/components/ui/RushDLogo";
-import { getLocalOrders, updateLocalOrderStatus, updateRiderStatus } from "@/lib/orderSync";
+import { getLocalOrders, updateLocalOrderStatus, updateRiderStatus, normalizeRiderId } from "@/lib/orderSync";
 
 export default function DeliveryPartnerPage() {
   const [activeRider, setActiveRider] = useState<DeliveryRiderStaff | null>(null);
@@ -21,9 +21,9 @@ export default function DeliveryPartnerPage() {
   const [selectedOrderDetails, setSelectedOrderDetails] = useState<OrderRecord | null>(null);
 
   const fetchRiderOrders = useCallback(async () => {
-    const riderId = activeRider?.id;
+    const canonicalRiderId = activeRider ? normalizeRiderId(activeRider) : "";
     try {
-      const url = riderId ? `/api/delivery/orders?riderId=${riderId}` : "/api/delivery/orders";
+      const url = canonicalRiderId ? `/api/delivery/orders?riderId=${canonicalRiderId}` : "/api/delivery/orders";
       const res = await fetch(url);
       const data = await res.json();
       const apiOrders: OrderRecord[] = data.orders || [];
@@ -34,17 +34,26 @@ export default function DeliveryPartnerPage() {
       [...localOrders, ...apiOrders].forEach((o) => orderMap.set(o.id, o));
       const allOrders = Array.from(orderMap.values());
 
-      // STRICT AUTHORITATIVE FILTER BY RIDER ID
-      const assignedOrders = riderId
+      // STRICT AUTHORITATIVE FILTER BY RIDER CANONICAL ID
+      const assignedOrders = canonicalRiderId
         ? allOrders.filter((order) => {
-            const orderRiderId =
+            const rawOrderRiderId =
               order.assignedRiderId || order.deliveryPartnerId || order.deliveryPartner?.id;
-            return orderRiderId === riderId;
+
+            if (!rawOrderRiderId) return false;
+
+            const canonicalOrderRiderId = normalizeRiderId({
+              id: rawOrderRiderId,
+              name: order.deliveryPartner?.name,
+            });
+
+            return canonicalOrderRiderId === canonicalRiderId;
           })
         : [];
 
-      console.log("RIDER PORTAL:", {
-        currentRiderId: riderId,
+      console.log("RIDER PORTAL DEBUG:", {
+        currentRiderId: activeRider?.id,
+        canonicalRiderId,
         currentRiderName: activeRider?.name,
         allOrdersCount: allOrders.length,
         filteredAssignedOrdersCount: assignedOrders.length,
@@ -59,12 +68,13 @@ export default function DeliveryPartnerPage() {
     } catch (err) {
       console.error("Error loading rider orders:", err);
       const localOrders = getLocalOrders();
-      const riderId = activeRider?.id;
-      const assignedOrders = riderId
+      const canonicalRiderId = activeRider ? normalizeRiderId(activeRider) : "";
+      const assignedOrders = canonicalRiderId
         ? localOrders.filter((order) => {
-            const orderRiderId =
+            const rawOrderRiderId =
               order.assignedRiderId || order.deliveryPartnerId || order.deliveryPartner?.id;
-            return orderRiderId === riderId;
+            if (!rawOrderRiderId) return false;
+            return normalizeRiderId({ id: rawOrderRiderId }) === canonicalRiderId;
           })
         : [];
       setOrders(assignedOrders);
