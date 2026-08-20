@@ -15,6 +15,7 @@ function LoginContent() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [selectedDemoEmail, setSelectedDemoEmail] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(
     errorParam === "unauthorized_admin_access"
@@ -50,10 +51,12 @@ function LoginContent() {
     }
   };
 
-  const handleQuickLogin = (demoEmail: string) => {
+  // ONLY populate credentials in state — DO NOT AUTHENTICATE OR REDIRECT
+  const handleQuickSelectRole = (demoEmail: string) => {
+    setSelectedDemoEmail(demoEmail);
     setEmail(demoEmail);
     setPassword("password123");
-    signIn(demoEmail, "password123", redirectParam);
+    setErrorMessage(null);
   };
 
   return (
@@ -77,7 +80,7 @@ function LoginContent() {
         </div>
       )}
 
-      {/* Quick Role Selection Hub */}
+      {/* Quick Role Selection Hub (Form Population Only) */}
       <div className="glass-card p-4 rounded-[22px] space-y-2.5 shadow-md">
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-gradient-to-r from-[#FF6B1A] to-[#2D6CFF] text-white">
@@ -89,8 +92,12 @@ function LoginContent() {
         <div className="grid grid-cols-3 gap-2 pt-1">
           <button
             type="button"
-            onClick={() => handleQuickLogin("student@vitbhopal.ac.in")}
-            className="p-2.5 bg-[#1A1F2C] hover:bg-white/10 rounded-xl text-center border border-white/8 transition-all group"
+            onClick={() => handleQuickSelectRole("student@vitbhopal.ac.in")}
+            className={`p-2.5 rounded-xl text-center border transition-all group ${
+              selectedDemoEmail === "student@vitbhopal.ac.in"
+                ? "bg-[#2D6CFF]/20 border-[#2D6CFF] ring-2 ring-[#2D6CFF]/30"
+                : "bg-[#1A1F2C] hover:bg-white/10 border-white/8"
+            }`}
           >
             <span className="text-base block mb-0.5">🛒</span>
             <span className="font-extrabold text-[11px] block text-[#F5F6FA] group-hover:text-[#FF6B1A]">
@@ -101,8 +108,12 @@ function LoginContent() {
 
           <button
             type="button"
-            onClick={() => handleQuickLogin("admin@x-grocery.com")}
-            className="p-2.5 bg-[#1A1F2C] hover:bg-white/10 rounded-xl text-center border border-white/8 transition-all group"
+            onClick={() => handleQuickSelectRole("admin@x-grocery.com")}
+            className={`p-2.5 rounded-xl text-center border transition-all group ${
+              selectedDemoEmail === "admin@x-grocery.com"
+                ? "bg-[#2D6CFF]/20 border-[#2D6CFF] ring-2 ring-[#2D6CFF]/30"
+                : "bg-[#1A1F2C] hover:bg-white/10 border-white/8"
+            }`}
           >
             <span className="text-base block mb-0.5">⚡</span>
             <span className="font-extrabold text-[11px] block text-[#F5F6FA] group-hover:text-[#FF6B1A]">
@@ -113,8 +124,12 @@ function LoginContent() {
 
           <button
             type="button"
-            onClick={() => handleQuickLogin("delivery1@x-grocery.com")}
-            className="p-2.5 bg-[#1A1F2C] hover:bg-white/10 rounded-xl text-center border border-white/8 transition-all group"
+            onClick={() => handleQuickSelectRole("delivery1@x-grocery.com")}
+            className={`p-2.5 rounded-xl text-center border transition-all group ${
+              selectedDemoEmail === "delivery1@x-grocery.com"
+                ? "bg-[#2D6CFF]/20 border-[#2D6CFF] ring-2 ring-[#2D6CFF]/30"
+                : "bg-[#1A1F2C] hover:bg-white/10 border-white/8"
+            }`}
           >
             <span className="text-base block mb-0.5">🛵</span>
             <span className="font-extrabold text-[11px] block text-[#F5F6FA] group-hover:text-[#2D6CFF]">
