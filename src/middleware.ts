@@ -17,7 +17,7 @@ export async function middleware(request: NextRequest) {
   let userRole = roleCookie || null;
   let userEmail = emailCookie || null;
 
-  // 2. Check Supabase Auth user if available
+  // 2. Check Supabase Auth user if configured
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co";
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-anon-key";
 
@@ -50,45 +50,65 @@ export async function middleware(request: NextRequest) {
   const isAuthenticated = Boolean(userRole || userEmail);
 
   // -------------------------------------------------------------
-  // ROUTE PROTECTION RULES
+  // LOGIN PAGE LOGIC
+  // -------------------------------------------------------------
+  if (pathname === "/login") {
+    if (isAuthenticated) {
+      if (userRole === "STORE_ADMIN") {
+        return NextResponse.redirect(new URL("/admin", request.url));
+      }
+      if (userRole === "DELIVERY_PARTNER") {
+        return NextResponse.redirect(new URL("/delivery", request.url));
+      }
+      return NextResponse.redirect(new URL("/", request.url));
+    }
+    return response;
+  }
+
+  // -------------------------------------------------------------
+  // REQUIRE LOGIN FOR ALL PROTECTED ROUTES (LOGIN-FIRST)
+  // -------------------------------------------------------------
+  if (!isAuthenticated) {
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("redirect", pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  // -------------------------------------------------------------
+  // ROLE-BASED AUTHORIZATION RULES (FOR AUTHENTICATED USERS)
   // -------------------------------------------------------------
 
-  // A. Protect /admin and /admin/*
-  if (pathname.startsWith("/admin")) {
-    if (!isAuthenticated) {
-      const url = new URL("/login", request.url);
-      url.searchParams.set("redirect", pathname);
-      return NextResponse.redirect(url);
+  // A. STORE_ADMIN Rules
+  if (userRole === "STORE_ADMIN") {
+    // Admin trying to access /delivery or customer root /
+    if (pathname.startsWith("/delivery") || pathname === "/" || pathname.startsWith("/cart") || pathname.startsWith("/categories")) {
+      return NextResponse.redirect(new URL("/admin", request.url));
     }
+    return response;
+  }
 
-    if (userRole === "DELIVERY_PARTNER") {
+  // B. DELIVERY_PARTNER Rules
+  if (userRole === "DELIVERY_PARTNER") {
+    // Rider trying to access /admin or customer root /
+    if (pathname.startsWith("/admin") || pathname === "/" || pathname.startsWith("/cart") || pathname.startsWith("/categories")) {
       return NextResponse.redirect(new URL("/delivery", request.url));
     }
+    return response;
+  }
 
-    if (userRole === "CUSTOMER" || userRole !== "STORE_ADMIN") {
+  // C. CUSTOMER Rules
+  if (userRole === "CUSTOMER" || !userRole) {
+    if (pathname.startsWith("/admin")) {
       const url = new URL("/", request.url);
       url.searchParams.set("error", "unauthorized_admin_access");
       return NextResponse.redirect(url);
     }
-  }
-
-  // B. Protect /delivery and /delivery/*
-  if (pathname.startsWith("/delivery")) {
-    if (!isAuthenticated) {
-      const url = new URL("/login", request.url);
-      url.searchParams.set("redirect", pathname);
-      return NextResponse.redirect(url);
-    }
-
-    if (userRole === "STORE_ADMIN") {
-      return NextResponse.redirect(new URL("/admin", request.url));
-    }
-
-    if (userRole === "CUSTOMER" || userRole !== "DELIVERY_PARTNER") {
+    if (pathname.startsWith("/delivery")) {
       const url = new URL("/", request.url);
       url.searchParams.set("error", "unauthorized_delivery_access");
       return NextResponse.redirect(url);
     }
+    return response;
   }
 
   return response;
@@ -96,7 +116,14 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/admin/:path*",
-    "/delivery/:path*",
+    /*
+     * Match all request paths except for:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public assets (/brand/, .png, .jpg, .svg, etc.)
+     * - API routes (/api/)
+     */
+    "/((?!_next/static|_next/image|favicon.ico|brand|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$|api/).*)",
   ],
 };

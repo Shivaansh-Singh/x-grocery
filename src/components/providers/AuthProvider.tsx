@@ -20,7 +20,7 @@ interface AuthContextType {
   session: Session | null;
   role: Role;
   loading: boolean;
-  signIn: (email: string, password?: string) => Promise<{ success: boolean; error?: string }>;
+  signIn: (email: string, password?: string, targetRedirect?: string | null) => Promise<{ success: boolean; error?: string }>;
   signUp: (name: string, email: string, password?: string) => Promise<{ success: boolean; error?: string }>;
   signOut: () => Promise<void>;
 }
@@ -125,7 +125,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [supabase.auth]);
 
-  const signIn = async (email: string, password?: string) => {
+  const signIn = async (email: string, password?: string, targetRedirect?: string | null) => {
     setLoading(true);
     try {
       // 1. Try Supabase Auth if credentials provided
@@ -149,7 +149,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (typeof window !== "undefined") {
             localStorage.setItem("rushd_active_user", JSON.stringify(userObj));
           }
-          redirectAfterLogin(userRole);
+          redirectAfterLogin(userRole, targetRedirect);
           return { success: true };
         }
       }
@@ -189,7 +189,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem("rushd_active_user", JSON.stringify(userObj));
       }
 
-      redirectAfterLogin(assignedRole);
+      redirectAfterLogin(assignedRole, targetRedirect);
       return { success: true };
     } catch (err) {
       console.error("SignIn error:", err);
@@ -227,13 +227,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const redirectAfterLogin = (userRole: Role) => {
+  const redirectAfterLogin = (userRole: Role, targetRedirect?: string | null) => {
     if (userRole === "STORE_ADMIN") {
-      router.push("/admin");
+      if (targetRedirect && targetRedirect.startsWith("/admin")) {
+        router.push(targetRedirect);
+      } else {
+        router.push("/admin");
+      }
     } else if (userRole === "DELIVERY_PARTNER") {
-      router.push("/delivery");
+      if (targetRedirect && targetRedirect.startsWith("/delivery")) {
+        router.push(targetRedirect);
+      } else {
+        router.push("/delivery");
+      }
     } else {
-      router.push("/");
+      if (targetRedirect && !targetRedirect.startsWith("/admin") && !targetRedirect.startsWith("/delivery") && !targetRedirect.startsWith("/login")) {
+        router.push(targetRedirect);
+      } else {
+        router.push("/");
+      }
     }
   };
 

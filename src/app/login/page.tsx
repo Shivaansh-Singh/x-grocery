@@ -33,7 +33,7 @@ function LoginContent() {
 
     try {
       if (mode === "signin") {
-        const res = await signIn(email, password);
+        const res = await signIn(email, password, redirectParam);
         if (!res.success) {
           setErrorMessage(res.error || "Invalid credentials. Please try again.");
         }
@@ -53,7 +53,7 @@ function LoginContent() {
   const handleQuickLogin = (demoEmail: string) => {
     setEmail(demoEmail);
     setPassword("password123");
-    signIn(demoEmail, "password123");
+    signIn(demoEmail, "password123", redirectParam);
   };
 
   return (
