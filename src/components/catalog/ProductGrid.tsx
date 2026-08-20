@@ -51,20 +51,15 @@ export function ProductGrid({
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-3.5 sm:gap-4.5 items-stretch">
-      {safeProducts.map((product, index) => {
-        // First product or every 9th product when not searching gets Featured Bento treatment
-        const isFeaturedTile = !searchQuery && (index === 0 || (index > 0 && index % 9 === 0));
-        return (
-          <ProductCard
-            key={product.id}
-            product={product}
-            quantity={cartQuantities[product.id] || 0}
-            onUpdateQuantity={onUpdateQuantity}
-            onSelectProduct={onSelectProduct}
-            isFeatured={isFeaturedTile}
-          />
-        );
-      })}
+      {safeProducts.map((product) => (
+        <ProductCard
+          key={product.id}
+          product={product}
+          quantity={cartQuantities[product.id] || 0}
+          onUpdateQuantity={onUpdateQuantity}
+          onSelectProduct={onSelectProduct}
+        />
+      ))}
     </div>
   );
 }
