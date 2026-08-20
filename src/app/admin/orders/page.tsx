@@ -132,7 +132,7 @@ function AdminOrdersContent() {
       // 2. Sync to Backend API
       await fetch(`/api/admin/orders/${orderId}`, {
         method: "PATCH",
-        headers: { "Content-[#Type]": "application/json", "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           status: newStatus,
           deliveryPartnerId,
