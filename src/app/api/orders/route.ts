@@ -228,26 +228,24 @@ export async function POST(request: NextRequest) {
         include: { items: true },
       });
 
-      // Atomically deduct stock and record inventory logs in parallel
-      await Promise.all(
-        orderItemsData.map(async (item) => {
-          const updatedProduct = await tx.product.update({
-            where: { id: item.productId },
-            data: { stock: { decrement: item.quantity } },
-            select: { id: true, stock: true },
-          });
+      // Atomically deduct stock and record inventory logs sequentially within the transaction
+      for (const item of orderItemsData) {
+        const updatedProduct = await tx.product.update({
+          where: { id: item.productId },
+          data: { stock: { decrement: item.quantity } },
+          select: { id: true, stock: true },
+        });
 
-          return tx.inventoryLog.create({
-            data: {
-              productId: item.productId,
-              previousStock: updatedProduct.stock + item.quantity,
-              newStock: updatedProduct.stock,
-              changeQuantity: -item.quantity,
-              reason: `ORDER_PLACED:${order.orderNumber}`,
-            },
-          });
-        })
-      );
+        await tx.inventoryLog.create({
+          data: {
+            productId: item.productId,
+            previousStock: updatedProduct.stock + item.quantity,
+            newStock: updatedProduct.stock,
+            changeQuantity: -item.quantity,
+            reason: `ORDER_PLACED:${order.orderNumber}`,
+          },
+        });
+      }
 
       return order;
     });

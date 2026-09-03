@@ -7,17 +7,9 @@ export async function GET(request: NextRequest) {
     const categorySlug = searchParams.get("category");
     const searchQuery = searchParams.get("search");
 
-    const store = await prisma.store.findUnique({
-      where: { slug: "store-x" },
-    });
-
-    if (!store) {
-      return NextResponse.json({ products: [] }, { status: 200 });
-    }
-
-    // Build Prisma query condition
+    // Build Prisma query condition directly using store relation (eliminates separate Store query roundtrip)
     const whereCondition: Record<string, unknown> = {
-      storeId: store.id,
+      store: { slug: "store-x" },
       isActive: true,
     };
 
@@ -36,7 +28,18 @@ export async function GET(request: NextRequest) {
 
     const products = await prisma.product.findMany({
       where: whereCondition,
-      include: {
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        description: true,
+        price: true,
+        unitDisplay: true,
+        stock: true,
+        isActive: true,
+        imageUrl: true,
+        storeId: true,
+        categoryId: true,
         category: {
           select: {
             id: true,
