@@ -203,25 +203,6 @@ export async function POST(request: NextRequest) {
 
     // 7. Atomic transaction: Create order + deduct stock simultaneously
     const newOrder = await prisma.$transaction(async (tx) => {
-      // Re-validate stock inside transaction to handle concurrent orders
-      for (const item of orderItemsData) {
-        const freshProduct = await tx.product.findUnique({
-          where: { id: item.productId },
-          select: { id: true, name: true, stock: true, isActive: true },
-        });
-
-        if (!freshProduct || !freshProduct.isActive) {
-          throw new Error(`"${item.productName}" is currently unavailable.`);
-        }
-        if (freshProduct.stock < item.quantity) {
-          throw new Error(
-            freshProduct.stock <= 0
-              ? `"${item.productName}" is out of stock.`
-              : `Only ${freshProduct.stock} item${freshProduct.stock === 1 ? "" : "s"} of "${item.productName}" available.`
-          );
-        }
-      }
-
       // Generate cryptographically secure 6-digit delivery OTP and hash
       const { otp: deliveryOtp, hash: deliveryOtpHash } = generateDeliveryOtp();
 
@@ -247,24 +228,26 @@ export async function POST(request: NextRequest) {
         include: { items: true },
       });
 
-      // Atomically deduct stock for each item and log
-      for (const item of orderItemsData) {
-        const updatedProduct = await tx.product.update({
-          where: { id: item.productId },
-          data: { stock: { decrement: item.quantity } },
-          select: { id: true, stock: true },
-        });
+      // Atomically deduct stock and record inventory logs in parallel
+      await Promise.all(
+        orderItemsData.map(async (item) => {
+          const updatedProduct = await tx.product.update({
+            where: { id: item.productId },
+            data: { stock: { decrement: item.quantity } },
+            select: { id: true, stock: true },
+          });
 
-        await tx.inventoryLog.create({
-          data: {
-            productId: item.productId,
-            previousStock: updatedProduct.stock + item.quantity,
-            newStock: updatedProduct.stock,
-            changeQuantity: -item.quantity,
-            reason: `ORDER_PLACED:${order.orderNumber}`,
-          },
-        });
-      }
+          return tx.inventoryLog.create({
+            data: {
+              productId: item.productId,
+              previousStock: updatedProduct.stock + item.quantity,
+              newStock: updatedProduct.stock,
+              changeQuantity: -item.quantity,
+              reason: `ORDER_PLACED:${order.orderNumber}`,
+            },
+          });
+        })
+      );
 
       return order;
     });

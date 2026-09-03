@@ -111,60 +111,71 @@ export async function PATCH(
       updateData.status = OrderStatus.REJECTED;
     }
 
-    // 5. Transaction: Handle stock restoration if order is REJECTED or CANCELLED
+    // 5. Update Execution: Use transaction strictly when stock restoration is required (REJECTED/CANCELLED)
     const isBecomingRejectedOrCancelled =
       updateData.status === OrderStatus.REJECTED || updateData.status === OrderStatus.CANCELLED;
 
-    const updatedOrder = await prisma.$transaction(async (tx) => {
-      // If rejecting/cancelling, restore stock safely for each item
-      if (isBecomingRejectedOrCancelled) {
-        for (const item of existingOrder.items) {
-          const updatedProduct = await tx.product.update({
-            where: { id: item.productId },
-            data: { stock: { increment: item.quantity } },
-            select: { id: true, stock: true },
-          });
+    const orderInclude = {
+      items: true,
+      customer: {
+        select: {
+          id: true,
+          name: true,
+          phone: true,
+          email: true,
+        },
+      },
+      deliveryPartner: {
+        select: {
+          id: true,
+          name: true,
+          phone: true,
+        },
+      },
+    };
 
-          await tx.inventoryLog.create({
-            data: {
-              productId: item.productId,
-              previousStock: updatedProduct.stock - item.quantity,
-              newStock: updatedProduct.stock,
-              changeQuantity: item.quantity,
-              reason: updateData.status === OrderStatus.REJECTED
-                ? `ORDER_REJECTED:${existingOrder.orderNumber}`
-                : `ORDER_CANCELLED:${existingOrder.orderNumber}`,
-            },
-          });
-        }
-      }
+    let updatedOrder;
 
-      // Update the order record
-      const order = await tx.order.update({
+    if (isBecomingRejectedOrCancelled) {
+      updatedOrder = await prisma.$transaction(async (tx) => {
+        // Restore stock safely for each item in parallel
+        await Promise.all(
+          existingOrder.items.map(async (item) => {
+            const updatedProduct = await tx.product.update({
+              where: { id: item.productId },
+              data: { stock: { increment: item.quantity } },
+              select: { id: true, stock: true },
+            });
+
+            return tx.inventoryLog.create({
+              data: {
+                productId: item.productId,
+                previousStock: updatedProduct.stock - item.quantity,
+                newStock: updatedProduct.stock,
+                changeQuantity: item.quantity,
+                reason:
+                  updateData.status === OrderStatus.REJECTED
+                    ? `ORDER_REJECTED:${existingOrder.orderNumber}`
+                    : `ORDER_CANCELLED:${existingOrder.orderNumber}`,
+              },
+            });
+          })
+        );
+
+        return tx.order.update({
+          where: { id: existingOrder.id },
+          data: updateData,
+          include: orderInclude,
+        });
+      });
+    } else {
+      // Normal single-operation status advancement (fast, direct query)
+      updatedOrder = await prisma.order.update({
         where: { id: existingOrder.id },
         data: updateData,
-        include: {
-          items: true,
-          customer: {
-            select: {
-              id: true,
-              name: true,
-              phone: true,
-              email: true,
-            },
-          },
-          deliveryPartner: {
-            select: {
-              id: true,
-              name: true,
-              phone: true,
-            },
-          },
-        },
+        include: orderInclude,
       });
-
-      return order;
-    });
+    }
 
     return NextResponse.json({ order: updatedOrder });
   } catch (error) {

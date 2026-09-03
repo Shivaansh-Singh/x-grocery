@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, useRef, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { AdminHeader } from "@/components/admin/AdminHeader";
@@ -23,6 +23,9 @@ function AdminOrdersContent() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  // In-flight fetch guard
+  const isFetchingRef = useRef(false);
+
   // Modals state
   const [selectedOrderDetails, setSelectedOrderDetails] = useState<OrderRecord | null>(null);
   const [assigningOrder, setAssigningOrder] = useState<OrderRecord | null>(null);
@@ -33,7 +36,11 @@ function AdminOrdersContent() {
     setTimeout(() => setToastMessage(null), 4000);
   };
 
-  const loadOrdersAndRiders = async () => {
+  const loadOrdersAndRiders = async (isBackground = false) => {
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
+    if (!isBackground) setLoading(true);
+
     try {
       const [ordersRes, ridersRes] = await Promise.all([
         fetch("/api/orders"),
@@ -74,6 +81,7 @@ function AdminOrdersContent() {
       }
       setRiders(getLocalRiders());
     } finally {
+      isFetchingRef.current = false;
       setLoading(false);
     }
   };
@@ -87,15 +95,23 @@ function AdminOrdersContent() {
     }
     init();
 
+    // 12s interval for background updates, skipped when tab is in background
     const interval = setInterval(() => {
-      if (!ignore) {
-        loadOrdersAndRiders();
+      if (ignore) return;
+      if (typeof document !== "undefined" && document.hidden) return;
+      loadOrdersAndRiders(true);
+    }, 12000);
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden && !ignore) {
+        loadOrdersAndRiders(true);
       }
-    }, 4000);
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     const handleStorageChange = (e: StorageEvent) => {
       if (!ignore && (e.key === "rushd_orders" || e.key === "x_grocery_orders" || e.key === "rushd_riders")) {
-        loadOrdersAndRiders();
+        loadOrdersAndRiders(true);
       }
     };
     window.addEventListener("storage", handleStorageChange);
@@ -103,6 +119,7 @@ function AdminOrdersContent() {
     return () => {
       ignore = true;
       clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("storage", handleStorageChange);
     };
   }, []);
