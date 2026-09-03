@@ -67,19 +67,59 @@ async function ensureDefaultCategories(storeId: string) {
 
 export async function GET() {
   try {
-    const store = await getOrCreateDefaultStore();
-    const categories = await ensureDefaultCategories(store.id);
-
-    const rawProducts = await prisma.product.findMany({
-      where: { storeId: store.id },
+    // 1. Single coordinated query for Store X, its categories, and catalog products
+    let store = await prisma.store.findUnique({
+      where: { slug: "store-x" },
       include: {
-        category: true,
+        categories: {
+          orderBy: { sortOrder: "asc" },
+        },
+        products: {
+          include: {
+            category: true,
+          },
+          orderBy: { createdAt: "desc" },
+        },
       },
-      orderBy: { createdAt: "desc" },
     });
 
+    // Fallback if Store X is not yet initialized
+    if (!store) {
+      const createdStore = await getOrCreateDefaultStore();
+      const rawFallbackProducts = await prisma.product.findMany({
+        where: { storeId: createdStore.id },
+        include: {
+          category: true,
+        },
+        orderBy: { createdAt: "desc" },
+      });
+      const fallbackCategories = await ensureDefaultCategories(createdStore.id);
+      const products = rawFallbackProducts.map((p) => ({
+        ...p,
+        unit: p.unitDisplay,
+        isAvailable: p.isActive,
+      }));
+      return NextResponse.json({ products, categories: fallbackCategories });
+    }
+
+    let categories = store?.categories || [];
+    if (categories.length === 0 && store?.id) {
+      categories = await ensureDefaultCategories(store.id);
+    }
+
+    let rawProducts = store?.products;
+    if (!rawProducts && store?.id) {
+      rawProducts = await prisma.product.findMany({
+        where: { storeId: store.id },
+        include: {
+          category: true,
+        },
+        orderBy: { createdAt: "desc" },
+      });
+    }
+
     // Map unitDisplay and isActive for component compatibility
-    const products = rawProducts.map((p) => ({
+    const products = (rawProducts || []).map((p) => ({
       ...p,
       unit: p.unitDisplay,
       isAvailable: p.isActive,

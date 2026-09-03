@@ -9,14 +9,13 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const customerId = searchParams.get("customerId");
 
-    const store = await prisma.store.findUnique({
-      where: { slug: "store-x" },
-    });
+    const whereCondition: {
+      store?: { slug: string };
+      customerId?: string;
+    } = {
+      store: { slug: "store-x" },
+    };
 
-    const whereCondition: Record<string, unknown> = {};
-    if (store) {
-      whereCondition.storeId = store.id;
-    }
     if (customerId) {
       whereCondition.customerId = customerId;
     }

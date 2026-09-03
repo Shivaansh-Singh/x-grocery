@@ -57,28 +57,62 @@ export async function GET(request: NextRequest) {
         })
       : feedbacks;
 
-    // Generate signed URLs for private storage items
-    const supabase = createAdminClient();
-    const feedbacksWithSignedUrls = await Promise.all(
-      filtered.map(async (f) => {
-        if (!f.imageUrl) return f;
-        // If already full external URL or legacy local path, return as is
-        if (f.imageUrl.startsWith("http://") || f.imageUrl.startsWith("https://") || f.imageUrl.startsWith("/uploads/")) {
-          return f;
-        }
+    // Generate signed URLs for private storage items with safe timeout fallback
+    const itemsNeedingSignedUrl = filtered.filter(
+      (f) =>
+        f.imageUrl &&
+        !f.imageUrl.startsWith("http://") &&
+        !f.imageUrl.startsWith("https://") &&
+        !f.imageUrl.startsWith("/uploads/") &&
+        !f.imageUrl.startsWith("data:")
+    );
+
+    let feedbacksWithSignedUrls = filtered;
+
+    if (itemsNeedingSignedUrl.length > 0) {
+      const supabase = createAdminClient();
+      
+      const getSignedUrlWithTimeout = async (
+        storagePath: string,
+        timeoutMs = 1200
+      ): Promise<string> => {
         try {
-          const { data } = await supabase.storage
+          const timeoutPromise = new Promise<null>((resolve) =>
+            setTimeout(() => resolve(null), timeoutMs)
+          );
+          const signedUrlPromise = supabase.storage
             .from("feedback")
-            .createSignedUrl(f.imageUrl, 3600);
+            .createSignedUrl(storagePath, 3600)
+            .then(({ data }) => data?.signedUrl || null)
+            .catch(() => null);
+
+          const result = await Promise.race([signedUrlPromise, timeoutPromise]);
+          return result || storagePath;
+        } catch {
+          return storagePath;
+        }
+      };
+
+      feedbacksWithSignedUrls = await Promise.all(
+        filtered.map(async (f) => {
+          if (
+            !f.imageUrl ||
+            f.imageUrl.startsWith("http://") ||
+            f.imageUrl.startsWith("https://") ||
+            f.imageUrl.startsWith("/uploads/") ||
+            f.imageUrl.startsWith("data:")
+          ) {
+            return f;
+          }
+
+          const signedUrl = await getSignedUrlWithTimeout(f.imageUrl);
           return {
             ...f,
-            imageUrl: data?.signedUrl || f.imageUrl,
+            imageUrl: signedUrl,
           };
-        } catch {
-          return f;
-        }
-      })
-    );
+        })
+      );
+    }
 
     const counts = {
       total: feedbacks.length,

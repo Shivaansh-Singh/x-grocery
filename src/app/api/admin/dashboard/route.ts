@@ -37,49 +37,58 @@ export async function GET(request: NextRequest) {
 
     const dateFilter = startDate ? { createdAt: { gte: startDate } } : {};
 
-    // 2. Fetch all orders (with date filter for range, and all-time for lifetime totals)
+    // 2. Fetch all orders and related entities in a single parallel batch
     const [
       allOrders,
-      rangeOrders,
       products,
-      categories,
       customers,
       deliveryPartners,
     ] = await Promise.all([
       prisma.order.findMany({
-        include: {
-          items: true,
+        select: {
+          id: true,
+          orderNumber: true,
+          totalAmount: true,
+          status: true,
+          paymentMethod: true,
+          paymentStatus: true,
+          deliveryAddress: true,
+          notes: true,
+          createdAt: true,
+          customerId: true,
           customer: {
             select: { id: true, name: true, phone: true, email: true },
           },
           deliveryPartner: {
             select: { id: true, name: true, phone: true },
           },
-        },
-        orderBy: { createdAt: "desc" },
-      }),
-      prisma.order.findMany({
-        where: dateFilter,
-        include: {
-          items: true,
-          customer: {
-            select: { id: true, name: true, phone: true, email: true },
-          },
-          deliveryPartner: {
-            select: { id: true, name: true, phone: true },
+          items: {
+            select: {
+              id: true,
+              productId: true,
+              productName: true,
+              unitPrice: true,
+              quantity: true,
+              subtotal: true,
+            },
           },
         },
         orderBy: { createdAt: "desc" },
       }),
       prisma.product.findMany({
-        include: {
+        select: {
+          id: true,
+          name: true,
+          price: true,
+          unitDisplay: true,
+          stock: true,
+          isActive: true,
           category: {
             select: { id: true, name: true, slug: true },
           },
         },
         orderBy: { stock: "asc" },
       }),
-      prisma.category.findMany(),
       prisma.user.findMany({
         where: { role: "CUSTOMER" },
         select: { id: true, name: true, phone: true, email: true, createdAt: true },
@@ -89,6 +98,11 @@ export async function GET(request: NextRequest) {
         select: { id: true, name: true, phone: true, email: true },
       }),
     ]);
+
+    // Compute range-filtered orders in memory (zero extra database roundtrips)
+    const rangeOrders = startDate
+      ? allOrders.filter((o) => new Date(o.createdAt) >= startDate)
+      : allOrders;
 
     // 3. Top Summary Metrics (Scoped to selected date range)
     const totalOrders = rangeOrders.length;
