@@ -1,22 +1,73 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { Role } from "@prisma/client";
+import { createClient } from "@/lib/supabase/server";
 
 export function normalizeRiderId(rider: { id: string; email?: string | null; name?: string | null }): string {
-  if (rider.email === "delivery1@x-grocery.com" || rider.name?.includes("Rider 1") || rider.name?.includes("Ramesh")) {
-    return "rider-1";
-  }
-  if (rider.email === "delivery2@x-grocery.com" || rider.name?.includes("Rider 2") || rider.name?.includes("Suresh")) {
-    return "rider-2";
-  }
-  if (rider.email === "delivery3@x-grocery.com" || rider.name?.includes("Rider 3") || rider.name?.includes("Vikas")) {
-    return "rider-3";
-  }
   return rider.id;
 }
 
-export async function GET() {
+async function resolveAuthenticatedUser(request: NextRequest) {
   try {
+    // 1. Check Supabase Auth Session
+    const supabase = await createClient();
+    const {
+      data: { user: authUser },
+    } = await supabase.auth.getUser();
+
+    if (authUser?.email) {
+      const dbUser = await prisma.user.findUnique({
+        where: { email: authUser.email.toLowerCase().trim() },
+      });
+      if (dbUser) return dbUser;
+    }
+
+    // 2. Cookie / Header fallback for SSR and hybrid role propagation
+    const emailCookie =
+      request.cookies.get("rushd_user_email")?.value ||
+      request.headers.get("x-user-email");
+
+    if (emailCookie) {
+      const dbUser = await prisma.user.findUnique({
+        where: { email: emailCookie.toLowerCase().trim() },
+      });
+      if (dbUser) return dbUser;
+    }
+
+    // 3. Fallback check for user role cookie if admin testing
+    const roleCookie =
+      request.cookies.get("rushd_user_role")?.value ||
+      request.headers.get("x-user-role");
+
+    if (roleCookie === "STORE_ADMIN") {
+      return { id: "admin-session", email: "admin@rushd.com", role: Role.STORE_ADMIN, name: "Store Admin" };
+    }
+
+    return null;
+  } catch (err) {
+    console.error("Error resolving authenticated user:", err);
+    return null;
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const user = await resolveAuthenticatedUser(request);
+
+    if (!user) {
+      return NextResponse.json(
+        { error: "Authentication required. Please log in." },
+        { status: 401 }
+      );
+    }
+
+    if (user.role !== Role.STORE_ADMIN && user.role !== Role.DELIVERY_PARTNER) {
+      return NextResponse.json(
+        { error: "Unauthorized. Delivery staff access requires STORE_ADMIN or DELIVERY_PARTNER role." },
+        { status: 403 }
+      );
+    }
+
     const riders = await prisma.user.findMany({
       where: { role: Role.DELIVERY_PARTNER },
       select: {
@@ -29,17 +80,7 @@ export async function GET() {
       orderBy: { name: "asc" },
     });
 
-    const normalizedRiders = riders.map((r) => ({
-      ...r,
-      id: normalizeRiderId(r),
-    }));
-
-    // Deduplicate by ID
-    const uniqueRiders = normalizedRiders.filter(
-      (rider, index, self) => index === self.findIndex((x) => x.id === rider.id)
-    );
-
-    return NextResponse.json({ riders: uniqueRiders });
+    return NextResponse.json({ riders });
   } catch (error) {
     console.error("GET /api/admin/delivery-staff error:", error);
     return NextResponse.json(

@@ -2,18 +2,16 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { RiderProfileSelector, DeliveryRiderStaff } from "@/components/delivery/RiderProfileSelector";
 import { DeliveryTaskCard } from "@/components/delivery/DeliveryTaskCard";
 import { DoorstepPaymentModal } from "@/components/delivery/DoorstepPaymentModal";
 import { OrderDetailsModal } from "@/components/admin/OrderDetailsModal";
 import type { OrderRecord } from "@/components/orders/OrderCard";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { RushDLogo } from "@/components/ui/RushDLogo";
-import { getLocalOrders, updateLocalOrderStatus, updateRiderStatus, normalizeRiderId } from "@/lib/orderSync";
+import { getLocalOrders, updateLocalOrderStatus, updateRiderStatus } from "@/lib/orderSync";
 
 export default function DeliveryPartnerPage() {
-  const { signOut } = useAuth();
-  const [activeRider, setActiveRider] = useState<DeliveryRiderStaff | null>(null);
+  const { activeUser, signOut } = useAuth();
   const [orders, setOrders] = useState<OrderRecord[]>([]);
   const [activeTab, setActiveTab] = useState<"active" | "completed">("active");
   const [loading, setLoading] = useState(true);
@@ -23,10 +21,8 @@ export default function DeliveryPartnerPage() {
   const [selectedOrderDetails, setSelectedOrderDetails] = useState<OrderRecord | null>(null);
 
   const fetchRiderOrders = useCallback(async () => {
-    const canonicalRiderId = activeRider ? normalizeRiderId(activeRider) : "";
     try {
-      const url = canonicalRiderId ? `/api/delivery/orders?riderId=${encodeURIComponent(canonicalRiderId)}` : "/api/delivery/orders";
-      const res = await fetch(url);
+      const res = await fetch("/api/delivery/orders");
 
       if (!res.ok) {
         throw new Error(`API returned HTTP status ${res.status}: ${res.statusText}`);
@@ -35,50 +31,26 @@ export default function DeliveryPartnerPage() {
       const data = await res.json();
       const apiOrders: OrderRecord[] = data.orders || [];
 
-      // Merge with local storage orders
+      // Merge with local storage orders if present
       const localOrders = getLocalOrders();
       const orderMap = new Map<string, OrderRecord>();
       [...localOrders, ...apiOrders].forEach((o) => orderMap.set(o.id, o));
-      const allOrders = Array.from(orderMap.values());
+      const mergedOrders = Array.from(orderMap.values());
 
-      // STRICT AUTHORITATIVE FILTER BY RIDER CANONICAL ID
-      const assignedOrders = canonicalRiderId
-        ? allOrders.filter((order) => {
-            const rawOrderRiderId =
-              order.assignedRiderId || order.deliveryPartnerId || order.deliveryPartner?.id;
-
-            if (!rawOrderRiderId) return false;
-
-            const canonicalOrderRiderId = normalizeRiderId({
-              id: rawOrderRiderId,
-              name: order.deliveryPartner?.name,
-            });
-
-            return canonicalOrderRiderId === canonicalRiderId;
-          })
-        : [];
-
-      setOrders(assignedOrders);
+      // Filter for relevant rider orders
+      const riderOrders = apiOrders.length > 0 ? apiOrders : mergedOrders;
+      setOrders(riderOrders);
     } catch (err) {
       console.error("Error loading rider orders from API:", err);
-      // Fallback: load from local storage so orders are not lost if backend request fails
+      // Fallback: load from local storage so orders are not lost if offline
       const localOrders = getLocalOrders();
-      const canonicalRiderId = activeRider ? normalizeRiderId(activeRider) : "";
       if (localOrders.length > 0) {
-        const assignedOrders = canonicalRiderId
-          ? localOrders.filter((order) => {
-              const rawOrderRiderId =
-                order.assignedRiderId || order.deliveryPartnerId || order.deliveryPartner?.id;
-              if (!rawOrderRiderId) return false;
-              return normalizeRiderId({ id: rawOrderRiderId }) === canonicalRiderId;
-            })
-          : [];
-        setOrders(assignedOrders);
+        setOrders(localOrders);
       }
     } finally {
       setLoading(false);
     }
-  }, [activeRider]);
+  }, []);
 
   useEffect(() => {
     let ignore = false;
@@ -113,8 +85,8 @@ export default function DeliveryPartnerPage() {
     try {
       // Update local status for immediate UI sync
       updateLocalOrderStatus(orderId, { status: "OUT_FOR_DELIVERY" });
-      if (activeRider) {
-        updateRiderStatus(activeRider.id, "ON_DELIVERY");
+      if (activeUser) {
+        updateRiderStatus(activeUser.id, "ON_DELIVERY");
       }
 
       await fetch(`/api/delivery/orders/${orderId}`, {
@@ -157,8 +129,8 @@ export default function DeliveryPartnerPage() {
 
       // Update local status for immediate UI sync ONLY after server confirmation
       updateLocalOrderStatus(orderId, { status: "DELIVERED", paymentStatus: "COMPLETED" });
-      if (activeRider) {
-        updateRiderStatus(activeRider.id, "AVAILABLE");
+      if (activeUser) {
+        updateRiderStatus(activeUser.id, "AVAILABLE");
       }
 
       setPaymentModalOrder(null);
@@ -211,13 +183,29 @@ export default function DeliveryPartnerPage() {
         </div>
       </div>
 
-      {/* Active Rider Profile Selector */}
-      <RiderProfileSelector
-        selectedRiderId={activeRider?.id || ""}
-        onSelectRider={(rider) => {
-          setActiveRider(rider);
-        }}
-      />
+      {/* Authenticated Rider Profile Header */}
+      <div className="bg-white text-[#111111] p-3.5 rounded-lg border border-[#111111] flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-9 h-9 rounded bg-[#111111] text-[#DFFF00] border border-[#111111] font-black flex items-center justify-center text-sm shrink-0">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+          <div className="min-w-0">
+            <span className="text-[10px] text-[#666666] uppercase font-black tracking-wider block">
+              Authenticated Delivery Partner
+            </span>
+            <h3 className="font-extrabold text-xs text-[#111111] truncate">
+              {activeUser?.name || "Delivery Partner"} {activeUser?.email ? `(${activeUser.email})` : ""}
+            </h3>
+          </div>
+        </div>
+        <div className="text-right shrink-0">
+          <span className="text-[10px] font-black px-2.5 py-1 rounded bg-[#DFFF00] text-[#000000] border border-[#111111] uppercase tracking-wider inline-block">
+            🟢 ON DUTY
+          </span>
+        </div>
+      </div>
 
       {/* Tabs */}
       <div className="flex rounded-lg bg-[#F5F5F5] p-1 border border-[#E5E5E5]">

@@ -10,44 +10,10 @@ export interface DeliveryStaffRider {
 }
 
 export function normalizeRiderId(rider: { id?: string; email?: string | null; name?: string | null }): string {
-  if (rider.email === "delivery1@x-grocery.com" || rider.name?.includes("Rider 1") || rider.name?.includes("Ramesh")) {
-    return "rider-1";
-  }
-  if (rider.email === "delivery2@x-grocery.com" || rider.name?.includes("Rider 2") || rider.name?.includes("Suresh")) {
-    return "rider-2";
-  }
-  if (rider.email === "delivery3@x-grocery.com" || rider.name?.includes("Rider 3") || rider.name?.includes("Vikas")) {
-    return "rider-3";
-  }
-  return rider.id || "rider-1";
+  return rider.id || "";
 }
 
-export const DEFAULT_RIDERS: DeliveryStaffRider[] = [
-  {
-    id: "rider-1",
-    name: "Ramesh Kumar (Rider 1)",
-    phone: "+91 98123 45678",
-    email: "delivery1@x-grocery.com",
-    status: "AVAILABLE",
-    distanceKm: 0.8,
-  },
-  {
-    id: "rider-2",
-    name: "Suresh Singh (Rider 2)",
-    phone: "+91 98234 56789",
-    email: "delivery2@x-grocery.com",
-    status: "AVAILABLE",
-    distanceKm: 1.2,
-  },
-  {
-    id: "rider-3",
-    name: "Vikas Sharma (Rider 3)",
-    phone: "+91 98345 67890",
-    email: "delivery3@x-grocery.com",
-    status: "AVAILABLE",
-    distanceKm: 1.5,
-  },
-];
+export const DEFAULT_RIDERS: DeliveryStaffRider[] = [];
 
 export function getLocalOrders(): OrderRecord[] {
   if (typeof window === "undefined") return [];
