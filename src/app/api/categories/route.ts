@@ -1,20 +1,34 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+const DEFAULT_CATEGORIES = [
+  { name: "Fresh Produce", slug: "fresh-produce", icon: "carrot", sortOrder: 1 },
+  { name: "Dairy & Eggs", slug: "dairy-eggs", icon: "milk", sortOrder: 2 },
+  { name: "Snacks & Munchies", slug: "snacks-munchies", icon: "cookie", sortOrder: 3 },
+  { name: "Instant Noodles & Ready Meals", slug: "instant-food", icon: "utensils", sortOrder: 4 },
+  { name: "Beverages & Drinks", slug: "beverages-drinks", icon: "cup-soda", sortOrder: 5 },
+  { name: "Hostel Essentials", slug: "hostel-essentials", icon: "package", sortOrder: 6 },
+];
+
 export async function GET() {
   try {
-    const store = await prisma.store.findUnique({
+    let store = await prisma.store.findUnique({
       where: { slug: "store-x" },
     });
 
     if (!store) {
-      return NextResponse.json(
-        { categories: [], message: "Store X default catalog" },
-        { status: 200 }
-      );
+      store = await prisma.store.create({
+        data: {
+          name: "Store X (VIT Bhopal Off-Campus Hub)",
+          slug: "store-x",
+          address: "Kotri Kalan, Near VIT Bhopal Campus Road, Bhopal, MP",
+          phone: "+91 9244302120",
+          isActive: true,
+        },
+      });
     }
 
-    const categories = await prisma.category.findMany({
+    let categories = await prisma.category.findMany({
       where: { storeId: store.id },
       include: {
         _count: {
@@ -23,6 +37,37 @@ export async function GET() {
       },
       orderBy: { sortOrder: "asc" },
     });
+
+    if (categories.length === 0) {
+      for (const cat of DEFAULT_CATEGORIES) {
+        await prisma.category.upsert({
+          where: {
+            storeId_slug: {
+              storeId: store.id,
+              slug: cat.slug,
+            },
+          },
+          update: {},
+          create: {
+            storeId: store.id,
+            name: cat.name,
+            slug: cat.slug,
+            icon: cat.icon,
+            sortOrder: cat.sortOrder,
+          },
+        });
+      }
+
+      categories = await prisma.category.findMany({
+        where: { storeId: store.id },
+        include: {
+          _count: {
+            select: { products: true },
+          },
+        },
+        orderBy: { sortOrder: "asc" },
+      });
+    }
 
     return NextResponse.json({ categories });
   } catch (error) {
@@ -33,3 +78,4 @@ export async function GET() {
     );
   }
 }
+

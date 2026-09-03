@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 
 interface CategoryOption {
@@ -33,6 +33,12 @@ export function CreateProductModal({
   const [error, setError] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!categoryId && categories.length > 0) {
+      setCategoryId(categories[0].id);
+    }
+  }, [categories, categoryId]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     setImageError(null);
