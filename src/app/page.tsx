@@ -124,18 +124,8 @@ function CustomerHomeContent() {
       {/* Live Search Bar */}
       <SearchBar onSearch={handleSearch} initialQuery={searchQuery} />
 
-      {/* Category Filter Pills */}
-      <div id="categories">
-        <CategoryPills
-          categories={categories}
-          activeCategory={activeCategory}
-          onSelectCategory={handleSelectCategory}
-          loading={loadingCategories}
-        />
-      </div>
-
       {/* Editorial High-Contrast Hero Banner */}
-      {!searchQuery && activeCategory === "all" && (
+      {!searchQuery && (
         <div className="bg-[#000000] border border-[#111111] rounded-lg p-6 sm:p-8 relative overflow-hidden text-white">
           <div className="relative z-10 space-y-3">
             <div className="flex items-center gap-2">
@@ -151,7 +141,7 @@ function CustomerHomeContent() {
             </p>
             <div className="pt-1">
               <a
-                href="#catalog"
+                href="#categories"
                 className="inline-block px-5 py-2.5 rounded bg-[#DFFF00] hover:bg-[#C8E600] text-[#000000] text-xs font-black tracking-wider transition-colors border border-[#111111]"
               >
                 SHOP NOW →
@@ -160,6 +150,16 @@ function CustomerHomeContent() {
           </div>
         </div>
       )}
+
+      {/* Category Navigation / Filter Row (Directly below Hero) */}
+      <div id="categories">
+        <CategoryPills
+          categories={categories}
+          activeCategory={activeCategory}
+          onSelectCategory={handleSelectCategory}
+          loading={loadingCategories}
+        />
+      </div>
 
       {/* Product Section Header & Grid */}
       <div id="catalog" className="pt-1">
