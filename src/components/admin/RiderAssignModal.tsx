@@ -27,6 +27,8 @@ export function RiderAssignModal({
 
   const handleConfirm = () => {
     if (!selectedRiderId) return;
+    const isValid = uniqueRiders.some((r) => r.id === selectedRiderId);
+    if (!isValid) return;
     onAssignRider(order.id, selectedRiderId);
     onClose();
   };

@@ -26,6 +26,10 @@ function AdminOrdersContent() {
   // In-flight fetch guard
   const isFetchingRef = useRef(false);
 
+  // Active in-flight order mutation tracker to guard against double-clicks and polling races
+  const mutatingOrdersRef = useRef<Map<string, Partial<OrderRecord>>>(new Map());
+  const [mutatingIds, setMutatingIds] = useState<Set<string>>(new Set());
+
   // Modals state
   const [selectedOrderDetails, setSelectedOrderDetails] = useState<OrderRecord | null>(null);
   const [assigningOrder, setAssigningOrder] = useState<OrderRecord | null>(null);
@@ -53,19 +57,30 @@ function AdminOrdersContent() {
       const apiOrders: OrderRecord[] = ordersData.orders || [];
       const localOrders = getLocalOrders();
 
-      const orderMap = new Map<string, OrderRecord>();
-      [...localOrders, ...apiOrders].forEach((o) => orderMap.set(o.id, o));
-      const mergedOrders = Array.from(orderMap.values());
+      setOrders((currentOrders) => {
+        const orderMap = new Map<string, OrderRecord>();
+        // 1. Add local orders
+        localOrders.forEach((o) => orderMap.set(o.id, o));
+        // 2. Add API orders, preserving pending mutation state for any in-flight order
+        apiOrders.forEach((o) => {
+          const isMutating =
+            mutatingOrdersRef.current.has(o.id) || mutatingOrdersRef.current.has(o.orderNumber);
+          if (isMutating) {
+            const existing =
+              currentOrders.find((cur) => cur.id === o.id || cur.orderNumber === o.orderNumber) || o;
+            orderMap.set(o.id, existing);
+          } else {
+            orderMap.set(o.id, o);
+          }
+        });
+        return Array.from(orderMap.values());
+      });
 
-      setOrders(mergedOrders);
       setErrorMessage(null);
 
+      // Authoritative API delivery staff roster
       const apiRiders: DeliveryStaffRider[] = ridersData.riders || [];
-      const localRiders = getLocalRiders();
-      const riderMap = new Map<string, DeliveryStaffRider>();
-      [...localRiders, ...apiRiders].forEach((r) => riderMap.set(r.id, r));
-
-      const uniqueRiders = Array.from(riderMap.values()).filter(
+      const uniqueRiders = apiRiders.filter(
         (rider, index, self) =>
           index === self.findIndex((r) => r.id === rider.id || (r.email && r.email === rider.email))
       );
@@ -79,7 +94,6 @@ function AdminOrdersContent() {
       } else {
         setErrorMessage("Unable to load orders. Please check network connection.");
       }
-      setRiders(getLocalRiders());
     } finally {
       isFetchingRef.current = false;
       setLoading(false);
@@ -130,33 +144,40 @@ function AdminOrdersContent() {
     deliveryPartnerId?: string,
     rejectionReason?: string
   ) => {
+    // Guard against rapid duplicate clicks on the same order while in flight
+    if (mutatingOrdersRef.current.has(orderId)) return;
+
     // 1. Snapshot previous state for rollback on error
     const previousOrders = [...orders];
 
+    const updates: Partial<OrderRecord> = {
+      status: newStatus as OrderRecord["status"],
+      assignedRiderId: deliveryPartnerId || undefined,
+      deliveryPartnerId: deliveryPartnerId || undefined,
+    };
+
+    let matchedRider: DeliveryStaffRider | undefined;
+    if (deliveryPartnerId) {
+      matchedRider = riders.find((r) => r.id === deliveryPartnerId);
+      if (matchedRider) {
+        updates.deliveryPartner = {
+          id: matchedRider.id,
+          name: matchedRider.name,
+          phone: matchedRider.phone || null,
+        };
+        updateRiderStatus(matchedRider.id, "ASSIGNED");
+      }
+    }
+
+    if (rejectionReason) {
+      updates.notes = `Rejected by Store: ${rejectionReason}`;
+    }
+
+    // Register active mutation lock
+    mutatingOrdersRef.current.set(orderId, updates);
+    setMutatingIds(new Set(mutatingOrdersRef.current.keys()));
+
     try {
-      const updates: Partial<OrderRecord> = {
-        status: newStatus as OrderRecord["status"],
-        assignedRiderId: deliveryPartnerId || undefined,
-        deliveryPartnerId: deliveryPartnerId || undefined,
-      };
-
-      let matchedRider: DeliveryStaffRider | undefined;
-      if (deliveryPartnerId) {
-        matchedRider = riders.find((r) => r.id === deliveryPartnerId);
-        if (matchedRider) {
-          updates.deliveryPartner = {
-            id: matchedRider.id,
-            name: matchedRider.name,
-            phone: matchedRider.phone || null,
-          };
-          updateRiderStatus(matchedRider.id, "ASSIGNED");
-        }
-      }
-
-      if (rejectionReason) {
-        updates.notes = `Rejected by Store: ${rejectionReason}`;
-      }
-
       // 2. Instant Optimistic UI Update (0ms perceived latency)
       setOrders((prev) =>
         prev.map((o) => {
@@ -208,13 +229,16 @@ function AdminOrdersContent() {
         setOrders(previousOrders);
         showToast(data.error || "Order could not be updated.");
       } else {
-        // Silent non-blocking background sync
+        // Silent non-blocking background sync with fresh authoritative server data
         loadOrdersAndRiders(true);
       }
     } catch (err) {
       console.error("Error updating order status:", err);
       setOrders(previousOrders);
       showToast("Order could not be updated.");
+    } finally {
+      mutatingOrdersRef.current.delete(orderId);
+      setMutatingIds(new Set(mutatingOrdersRef.current.keys()));
     }
   };
 
@@ -558,13 +582,15 @@ function AdminOrdersContent() {
                     <>
                       <button
                         onClick={() => setRejectingOrder(order)}
-                        className="py-2 px-3.5 rounded bg-white hover:bg-[#FFF0F0] text-[#D92D3A] font-bold text-xs transition-colors border border-[#D92D3A]"
+                        disabled={mutatingIds.has(order.id) || mutatingIds.has(order.orderNumber)}
+                        className="py-2 px-3.5 rounded bg-white hover:bg-[#FFF0F0] text-[#D92D3A] font-bold text-xs transition-colors border border-[#D92D3A] disabled:opacity-50"
                       >
                         Reject
                       </button>
                       <button
                         onClick={() => handleUpdateStatus(order.id, "ACCEPTED")}
-                        className="flex-1 py-2 rounded bg-[#DFFF00] hover:bg-[#C8E600] text-[#000000] font-black text-xs transition-colors border border-[#111111]"
+                        disabled={mutatingIds.has(order.id) || mutatingIds.has(order.orderNumber)}
+                        className="flex-1 py-2 rounded bg-[#DFFF00] hover:bg-[#C8E600] text-[#000000] font-black text-xs transition-colors border border-[#111111] disabled:opacity-50"
                       >
                         ACCEPT ORDER ✓
                       </button>
@@ -574,7 +600,8 @@ function AdminOrdersContent() {
                   {isAccepted && (
                     <button
                       onClick={() => handleUpdateStatus(order.id, "PREPARING")}
-                      className="flex-1 py-2 rounded bg-[#111111] hover:bg-black text-white font-black text-xs transition-colors border border-[#111111]"
+                      disabled={mutatingIds.has(order.id) || mutatingIds.has(order.orderNumber)}
+                      className="flex-1 py-2 rounded bg-[#111111] hover:bg-black text-white font-black text-xs transition-colors border border-[#111111] disabled:opacity-50"
                     >
                       Start Packing Items 📦
                     </button>
@@ -583,7 +610,8 @@ function AdminOrdersContent() {
                   {isPreparing && (
                     <button
                       onClick={() => handleUpdateStatus(order.id, "ASSIGNED")}
-                      className="flex-1 py-2 rounded bg-[#111111] hover:bg-black text-[#DFFF00] font-black text-xs transition-colors border border-[#111111]"
+                      disabled={mutatingIds.has(order.id) || mutatingIds.has(order.orderNumber)}
+                      className="flex-1 py-2 rounded bg-[#111111] hover:bg-black text-[#DFFF00] font-black text-xs transition-colors border border-[#111111] disabled:opacity-50"
                     >
                       Mark Ready for Pickup ⚡
                     </button>
@@ -592,7 +620,8 @@ function AdminOrdersContent() {
                   {(isAccepted || isPreparing || isReady) && (
                     <button
                       onClick={() => setAssigningOrder(order)}
-                      className="py-2 px-4 rounded bg-[#DFFF00] hover:bg-[#C8E600] text-[#000000] font-black text-xs transition-colors border border-[#111111]"
+                      disabled={mutatingIds.has(order.id) || mutatingIds.has(order.orderNumber)}
+                      className="py-2 px-4 rounded bg-[#DFFF00] hover:bg-[#C8E600] text-[#000000] font-black text-xs transition-colors border border-[#111111] disabled:opacity-50"
                     >
                       {order.deliveryPartner ? "Reassign Rider 🛵" : "Assign Rider 🛵"}
                     </button>

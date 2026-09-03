@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { OrderStatus } from "@prisma/client";
+import { OrderStatus, Role } from "@prisma/client";
 
 export async function PATCH(
   request: NextRequest,
@@ -76,7 +76,12 @@ export async function PATCH(
 
     // Validate invalid backward transitions
     if (targetStatus) {
-      if (currentStatus === OrderStatus.OUT_FOR_DELIVERY && (targetStatus === OrderStatus.PENDING || targetStatus === OrderStatus.ACCEPTED || targetStatus === OrderStatus.PREPARING)) {
+      if (
+        currentStatus === OrderStatus.OUT_FOR_DELIVERY &&
+        (targetStatus === OrderStatus.PENDING ||
+          targetStatus === OrderStatus.ACCEPTED ||
+          targetStatus === OrderStatus.PREPARING)
+      ) {
         return NextResponse.json(
           { error: "Invalid status transition: Order is already out for delivery." },
           { status: 400 }
@@ -104,8 +109,25 @@ export async function PATCH(
       updateData.status = targetStatus;
     }
 
+    // 5. Authoritative Delivery Partner Validation
     if (deliveryPartnerId !== undefined) {
-      updateData.deliveryPartnerId = deliveryPartnerId;
+      if (deliveryPartnerId) {
+        const riderUser = await prisma.user.findUnique({
+          where: { id: deliveryPartnerId },
+          select: { id: true, role: true, name: true },
+        });
+
+        if (!riderUser || riderUser.role !== Role.DELIVERY_PARTNER) {
+          return NextResponse.json(
+            { error: "Invalid delivery partner. Selected user is not an active delivery partner." },
+            { status: 400 }
+          );
+        }
+        updateData.deliveryPartnerId = riderUser.id;
+      } else {
+        updateData.deliveryPartnerId = null;
+      }
+
       // If assigning a rider and currently ACCEPTED or PREPARING, advance to ASSIGNED (Ready for Pickup)
       if (!targetStatus && (currentStatus === OrderStatus.ACCEPTED || currentStatus === OrderStatus.PREPARING)) {
         updateData.status = OrderStatus.ASSIGNED;
@@ -117,7 +139,7 @@ export async function PATCH(
       updateData.status = OrderStatus.REJECTED;
     }
 
-    // 5. Update Execution: Use transaction strictly when stock restoration is required (REJECTED/CANCELLED)
+    // 6. Update Execution: Use transaction strictly when stock restoration is required (REJECTED/CANCELLED)
     const isBecomingRejectedOrCancelled =
       updateData.status === OrderStatus.REJECTED || updateData.status === OrderStatus.CANCELLED;
 
@@ -125,29 +147,36 @@ export async function PATCH(
 
     if (isBecomingRejectedOrCancelled && "items" in existingOrder && Array.isArray(existingOrder.items)) {
       updatedOrder = await prisma.$transaction(async (tx) => {
-        // Restore stock safely for each item in parallel
-        await Promise.all(
-          existingOrder.items.map(async (item) => {
-            const updatedProduct = await tx.product.update({
-              where: { id: item.productId },
-              data: { stock: { increment: item.quantity } },
-              select: { id: true, stock: true },
-            });
+        // Safe sequential stock restoration (prevents deadlock / serialization contention on duplicate items)
+        for (const item of existingOrder.items) {
+          const product = await tx.product.findUnique({
+            where: { id: item.productId },
+            select: { id: true, stock: true },
+          });
 
-            return tx.inventoryLog.create({
-              data: {
-                productId: item.productId,
-                previousStock: updatedProduct.stock - item.quantity,
-                newStock: updatedProduct.stock,
-                changeQuantity: item.quantity,
-                reason:
-                  updateData.status === OrderStatus.REJECTED
-                    ? `ORDER_REJECTED:${existingOrder.orderNumber}`
-                    : `ORDER_CANCELLED:${existingOrder.orderNumber}`,
-              },
-            });
-          })
-        );
+          if (!product) {
+            throw new Error(`Product not found: "${item.productName}" (${item.productId})`);
+          }
+
+          const updatedProduct = await tx.product.update({
+            where: { id: item.productId },
+            data: { stock: { increment: item.quantity } },
+            select: { id: true, stock: true },
+          });
+
+          await tx.inventoryLog.create({
+            data: {
+              productId: item.productId,
+              previousStock: product.stock,
+              newStock: updatedProduct.stock,
+              changeQuantity: item.quantity,
+              reason:
+                updateData.status === OrderStatus.REJECTED
+                  ? `ORDER_REJECTED:${existingOrder.orderNumber}`
+                  : `ORDER_CANCELLED:${existingOrder.orderNumber}`,
+            },
+          });
+        }
 
         return tx.order.update({
           where: { id: existingOrder.id },
@@ -181,6 +210,13 @@ export async function PATCH(
     return NextResponse.json({ order: updatedOrder });
   } catch (error) {
     console.error("PATCH /api/admin/orders/[id] error:", error);
+    const errorMessage = error instanceof Error ? error.message : "";
+    if (errorMessage.startsWith("Product not found:")) {
+      return NextResponse.json(
+        { error: `Cannot reject order: ${errorMessage}` },
+        { status: 400 }
+      );
+    }
     return NextResponse.json(
       { error: "Failed to update order" },
       { status: 500 }
