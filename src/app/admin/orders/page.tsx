@@ -130,6 +130,9 @@ function AdminOrdersContent() {
     deliveryPartnerId?: string,
     rejectionReason?: string
   ) => {
+    // 1. Snapshot previous state for rollback on error
+    const previousOrders = [...orders];
+
     try {
       const updates: Partial<OrderRecord> = {
         status: newStatus as OrderRecord["status"],
@@ -137,8 +140,9 @@ function AdminOrdersContent() {
         deliveryPartnerId: deliveryPartnerId || undefined,
       };
 
+      let matchedRider: DeliveryStaffRider | undefined;
       if (deliveryPartnerId) {
-        const matchedRider = riders.find((r) => r.id === deliveryPartnerId);
+        matchedRider = riders.find((r) => r.id === deliveryPartnerId);
         if (matchedRider) {
           updates.deliveryPartner = {
             id: matchedRider.id,
@@ -153,8 +157,39 @@ function AdminOrdersContent() {
         updates.notes = `Rejected by Store: ${rejectionReason}`;
       }
 
+      // 2. Instant Optimistic UI Update (0ms perceived latency)
+      setOrders((prev) =>
+        prev.map((o) => {
+          if (o.id === orderId || o.orderNumber === orderId) {
+            return {
+              ...o,
+              status: newStatus as OrderRecord["status"],
+              deliveryPartnerId: deliveryPartnerId || o.deliveryPartnerId,
+              assignedRiderId: deliveryPartnerId || o.assignedRiderId,
+              deliveryPartner: matchedRider
+                ? {
+                    id: matchedRider.id,
+                    name: matchedRider.name,
+                    phone: matchedRider.phone || null,
+                  }
+                : o.deliveryPartner,
+              notes: rejectionReason ? `Rejected by Store: ${rejectionReason}` : o.notes,
+            };
+          }
+          return o;
+        })
+      );
+
+      // 3. Update localStorage cache
       updateLocalOrderStatus(orderId, updates);
 
+      // 4. Immediate feedback toast
+      if (newStatus === "ACCEPTED") showToast("Order accepted.");
+      else if (newStatus === "REJECTED") showToast("Order rejected.");
+      else if (deliveryPartnerId) showToast("Rider assigned.");
+      else showToast(`Order status updated to ${newStatus}.`);
+
+      // 5. Backend PATCH in background
       const url = `/api/admin/orders/${orderId}`;
       const res = await fetch(url, {
         method: "PATCH",
@@ -169,17 +204,16 @@ function AdminOrdersContent() {
       const data = await res.json();
 
       if (!res.ok) {
+        // Rollback optimistic update on error
+        setOrders(previousOrders);
         showToast(data.error || "Order could not be updated.");
       } else {
-        if (newStatus === "ACCEPTED") showToast("Order accepted.");
-        else if (newStatus === "REJECTED") showToast("Order rejected.");
-        else if (deliveryPartnerId) showToast("Rider assigned.");
-        else showToast(`Order status updated to ${newStatus}.`);
+        // Silent non-blocking background sync
+        loadOrdersAndRiders(true);
       }
-
-      loadOrdersAndRiders();
     } catch (err) {
       console.error("Error updating order status:", err);
+      setOrders(previousOrders);
       showToast("Order could not be updated.");
     }
   };

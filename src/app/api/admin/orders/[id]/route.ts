@@ -27,15 +27,21 @@ export async function PATCH(
       return NextResponse.json({ error: "Order ID is required" }, { status: 400 });
     }
 
-    // 2. Fetch existing order
+    const isIncomingRejectionOrCancellation =
+      status === OrderStatus.REJECTED || status === OrderStatus.CANCELLED || Boolean(rejectionReason);
+
+    // 2. Fetch existing order (fetch items only if stock restoration is required)
     const existingOrder = await prisma.order.findFirst({
       where: {
         OR: [{ id }, { orderNumber: id }],
       },
-      include: {
-        items: true,
-        deliveryPartner: true,
-        customer: true,
+      select: {
+        id: true,
+        orderNumber: true,
+        status: true,
+        notes: true,
+        deliveryPartnerId: true,
+        ...(isIncomingRejectionOrCancellation ? { items: true } : {}),
       },
     });
 
@@ -115,28 +121,9 @@ export async function PATCH(
     const isBecomingRejectedOrCancelled =
       updateData.status === OrderStatus.REJECTED || updateData.status === OrderStatus.CANCELLED;
 
-    const orderInclude = {
-      items: true,
-      customer: {
-        select: {
-          id: true,
-          name: true,
-          phone: true,
-          email: true,
-        },
-      },
-      deliveryPartner: {
-        select: {
-          id: true,
-          name: true,
-          phone: true,
-        },
-      },
-    };
-
     let updatedOrder;
 
-    if (isBecomingRejectedOrCancelled) {
+    if (isBecomingRejectedOrCancelled && "items" in existingOrder && Array.isArray(existingOrder.items)) {
       updatedOrder = await prisma.$transaction(async (tx) => {
         // Restore stock safely for each item in parallel
         await Promise.all(
@@ -165,15 +152,29 @@ export async function PATCH(
         return tx.order.update({
           where: { id: existingOrder.id },
           data: updateData,
-          include: orderInclude,
+          select: {
+            id: true,
+            orderNumber: true,
+            status: true,
+            deliveryPartnerId: true,
+            notes: true,
+            updatedAt: true,
+          },
         });
       });
     } else {
-      // Normal single-operation status advancement (fast, direct query)
+      // Normal single-operation status advancement (fast, direct, single SQL query)
       updatedOrder = await prisma.order.update({
         where: { id: existingOrder.id },
         data: updateData,
-        include: orderInclude,
+        select: {
+          id: true,
+          orderNumber: true,
+          status: true,
+          deliveryPartnerId: true,
+          notes: true,
+          updatedAt: true,
+        },
       });
     }
 
