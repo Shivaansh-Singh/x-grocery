@@ -12,13 +12,16 @@ interface CreateProductModalProps {
   categories: CategoryOption[];
   onClose: () => void;
   onSuccess: () => void;
+  onCategoryCreated?: (newCategory: CategoryOption) => void;
 }
 
 export function CreateProductModal({
   categories,
   onClose,
   onSuccess,
+  onCategoryCreated,
 }: CreateProductModalProps) {
+  const [localCategories, setLocalCategories] = useState<CategoryOption[]>(categories);
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [unit, setUnit] = useState("1 pack");
@@ -32,13 +35,59 @@ export function CreateProductModal({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // New Category inline creation state
+  const [isAddingCategory, setIsAddingCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [creatingCategory, setCreatingCategory] = useState(false);
+  const [categoryError, setCategoryError] = useState<string | null>(null);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    setLocalCategories(categories);
     if (!categoryId && categories.length > 0) {
       setCategoryId(categories[0].id);
     }
   }, [categories, categoryId]);
+
+  const handleCreateCategory = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!newCategoryName.trim()) return;
+    setCreatingCategory(true);
+    setCategoryError(null);
+
+    try {
+      const res = await fetch("/api/admin/categories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newCategoryName.trim() }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.category) {
+        throw new Error(data.error || "Failed to create category");
+      }
+
+      const createdCat: CategoryOption = {
+        id: data.category.id,
+        name: data.category.name,
+      };
+
+      setLocalCategories((prev) => {
+        if (prev.some((c) => c.id === createdCat.id)) return prev;
+        return [...prev, createdCat];
+      });
+      setCategoryId(createdCat.id);
+      setIsAddingCategory(false);
+      setNewCategoryName("");
+      onCategoryCreated?.(createdCat);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to create category";
+      setCategoryError(msg);
+    } finally {
+      setCreatingCategory(false);
+    }
+  };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     setImageError(null);
@@ -231,18 +280,70 @@ export function CreateProductModal({
             </div>
 
             <div>
-              <label className="font-bold text-[#111111] block mb-1">Category *</label>
-              <select
-                value={categoryId}
-                onChange={(e) => setCategoryId(e.target.value)}
-                className="w-full px-3 py-2 rounded border border-[#111111] bg-white text-[#111111] focus:outline-none focus:ring-2 focus:ring-[#DFFF00]"
-              >
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+              <div className="flex items-center justify-between mb-1">
+                <label className="font-bold text-[#111111] block">Category *</label>
+                {!isAddingCategory && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsAddingCategory(true);
+                      setCategoryError(null);
+                    }}
+                    className="text-[11px] font-extrabold text-[#111111] hover:underline flex items-center gap-0.5 cursor-pointer"
+                  >
+                    + New Category
+                  </button>
+                )}
+              </div>
+
+              {isAddingCategory ? (
+                <div className="space-y-1.5">
+                  <div className="flex gap-1.5">
+                    <input
+                      type="text"
+                      value={newCategoryName}
+                      onChange={(e) => setNewCategoryName(e.target.value)}
+                      placeholder="e.g. Frozen Foods"
+                      className="flex-1 px-2.5 py-1.5 text-xs rounded border border-[#111111] bg-white text-[#111111] focus:outline-none focus:ring-2 focus:ring-[#DFFF00]"
+                      autoFocus
+                    />
+                    <button
+                      type="button"
+                      onClick={handleCreateCategory}
+                      disabled={creatingCategory || !newCategoryName.trim()}
+                      className="px-2.5 py-1.5 bg-[#DFFF00] hover:bg-[#C8E600] text-black font-extrabold text-xs rounded border border-[#111111] disabled:opacity-50 cursor-pointer"
+                    >
+                      {creatingCategory ? "..." : "Save"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsAddingCategory(false);
+                        setNewCategoryName("");
+                        setCategoryError(null);
+                      }}
+                      className="px-2 py-1.5 bg-[#F5F5F5] hover:bg-[#E5E5E5] text-[#666666] font-bold text-xs rounded border border-[#E5E5E5] cursor-pointer"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  {categoryError && (
+                    <p className="text-[10px] text-[#D92D3A] font-bold">{categoryError}</p>
+                  )}
+                </div>
+              ) : (
+                <select
+                  value={categoryId}
+                  onChange={(e) => setCategoryId(e.target.value)}
+                  className="w-full px-3 py-2 rounded border border-[#111111] bg-white text-[#111111] focus:outline-none focus:ring-2 focus:ring-[#DFFF00]"
+                >
+                  {localCategories.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
           </div>
 

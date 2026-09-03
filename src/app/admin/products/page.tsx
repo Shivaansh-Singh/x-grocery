@@ -382,6 +382,10 @@ export default function AdminProductsPage() {
           categories={categories}
           onClose={() => setEditingProduct(null)}
           onSave={fetchCatalogData}
+          onCategoryCreated={(newCat) => {
+            setCategories((prev) => (prev.some((c) => c.id === newCat.id) ? prev : [...prev, newCat]));
+            showToast(`Category "${newCat.name}" created.`);
+          }}
         />
       )}
 
@@ -390,6 +394,10 @@ export default function AdminProductsPage() {
           categories={categories}
           onClose={() => setIsCreateOpen(false)}
           onSuccess={fetchCatalogData}
+          onCategoryCreated={(newCat) => {
+            setCategories((prev) => (prev.some((c) => c.id === newCat.id) ? prev : [...prev, newCat]));
+            showToast(`Category "${newCat.name}" created.`);
+          }}
         />
       )}
     </div>
