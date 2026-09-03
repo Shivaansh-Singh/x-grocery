@@ -97,6 +97,25 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    // 1. Authorization Guard: STORE_ADMIN only
+    const roleCookie = request.cookies.get("rushd_user_role")?.value;
+    const authHeader = request.headers.get("x-user-role");
+    const userRole = roleCookie || authHeader;
+
+    if (!userRole) {
+      return NextResponse.json(
+        { error: "Authentication required. Please log in as an administrator." },
+        { status: 401 }
+      );
+    }
+
+    if (userRole !== "STORE_ADMIN") {
+      return NextResponse.json(
+        { error: "Unauthorized. STORE_ADMIN privileges required." },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     const { name, slug, price, unit, stock, categoryId, description, imageUrl, isAvailable } = body;
 

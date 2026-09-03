@@ -6,6 +6,25 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // 1. Authorization Guard: STORE_ADMIN only
+    const roleCookie = request.cookies.get("rushd_user_role")?.value;
+    const authHeader = request.headers.get("x-user-role");
+    const userRole = roleCookie || authHeader;
+
+    if (!userRole) {
+      return NextResponse.json(
+        { error: "Authentication required. Please log in as an administrator." },
+        { status: 401 }
+      );
+    }
+
+    if (userRole !== "STORE_ADMIN") {
+      return NextResponse.json(
+        { error: "Unauthorized. STORE_ADMIN privileges required." },
+        { status: 403 }
+      );
+    }
+
     const { id } = await params;
     const body = await request.json();
     const { name, price, unit, stock, isAvailable, isActive, description, imageUrl, categoryId } = body;
@@ -103,6 +122,25 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // 1. Authorization Guard: STORE_ADMIN only
+    const roleCookie = request.cookies.get("rushd_user_role")?.value;
+    const authHeader = request.headers.get("x-user-role");
+    const userRole = roleCookie || authHeader;
+
+    if (!userRole) {
+      return NextResponse.json(
+        { error: "Authentication required. Please log in as an administrator." },
+        { status: 401 }
+      );
+    }
+
+    if (userRole !== "STORE_ADMIN") {
+      return NextResponse.json(
+        { error: "Unauthorized. STORE_ADMIN privileges required." },
+        { status: 403 }
+      );
+    }
+
     const { id } = await params;
 
     // Check if product has historical order references
