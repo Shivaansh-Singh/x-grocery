@@ -19,27 +19,49 @@ export async function PATCH(
     }
 
     const updateData: Record<string, unknown> = {};
-    if (name !== undefined) updateData.name = name;
-    if (price !== undefined) updateData.price = Number(price);
+
+    if (name !== undefined) {
+      if (typeof name !== "string" || name.trim() === "") {
+        return NextResponse.json({ error: "Product name cannot be empty." }, { status: 400 });
+      }
+      updateData.name = name.trim();
+    }
+
+    if (price !== undefined) {
+      const parsedPrice = Number(price);
+      if (isNaN(parsedPrice) || parsedPrice < 0) {
+        return NextResponse.json({ error: "Price must be a non-negative number." }, { status: 400 });
+      }
+      updateData.price = parsedPrice;
+    }
+
     if (unit !== undefined) updateData.unitDisplay = unit;
     if (description !== undefined) updateData.description = description;
     if (imageUrl !== undefined) updateData.imageUrl = imageUrl;
     if (categoryId !== undefined) updateData.categoryId = categoryId;
-    if (isActive !== undefined || isAvailable !== undefined) {
-      updateData.isActive = Boolean(isActive ?? isAvailable);
-    }
 
-    // Stock Override & Inventory Audit Logging
+    // Explicit availability toggle (independent from stock)
+    if (isActive !== undefined) updateData.isActive = Boolean(isActive);
+    if (isAvailable !== undefined) updateData.isActive = Boolean(isAvailable);
+
+    // Stock update with inventory audit logging
     let stockChanged = false;
     let newStockValue = existingProduct.stock;
     let changeQty = 0;
 
-    if (stock !== undefined && Number(stock) !== existingProduct.stock) {
-      stockChanged = true;
-      newStockValue = Number(stock);
-      changeQty = newStockValue - existingProduct.stock;
-      updateData.stock = newStockValue;
-      updateData.isActive = newStockValue > 0;
+    if (stock !== undefined) {
+      const parsedStock = parseInt(String(stock), 10);
+      if (isNaN(parsedStock) || parsedStock < 0) {
+        return NextResponse.json({ error: "Stock must be a non-negative integer." }, { status: 400 });
+      }
+      if (parsedStock !== existingProduct.stock) {
+        stockChanged = true;
+        newStockValue = parsedStock;
+        changeQty = newStockValue - existingProduct.stock;
+        updateData.stock = newStockValue;
+        // NOTE: We do NOT auto-set isActive based on stock.
+        // Availability is controlled exclusively by the admin toggle.
+      }
     }
 
     const updatedRaw = await prisma.product.update({
@@ -83,12 +105,29 @@ export async function DELETE(
   try {
     const { id } = await params;
 
-    // Delete product from catalog
-    await prisma.product.delete({
-      where: { id },
+    // Check if product has historical order references
+    const orderItemCount = await prisma.orderItem.count({
+      where: { productId: id },
     });
 
-    return NextResponse.json({ success: true });
+    if (orderItemCount > 0) {
+      // Soft-delete: deactivate product to protect historical order data
+      const deactivated = await prisma.product.update({
+        where: { id },
+        data: { isActive: false, stock: 0 },
+        select: { id: true, name: true, isActive: true },
+      });
+      return NextResponse.json({
+        success: true,
+        softDeleted: true,
+        message: `"${deactivated.name}" has been deactivated (has ${orderItemCount} historical order reference${orderItemCount === 1 ? "" : "s"}).`,
+      });
+    }
+
+    // Hard delete only if no order references exist
+    await prisma.product.delete({ where: { id } });
+
+    return NextResponse.json({ success: true, softDeleted: false });
   } catch (error) {
     console.error("DELETE /api/admin/products/[id] error:", error);
     return NextResponse.json(
@@ -97,3 +136,4 @@ export async function DELETE(
     );
   }
 }
+

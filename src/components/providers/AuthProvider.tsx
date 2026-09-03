@@ -21,7 +21,8 @@ interface AuthContextType {
   role: Role;
   loading: boolean;
   signIn: (email: string, password?: string, targetRedirect?: string | null) => Promise<{ success: boolean; error?: string }>;
-  signUp: (name: string, email: string, password?: string) => Promise<{ success: boolean; error?: string }>;
+  signInWithGoogle: (targetRedirect?: string | null) => Promise<{ success: boolean; error?: string }>;
+  signUp: (name: string, email: string, password?: string) => Promise<{ success: boolean; error?: string; message?: string }>;
   signOut: () => Promise<void>;
 }
 
@@ -32,8 +33,9 @@ const AuthContext = createContext<AuthContextType>({
   role: "CUSTOMER",
   loading: true,
   signIn: async () => ({ success: false }),
+  signInWithGoogle: async () => ({ success: false }),
   signUp: async () => ({ success: false }),
-  signOut: async () => {},
+  signOut: async () => { },
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -140,9 +142,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, currentSession) => {
+    } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
+
+      if (event === "PASSWORD_RECOVERY") {
+        if (typeof window !== "undefined" && window.location.pathname !== "/reset-password") {
+          router.push("/reset-password");
+        }
+        return;
+      }
+
       if (currentSession?.user) {
         const email = currentSession.user.email || "";
         const dbAuthoritative = await fetchAuthoritativeRole(email);
@@ -171,114 +181,191 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     const cleanEmail = email.toLowerCase().trim();
 
+    if (!cleanEmail) {
+      setLoading(false);
+      return { success: false, error: "Please enter your email address." };
+    }
+
+    if (!password || !password.trim()) {
+      setLoading(false);
+      return { success: false, error: "Please enter your password." };
+    }
+
     try {
-      // 1. Authoritative Role Resolution via Database API
+      // Authenticate strictly with Supabase Auth
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: cleanEmail,
+        password,
+      });
+
+      if (error || !data.user) {
+        return {
+          success: false,
+          error: error?.message || "Invalid email or password. Please try again.",
+        };
+      }
+
+      // Authoritative Role Resolution via Database API
       const dbAuthoritative = await fetchAuthoritativeRole(cleanEmail);
-
-      // 2. Try Supabase Auth if credentials provided
-      if (password && process.env.NEXT_PUBLIC_SUPABASE_URL && !process.env.NEXT_PUBLIC_SUPABASE_URL.includes("placeholder")) {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: cleanEmail,
-          password,
-        });
-
-        if (!error && data.user) {
-          const userRole: Role =
-            dbAuthoritative?.role || (data.user.user_metadata?.role as Role) || "CUSTOMER";
-
-          const userObj: ActiveUser = {
-            id: dbAuthoritative?.id || data.user.id,
-            email: data.user.email || cleanEmail,
-            name: dbAuthoritative?.name || data.user.user_metadata?.name || cleanEmail.split("@")[0],
-            role: userRole,
-          };
-
-          setActiveUser(userObj);
-          setRole(userRole);
-          setRoleCookie(userRole, cleanEmail);
-          if (typeof window !== "undefined") {
-            localStorage.setItem("rushd_active_user", JSON.stringify(userObj));
-          }
-
-          console.log("AUTH SUCCESS (Supabase):", { userObj, targetRedirect });
-          redirectAfterLogin(userRole, targetRedirect);
-          return { success: true };
-        }
-      }
-
-      // 3. Fallback direct authentication for seed accounts & dev mode
-      let fallbackRole: Role = "CUSTOMER";
-      let fallbackName = cleanEmail.split("@")[0];
-      let fallbackId = `user-${cleanEmail.replace(/[^a-z0-9]/g, "-")}`;
-
-      if (cleanEmail.includes("admin") || cleanEmail === "store@rushd.com") {
-        fallbackRole = "STORE_ADMIN";
-        fallbackName = "Store Admin X";
-      } else if (cleanEmail.includes("delivery") || cleanEmail.includes("rider")) {
-        fallbackRole = "DELIVERY_PARTNER";
-        fallbackName = cleanEmail.includes("1") ? "Ramesh Kumar (Rider 1)" : cleanEmail.includes("2") ? "Suresh Singh (Rider 2)" : "Vikas Sharma (Rider 3)";
-        fallbackId = cleanEmail.includes("delivery1") ? "rider-1" : cleanEmail.includes("delivery2") ? "rider-2" : "rider-3";
-      }
-
-      const finalRole: Role = dbAuthoritative?.role || fallbackRole;
-      const finalName = dbAuthoritative?.name || fallbackName;
-      const finalId = dbAuthoritative?.id || fallbackId;
+      const userRole: Role =
+        dbAuthoritative?.role || (data.user.user_metadata?.role as Role) || "CUSTOMER";
 
       const userObj: ActiveUser = {
-        id: finalId,
-        email: cleanEmail,
-        name: finalName,
-        role: finalRole,
+        id: dbAuthoritative?.id || data.user.id,
+        email: data.user.email || cleanEmail,
+        name: dbAuthoritative?.name || data.user.user_metadata?.name || cleanEmail.split("@")[0],
+        role: userRole,
       };
 
       setActiveUser(userObj);
-      setRole(finalRole);
-      setRoleCookie(finalRole, cleanEmail);
+      setRole(userRole);
+      setRoleCookie(userRole, cleanEmail);
       if (typeof window !== "undefined") {
         localStorage.setItem("rushd_active_user", JSON.stringify(userObj));
       }
 
-      console.log("AUTH SUCCESS (Local DB):", { userObj, targetRedirect });
-      redirectAfterLogin(finalRole, targetRedirect);
+
+      redirectAfterLogin(userRole, targetRedirect);
       return { success: true };
     } catch (err) {
       console.error("SignIn error:", err);
-      return { success: false, error: "Failed to sign in. Please check your details." };
+      return { success: false, error: "Failed to sign in. Please check your network connection." };
     } finally {
       setLoading(false);
     }
   };
 
-  const signUp = async (name: string, email: string) => {
+  const signUp = async (name: string, email: string, password?: string) => {
     setLoading(true);
-    try {
-      const cleanEmail = email.toLowerCase().trim();
-      const userObj: ActiveUser = {
-        id: `cust-${cleanEmail.replace(/[^a-z0-9]/g, "-")}`,
-        email: cleanEmail,
-        name,
-        role: "CUSTOMER",
-      };
+    const cleanEmail = email.toLowerCase().trim();
+    const cleanName = name.trim();
 
-      setActiveUser(userObj);
-      setRole("CUSTOMER");
-      setRoleCookie("CUSTOMER", cleanEmail);
-      if (typeof window !== "undefined") {
-        localStorage.setItem("rushd_active_user", JSON.stringify(userObj));
+    if (!cleanName) {
+      setLoading(false);
+      return { success: false, error: "Please enter your full name." };
+    }
+
+    if (!cleanEmail) {
+      setLoading(false);
+      return { success: false, error: "Please enter your email address." };
+    }
+
+    if (!password || password.length < 6) {
+      setLoading(false);
+      return { success: false, error: "Password must be at least 6 characters long." };
+    }
+
+    try {
+      const origin = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
+
+      const { data, error } = await supabase.auth.signUp({
+        email: cleanEmail,
+        password,
+        options: {
+          emailRedirectTo: `${origin}/auth/callback`,
+          data: {
+            name: cleanName,
+            full_name: cleanName,
+            role: "CUSTOMER",
+          },
+        },
+      });
+
+      if (error) {
+        if (
+          error.message.toLowerCase().includes("already registered") ||
+          error.message.toLowerCase().includes("already exists") ||
+          error.message.toLowerCase().includes("user already")
+        ) {
+          return {
+            success: false,
+            error: "An account with this email already exists. Please sign in instead.",
+          };
+        }
+        return { success: false, error: error.message };
       }
 
-      router.push("/");
-      return { success: true };
+      // Check if user already exists with identity enumeration protection enabled
+      if (data.user && data.user.identities && data.user.identities.length === 0) {
+        return {
+          success: false,
+          error: "An account with this email already exists. Please sign in instead.",
+        };
+      }
+
+      if (data.session && data.user) {
+        const userObj: ActiveUser = {
+          id: data.user.id,
+          email: cleanEmail,
+          name: cleanName,
+          role: "CUSTOMER",
+        };
+
+        setActiveUser(userObj);
+        setRole("CUSTOMER");
+        setRoleCookie("CUSTOMER", cleanEmail);
+        if (typeof window !== "undefined") {
+          localStorage.setItem("rushd_active_user", JSON.stringify(userObj));
+        }
+
+        router.push("/");
+        return { success: true };
+      }
+
+      // If Supabase requires email verification
+      return {
+        success: true,
+        message: "Account registered successfully! Please check your email to confirm your account before signing in.",
+      };
     } catch (err) {
       console.error("SignUp error:", err);
-      return { success: false, error: "Sign up failed." };
+      return { success: false, error: "Sign up failed. Please check your network connection and try again." };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const signInWithGoogle = async (targetRedirect?: string | null) => {
+    setLoading(true);
+    try {
+      if (process.env.NEXT_PUBLIC_SUPABASE_URL && !process.env.NEXT_PUBLIC_SUPABASE_URL.includes("placeholder")) {
+        const origin = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
+        const callbackUrl = `${origin}/auth/callback${targetRedirect ? `?redirect=${encodeURIComponent(targetRedirect)}` : ""}`;
+
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: "google",
+          options: {
+            redirectTo: callbackUrl,
+          },
+        });
+
+        if (error) {
+          if (
+            error.message.toLowerCase().includes("provider is not enabled") ||
+            error.message.toLowerCase().includes("unsupported provider") ||
+            error.message.toLowerCase().includes("validation_failed")
+          ) {
+            return {
+              success: false,
+              error: "Google Sign-In is not currently enabled in the Supabase project configuration.",
+            };
+          }
+          throw error;
+        }
+        return { success: true };
+      } else {
+        return { success: false, error: "Google Sign-In is not available. Please sign in with email and password." };
+      }
+    } catch (err) {
+      console.error("Google signIn error:", err);
+      return { success: false, error: err instanceof Error ? err.message : "Failed to sign in with Google." };
     } finally {
       setLoading(false);
     }
   };
 
   const redirectAfterLogin = (userRole: Role, targetRedirect?: string | null) => {
-    console.log("REDIRECTING AFTER LOGIN:", { userRole, targetRedirect });
+
     if (userRole === "STORE_ADMIN") {
       if (targetRedirect && targetRedirect.startsWith("/admin")) {
         router.push(targetRedirect);
@@ -314,14 +401,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       clearRoleCookie();
       if (typeof window !== "undefined") {
         localStorage.removeItem("rushd_active_user");
+        // Use full location reload/navigation to cleanly terminate all component timers and background requests
+        window.location.href = "/login";
+      } else {
+        setLoading(false);
+        router.push("/login");
       }
-      setLoading(false);
-      router.push("/login");
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, activeUser, session, role, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ user, activeUser, session, role, loading, signIn, signInWithGoogle, signUp, signOut }}>
       {children}
     </AuthContext.Provider>
   );

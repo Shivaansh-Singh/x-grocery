@@ -134,39 +134,44 @@ function CustomerHomeContent() {
         />
       </div>
 
-      {/* Clean Editorial Hero Banner */}
+      {/* Editorial High-Contrast Hero Banner */}
       {!searchQuery && activeCategory === "all" && (
-        <div className="glass-card rounded-[22px] p-5 sm:p-6 shadow-xl relative overflow-hidden rushd-speed-slash">
-          {/* Subtle Ambient Soft Glow */}
-          <div className="absolute -top-12 -left-12 w-56 h-56 rounded-full bg-gradient-to-br from-[#FF6B1A]/12 to-[#2D6CFF]/12 blur-3xl pointer-events-none" />
-
-          <div className="relative z-10 space-y-2">
+        <div className="bg-[#000000] border border-[#111111] rounded-lg p-6 sm:p-8 relative overflow-hidden text-white">
+          <div className="relative z-10 space-y-3">
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-black tracking-wider uppercase px-2.5 py-0.5 rounded-md bg-gradient-to-r from-[#FF6B1A] to-[#2D6CFF] text-white shadow-xs">
-                ⚡ 15-MIN EXPRESS
+              <span className="text-[10px] font-black tracking-wider uppercase px-2.5 py-0.5 rounded bg-[#DFFF00] text-[#000000]">
+                10-MIN EXPRESS
               </span>
             </div>
-            <h2 className="font-display font-black text-xl sm:text-2xl text-[#F5F6FA] tracking-tight">
-              Your essentials. On the way.
+            <h2 className="font-extrabold text-2xl sm:text-3xl text-white tracking-tight leading-tight max-w-md">
+              Everything you need.<br />Delivered fast.
             </h2>
-            <p className="text-xs font-medium text-[#8A90A3] max-w-md leading-relaxed">
-              Groceries, snacks & everyday essentials delivered fast.
+            <p className="text-xs font-medium text-[#A3A3A3] max-w-md leading-relaxed">
+              Groceries, snacks & everyday essentials at your doorstep.
             </p>
+            <div className="pt-1">
+              <a
+                href="#catalog"
+                className="inline-block px-5 py-2.5 rounded bg-[#DFFF00] hover:bg-[#C8E600] text-[#000000] text-xs font-black tracking-wider transition-colors border border-[#111111]"
+              >
+                SHOP NOW →
+              </a>
+            </div>
           </div>
         </div>
       )}
 
       {/* Product Section Header & Grid */}
-      <div className="pt-1">
-        <div className="flex items-end justify-between mb-4 px-1 border-b border-white/8 pb-3">
-          <div className="heading-accent-line">
-            <h2 className="font-display font-black text-base sm:text-lg text-[#F5F6FA] tracking-tight">
+      <div id="catalog" className="pt-1">
+        <div className="flex items-end justify-between mb-4 px-1 border-b border-[#E5E5E5] pb-3">
+          <div>
+            <h2 className="font-extrabold text-lg text-[#111111] tracking-tight">
               {activeCategory === "all"
                 ? "Popular Near You"
                 : categories.find((c) => c.slug === activeCategory)?.name || "Catalog"}
             </h2>
           </div>
-          <span className="text-xs text-[#8A90A3] font-semibold">
+          <span className="text-xs text-[#666666] font-bold">
             {products.length} {products.length === 1 ? "item" : "items"}
           </span>
         </div>
@@ -198,11 +203,11 @@ export default function Home() {
     <Suspense
       fallback={
         <div className="space-y-4 pt-4 animate-pulse">
-          <div className="h-12 glass-card rounded-2xl" />
-          <div className="h-10 glass-card rounded-xl" />
+          <div className="h-12 bg-[#F5F5F5] border border-[#E5E5E5] rounded-lg" />
+          <div className="h-10 bg-[#F5F5F5] border border-[#E5E5E5] rounded-lg" />
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-56 glass-card rounded-[20px]" />
+              <div key={i} className="h-56 bg-[#F5F5F5] border border-[#E5E5E5] rounded-lg" />
             ))}
           </div>
         </div>

@@ -58,15 +58,20 @@ model User {
   customerOrders  Order[]           @relation("CustomerOrders")
   assignedOrders  Order[]           @relation("DeliveryPartnerOrders")
   inventoryLogs   InventoryLog[]
+  feedbacks       CustomerFeedback[]
 }
 
 model CustomerAddress {
   id             String   @id @default(uuid())
   userId         String
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label          String   @default("Home")
   buildingColony String
   flatRoomNo     String
   landmark       String?
+  city           String   @default("Bhopal")
+  state          String   @default("Madhya Pradesh")
+  pincode        String   @default("466114")
   phone          String
   isDefault      Boolean  @default(false)
   createdAt      DateTime @default(now())
@@ -157,6 +162,10 @@ model Order {
   totalAmount       Float
   deliveryAddress   String
   notes             String?
+  deliveryOtp       String?
+  deliveryOtpHash   String?
+  deliveryOtpVerified   Boolean   @default(false)
+  deliveryOtpVerifiedAt DateTime?
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
 
@@ -173,4 +182,32 @@ model OrderItem {
   unitPrice   Float
   quantity    Int
   subtotal    Float
+}
+
+enum FeedbackType {
+  COMPLAINT
+  FEEDBACK
+  PRODUCT_REQUEST
+}
+
+enum FeedbackStatus {
+  NEW
+  IN_PROGRESS
+  RESOLVED
+}
+
+model CustomerFeedback {
+  id         String         @id @default(uuid())
+  customerId String?
+  customer   User?          @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  name       String?
+  phone      String?
+  email      String?
+  type       FeedbackType   @default(FEEDBACK)
+  message    String
+  imageUrl   String?
+  status     FeedbackStatus @default(NEW)
+  adminNotes String?
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
 }

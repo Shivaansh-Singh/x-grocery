@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { OrderStatus, PaymentMethod, PaymentStatus } from "@prisma/client";
+import { generateDeliveryOtp } from "@/lib/otp";
+import { calculateOrderPricing } from "@/lib/pricing";
 
 export async function GET(request: NextRequest) {
   try {
@@ -23,6 +25,14 @@ export async function GET(request: NextRequest) {
       where: whereCondition,
       include: {
         items: true,
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+            email: true,
+          },
+        },
         deliveryPartner: {
           select: {
             id: true,
@@ -62,7 +72,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 1. Get or create Store X
+    // 1. Get Store X
     const store = await prisma.store.findUnique({
       where: { slug: "store-x" },
     });
@@ -87,56 +97,189 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // 3. Generate unique order code (e.g. XG-849201)
+    // 3. Deduplication Guard: Check for duplicate submission from same customer & address in last 10 seconds
+    const tenSecondsAgo = new Date(Date.now() - 10000);
+    const existingRecentOrder = await prisma.order.findFirst({
+      where: {
+        customerId: customer.id,
+        deliveryAddress,
+        createdAt: { gte: tenSecondsAgo },
+      },
+      include: { items: true },
+    });
+
+    if (existingRecentOrder) {
+      console.log("POST /api/orders DUP GUARD: Returning existing recent order", existingRecentOrder.orderNumber);
+      return NextResponse.json({ order: existingRecentOrder }, { status: 200 });
+    }
+
+    // 4. Pre-validate all items before starting transaction
+    const typedItems = items as Array<{
+      productId?: string;
+      product?: { id: string; name?: string };
+      productName?: string;
+      quantity?: number;
+    }>;
+
+    const productIds = typedItems.map(
+      (item) => item.productId || item.product?.id
+    ).filter(Boolean) as string[];
+
+    const liveProducts = await prisma.product.findMany({
+      where: { id: { in: productIds } },
+      select: { id: true, name: true, price: true, stock: true, isActive: true },
+    });
+
+    const productMap = new Map(liveProducts.map((p) => [p.id, p]));
+
+    // Validate each ordered item
+    for (const item of typedItems) {
+      const productId = item.productId || item.product?.id;
+      const requestedQty = Number(item.quantity || 1);
+      const liveProduct = productId ? productMap.get(productId) : undefined;
+
+      if (!liveProduct) {
+        return NextResponse.json(
+          { error: `Product not found: ${item.productName || productId}` },
+          { status: 400 }
+        );
+      }
+
+      if (!liveProduct.isActive) {
+        return NextResponse.json(
+          { error: `"${liveProduct.name}" is currently unavailable.` },
+          { status: 400 }
+        );
+      }
+
+      if (liveProduct.stock <= 0) {
+        return NextResponse.json(
+          { error: `"${liveProduct.name}" is out of stock.` },
+          { status: 400 }
+        );
+      }
+
+      if (requestedQty > liveProduct.stock) {
+        return NextResponse.json(
+          { error: `Only ${liveProduct.stock} item${liveProduct.stock === 1 ? "" : "s"} of "${liveProduct.name}" available.` },
+          { status: 400 }
+        );
+      }
+    }
+
+    // 5. Generate unique order number
     const orderNumber = `XG-${Math.floor(100000 + Math.random() * 900000)}`;
 
-    // 4. Calculate total amount & prepare frozen item snapshots
+    // 6. Calculate totals using LIVE prices as authoritative snapshot
     let calculatedSubtotal = 0;
-    const orderItemsData = [];
+    const orderItemsData: {
+      productId: string;
+      productName: string;
+      unitPrice: number;
+      quantity: number;
+      subtotal: number;
+    }[] = [];
 
-    for (const item of items) {
-      const unitPrice = Number(item.unitPrice || item.product?.price || 0);
+    for (const item of typedItems) {
+      const productId = (item.productId || item.product?.id) ?? "";
+      const liveProduct = productMap.get(productId)!;
+      const unitPrice = liveProduct.price;
       const quantity = Number(item.quantity || 1);
       const subtotal = unitPrice * quantity;
       calculatedSubtotal += subtotal;
 
       orderItemsData.push({
-        productId: item.productId || item.product?.id || "product-item",
-        productName: item.productName || item.product?.name || "Grocery Product",
+        productId: liveProduct.id,
+        productName: liveProduct.name,
         unitPrice,
         quantity,
         subtotal,
       });
     }
 
-    // Delivery fee rule: flat ₹15, waived (FREE) for subtotal >= 199
-    const deliveryFee = calculatedSubtotal >= 199 ? 0 : 15;
-    const totalAmount = calculatedSubtotal + deliveryFee;
+    // Pricing calculation via single source of truth (Delivery fee + Platform & Packaging fee)
+    const pricing = calculateOrderPricing(calculatedSubtotal, orderItemsData.length);
+    const totalAmount = pricing.totalAmount;
 
-    // 5. Create Order transaction with nested OrderItems
-    const newOrder = await prisma.order.create({
-      data: {
-        orderNumber,
-        storeId: store.id,
-        customerId: customer.id,
-        status: OrderStatus.PENDING,
-        paymentMethod: (paymentMethod as PaymentMethod) || PaymentMethod.COD,
-        paymentStatus: PaymentStatus.PENDING,
-        totalAmount,
-        deliveryAddress,
-        notes: notes || null,
-        items: {
-          create: orderItemsData,
+    // 7. Atomic transaction: Create order + deduct stock simultaneously
+    const newOrder = await prisma.$transaction(async (tx) => {
+      // Re-validate stock inside transaction to handle concurrent orders
+      for (const item of orderItemsData) {
+        const freshProduct = await tx.product.findUnique({
+          where: { id: item.productId },
+          select: { id: true, name: true, stock: true, isActive: true },
+        });
+
+        if (!freshProduct || !freshProduct.isActive) {
+          throw new Error(`"${item.productName}" is currently unavailable.`);
+        }
+        if (freshProduct.stock < item.quantity) {
+          throw new Error(
+            freshProduct.stock <= 0
+              ? `"${item.productName}" is out of stock.`
+              : `Only ${freshProduct.stock} item${freshProduct.stock === 1 ? "" : "s"} of "${item.productName}" available.`
+          );
+        }
+      }
+
+      // Generate cryptographically secure 6-digit delivery OTP and hash
+      const { otp: deliveryOtp, hash: deliveryOtpHash } = generateDeliveryOtp();
+
+      // Create the order with frozen item price snapshots and delivery verification OTP
+      const order = await tx.order.create({
+        data: {
+          orderNumber,
+          storeId: store.id,
+          customerId: customer.id,
+          status: OrderStatus.PENDING,
+          paymentMethod: (paymentMethod as PaymentMethod) || PaymentMethod.COD,
+          paymentStatus: PaymentStatus.PENDING,
+          totalAmount,
+          deliveryAddress,
+          notes: notes || null,
+          deliveryOtp,
+          deliveryOtpHash,
+          deliveryOtpVerified: false,
+          items: {
+            create: orderItemsData,
+          },
         },
-      },
-      include: {
-        items: true,
-      },
+        include: { items: true },
+      });
+
+      // Atomically deduct stock for each item and log
+      for (const item of orderItemsData) {
+        const updatedProduct = await tx.product.update({
+          where: { id: item.productId },
+          data: { stock: { decrement: item.quantity } },
+          select: { id: true, stock: true },
+        });
+
+        await tx.inventoryLog.create({
+          data: {
+            productId: item.productId,
+            previousStock: updatedProduct.stock + item.quantity,
+            newStock: updatedProduct.stock,
+            changeQuantity: -item.quantity,
+            reason: `ORDER_PLACED:${order.orderNumber}`,
+          },
+        });
+      }
+
+      return order;
     });
 
     return NextResponse.json({ order: newOrder }, { status: 201 });
   } catch (error) {
     console.error("POST /api/orders error:", error);
+    // Surface stock validation errors to client
+    if (error instanceof Error && (
+      error.message.includes("available") ||
+      error.message.includes("unavailable") ||
+      error.message.includes("out of stock")
+    )) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
     return NextResponse.json(
       { error: "Failed to place order" },
       { status: 500 }

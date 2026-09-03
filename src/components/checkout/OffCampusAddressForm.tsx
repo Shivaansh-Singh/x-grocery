@@ -50,25 +50,25 @@ export function OffCampusAddressForm({
   };
 
   return (
-    <div className="bg-[#141822] p-4 rounded-2xl border border-white/8 shadow-md space-y-4 text-[#F5F6FA]">
+    <div className="bg-white p-4 rounded-lg border border-[#E5E5E5] space-y-4 text-[#111111]">
       {/* Service Scope Warning Banner */}
-      <div className="p-3.5 bg-[#1A1F2C] border border-white/8 rounded-xl text-[#8A90A3] text-xs space-y-1">
-        <div className="flex items-center gap-1.5 font-extrabold text-[#FF6B1A]">
+      <div className="p-3.5 bg-[#000000] border border-[#111111] rounded-lg text-white text-xs space-y-1">
+        <div className="flex items-center gap-1.5 font-black text-[#DFFF00]">
           <span>⚡ Off-Campus Delivery Scope</span>
         </div>
-        <p className="text-[11px] text-[#8A90A3] leading-relaxed">
+        <p className="text-[11px] text-[#A3A3A3] leading-relaxed font-medium">
           RushD delivers strictly to off-campus flats, rooms & PGs in Kotri Kalan, Royal City & nearby areas. Inside-campus hostel delivery is not supported.
         </p>
       </div>
 
       <div className="space-y-3">
-        <h3 className="font-extrabold text-xs text-[#F5F6FA] uppercase tracking-wider">
+        <h3 className="font-extrabold text-xs text-[#111111] uppercase tracking-wider">
           Off-Campus Delivery Address
         </h3>
 
         {/* Quick Hub Presets */}
         <div className="space-y-1">
-          <label className="text-[11px] font-semibold text-[#8A90A3]">Quick Select Off-Campus Hub</label>
+          <label className="text-[11px] font-bold text-[#666666]">Quick Select Off-Campus Hub</label>
           <div className="grid grid-cols-2 gap-2">
             {hubs.map((h) => {
               const isSelected = hub === h.value;
@@ -77,10 +77,10 @@ export function OffCampusAddressForm({
                   type="button"
                   key={h.label}
                   onClick={() => handleSelectHub(h.value)}
-                  className={`p-2.5 rounded-xl text-xs font-bold text-left border transition-all ${
+                  className={`p-2.5 rounded text-xs font-black text-left border transition-colors ${
                     isSelected
-                      ? "bg-[#2D6CFF] text-white border-[#2D6CFF] shadow-xs"
-                      : "bg-[#1A1F2C] border-white/8 text-[#8A90A3] hover:text-[#F5F6FA] hover:border-[#2D6CFF]"
+                      ? "bg-[#DFFF00] text-[#000000] border-[#111111]"
+                      : "bg-white border-[#E5E5E5] text-[#666666] hover:text-[#111111] hover:border-[#111111]"
                   }`}
                 >
                   <span className="block text-[11px]">{h.label}</span>
@@ -92,7 +92,7 @@ export function OffCampusAddressForm({
 
         {/* Building / Colony */}
         <div className="space-y-1">
-          <label className="text-[11px] font-semibold text-[#8A90A3]">Building / Colony Name</label>
+          <label className="text-[11px] font-bold text-[#666666]">Building / Colony Name</label>
           <input
             type="text"
             value={hub}
@@ -102,13 +102,13 @@ export function OffCampusAddressForm({
             }}
             placeholder="e.g. Royal City Flats, Block B"
             required
-            className="w-full px-3 py-2.5 text-xs rounded-xl border border-white/8 bg-[#1A1F2C] text-[#F5F6FA] placeholder-[#8A90A3] focus:outline-none focus:border-[#2D6CFF]"
+            className="w-full px-3 py-2.5 text-xs rounded border border-[#111111] bg-white text-[#111111] placeholder-[#666666] focus:outline-none focus:ring-2 focus:ring-[#DFFF00]"
           />
         </div>
 
         {/* Flat / Room No */}
         <div className="space-y-1">
-          <label className="text-[11px] font-semibold text-[#8A90A3]">Flat / Room No *</label>
+          <label className="text-[11px] font-bold text-[#666666]">Flat / Room No *</label>
           <input
             type="text"
             value={flatRoomNo}
@@ -118,13 +118,13 @@ export function OffCampusAddressForm({
             }}
             placeholder="e.g. Flat 204, Room 12"
             required
-            className="w-full px-3 py-2.5 text-xs rounded-xl border border-white/8 bg-[#1A1F2C] text-[#F5F6FA] placeholder-[#8A90A3] focus:outline-none focus:border-[#2D6CFF]"
+            className="w-full px-3 py-2.5 text-xs rounded border border-[#111111] bg-white text-[#111111] placeholder-[#666666] focus:outline-none focus:ring-2 focus:ring-[#DFFF00]"
           />
         </div>
 
         {/* Landmark */}
         <div className="space-y-1">
-          <label className="text-[11px] font-semibold text-[#8A90A3]">Landmark (Optional)</label>
+          <label className="text-[11px] font-bold text-[#666666]">Landmark (Optional)</label>
           <input
             type="text"
             value={landmark}
@@ -133,13 +133,13 @@ export function OffCampusAddressForm({
               updateAddress(hub, flatRoomNo, e.target.value, phone);
             }}
             placeholder="e.g. Near Shiv Temple / Main Gate Road"
-            className="w-full px-3 py-2.5 text-xs rounded-xl border border-white/8 bg-[#1A1F2C] text-[#F5F6FA] placeholder-[#8A90A3] focus:outline-none focus:border-[#2D6CFF]"
+            className="w-full px-3 py-2.5 text-xs rounded border border-[#111111] bg-white text-[#111111] placeholder-[#666666] focus:outline-none focus:ring-2 focus:ring-[#DFFF00]"
           />
         </div>
 
         {/* Phone */}
         <div className="space-y-1">
-          <label className="text-[11px] font-semibold text-[#8A90A3]">Contact Phone Number *</label>
+          <label className="text-[11px] font-bold text-[#666666]">Contact Phone Number *</label>
           <input
             type="tel"
             value={phone}
@@ -149,7 +149,7 @@ export function OffCampusAddressForm({
             }}
             placeholder="+91 99999 88888"
             required
-            className="w-full px-3 py-2.5 text-xs rounded-xl border border-white/8 bg-[#1A1F2C] text-[#F5F6FA] placeholder-[#8A90A3] focus:outline-none focus:border-[#2D6CFF]"
+            className="w-full px-3 py-2.5 text-xs rounded border border-[#111111] bg-white text-[#111111] placeholder-[#666666] focus:outline-none focus:ring-2 focus:ring-[#DFFF00]"
           />
         </div>
       </div>

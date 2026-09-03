@@ -32,39 +32,8 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // 2. Fallback resolution rules for demo emails if DB record not found
-    let role = "CUSTOMER";
-    let name = email.split("@")[0];
-    let id = `user-${email.replace(/[^a-z0-9]/g, "-")}`;
-
-    if (email.includes("admin") || email === "store@rushd.com") {
-      role = "STORE_ADMIN";
-      name = "Store Admin X";
-    } else if (email.includes("delivery1") || email.includes("rider1")) {
-      role = "DELIVERY_PARTNER";
-      name = "Ramesh Kumar (Rider 1)";
-      id = "rider-1";
-    } else if (email.includes("delivery2") || email.includes("rider2")) {
-      role = "DELIVERY_PARTNER";
-      name = "Suresh Singh (Rider 2)";
-      id = "rider-2";
-    } else if (email.includes("delivery3") || email.includes("rider3")) {
-      role = "DELIVERY_PARTNER";
-      name = "Vikas Sharma (Rider 3)";
-      id = "rider-3";
-    } else if (email.includes("delivery") || email.includes("rider")) {
-      role = "DELIVERY_PARTNER";
-      name = "Rider Partner";
-    }
-
-    return NextResponse.json({
-      user: {
-        id,
-        email,
-        name,
-        role,
-      },
-    });
+    // No user found in database — return null so the caller handles defaults
+    return NextResponse.json({ user: null });
   } catch (error) {
     console.error("GET /api/auth/role error:", error);
     return NextResponse.json({ error: "Failed to resolve user role" }, { status: 500 });

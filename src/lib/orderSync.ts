@@ -105,6 +105,9 @@ export function updateLocalOrderStatus(
       updatedOrder = {
         ...o,
         ...updates,
+        deliveryOtp: updates.deliveryOtp !== undefined ? updates.deliveryOtp : o.deliveryOtp,
+        deliveryOtpVerified: updates.deliveryOtpVerified !== undefined ? updates.deliveryOtpVerified : o.deliveryOtpVerified,
+        deliveryOtpVerifiedAt: updates.deliveryOtpVerifiedAt !== undefined ? updates.deliveryOtpVerifiedAt : o.deliveryOtpVerifiedAt,
         assignedRiderId: finalRiderId,
         deliveryPartnerId: finalRiderId,
         updatedAt: new Date().toISOString(),
@@ -119,9 +122,15 @@ export function updateLocalOrderStatus(
     const lastOrder = localStorage.getItem("x_grocery_last_order");
     if (lastOrder) {
       try {
-        const parsed = JSON.parse(lastOrder);
-        if (parsed.id === orderId || parsed.orderNumber === orderId) {
-          localStorage.setItem("x_grocery_last_order", JSON.stringify(updatedOrder));
+        const parsed = JSON.parse(lastOrder) as OrderRecord;
+        const currentOrder: OrderRecord = updatedOrder;
+        if (parsed && (parsed.id === orderId || parsed.orderNumber === orderId)) {
+          const mergedLastOrder: OrderRecord = {
+            ...parsed,
+            ...currentOrder,
+            deliveryOtp: currentOrder.deliveryOtp || parsed.deliveryOtp,
+          };
+          localStorage.setItem("x_grocery_last_order", JSON.stringify(mergedLastOrder));
         }
       } catch {
         // ignore
@@ -129,12 +138,8 @@ export function updateLocalOrderStatus(
     }
   }
 
-  console.log("ADMIN ASSIGNMENT DEBUG:", {
-    orderId,
-    newStatus: updates.status,
-    canonicalRiderId,
-    updatedOrder,
-  });
+
+
 
   return updatedOrder;
 }

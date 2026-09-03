@@ -43,7 +43,15 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json({ orders });
+    const sanitizedOrders = orders.map((order) => {
+      const { deliveryOtp, deliveryOtpHash, ...safeOrder } = order as typeof order & {
+        deliveryOtp?: string;
+        deliveryOtpHash?: string;
+      };
+      return safeOrder;
+    });
+
+    return NextResponse.json({ orders: sanitizedOrders });
   } catch (error) {
     console.error("GET /api/delivery/orders error:", error);
     return NextResponse.json(

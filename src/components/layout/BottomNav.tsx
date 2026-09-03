@@ -43,49 +43,48 @@ export function BottomNav() {
       ),
     },
     {
-      label: "Orders",
-      href: "/orders",
+      label: "Account",
+      href: "/profile",
       svg: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-        </svg>
-      ),
-    },
-    {
-      label: "Rider Portal",
-      href: "/delivery",
-      svg: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
         </svg>
       ),
     },
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#0B0E14]/90 backdrop-blur-lg border-t border-white/8 px-2 py-2 shadow-xl">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-[#111111] px-2 py-2">
       <div className="max-w-md md:max-w-2xl mx-auto flex items-center justify-around">
         {tabs.map((tab) => {
-          const isActive = pathname === tab.href;
+          const isActive =
+            tab.href === "/"
+              ? pathname === "/"
+              : tab.href.startsWith("/#")
+              ? pathname === "/"
+              : pathname.startsWith(tab.href);
           return (
             <Link
               key={tab.href}
               href={tab.href}
-              className={`relative flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all ${
+              className={`relative flex flex-col items-center justify-center py-1 px-3 transition-colors ${
                 isActive
-                  ? "text-[#FF6B1A] font-extrabold scale-105"
-                  : "text-[#8A90A3] hover:text-[#F5F6FA]"
+                  ? "text-[#111111] font-extrabold"
+                  : "text-[#666666] hover:text-[#111111]"
               }`}
             >
               <div className="relative">
                 {tab.svg}
                 {tab.badge && (
-                  <span className="absolute -top-1.5 -right-2.5 px-1.5 py-0.2 rounded-full bg-gradient-to-r from-[#FF6B1A] to-[#2D6CFF] text-white text-[9px] font-black shadow-xs">
+                  <span className="absolute -top-1.5 -right-2.5 px-1.5 py-0.2 rounded-full bg-[#DFFF00] text-[#000000] text-[9px] font-black border border-[#111111]">
                     {tab.badge}
                   </span>
                 )}
               </div>
-              <span className="text-[10px] mt-0.5 font-extrabold tracking-tight">{tab.label}</span>
+              <span className="text-[10px] mt-0.5 font-bold tracking-tight">{tab.label}</span>
+              {isActive && (
+                <span className="absolute bottom-0 w-4 h-0.5 bg-[#DFFF00]" />
+              )}
             </Link>
           );
         })}

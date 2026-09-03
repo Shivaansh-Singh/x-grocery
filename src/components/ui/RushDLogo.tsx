@@ -8,6 +8,7 @@ interface RushDLogoProps {
   size?: "sm" | "md" | "lg";
   href?: string;
   className?: string;
+  themeMode?: "auto" | "light" | "dark";
 }
 
 export function RushDLogo({
@@ -15,6 +16,7 @@ export function RushDLogo({
   size = "md",
   href = "/",
   className = "",
+  themeMode = "auto",
 }: RushDLogoProps) {
   const iconDimensions = {
     sm: "h-7 w-7",
@@ -34,24 +36,46 @@ export function RushDLogo({
       <Image
         src="/brand/rushd-icon.png"
         alt="RushD Icon"
-        width={160}
-        height={160}
+        width={971}
+        height={644}
         priority
         unoptimized
-        className={`${iconDimensions[size]} object-contain rounded-xl shrink-0 shadow-sm`}
+        className={`${iconDimensions[size]} object-contain shrink-0`}
       />
 
-      {/* Supplied RushD Wordmark Image Asset (Inverted to bright white for seamless dark theme contrast) */}
+      {/* RushD Wordmark with genuine transparent light (Black Rush + Orange D) and dark (White Rush + Orange D) treatment */}
       {variant === "full" && (
-        <Image
-          src="/brand/rushd-wordmark.png"
-          alt="RushD"
-          width={220}
-          height={50}
-          priority
-          unoptimized
-          className={`${wordmarkHeights[size]} w-auto object-contain shrink-0 brightness-0 invert opacity-95`}
-        />
+        <>
+          {/* Light background: Black Rush + Orange D */}
+          {(themeMode === "auto" || themeMode === "light") && (
+            <Image
+              src="/brand/rushd-wordmark.png"
+              alt="RushD"
+              width={871}
+              height={172}
+              priority
+              unoptimized
+              className={`${wordmarkHeights[size]} w-auto object-contain shrink-0 ${
+                themeMode === "auto" ? "rushd-wordmark-light" : "block"
+              }`}
+            />
+          )}
+
+          {/* Dark background: White Rush + Orange D */}
+          {(themeMode === "auto" || themeMode === "dark") && (
+            <Image
+              src="/brand/rushd-wordmark-dark.png"
+              alt="RushD"
+              width={871}
+              height={172}
+              priority
+              unoptimized
+              className={`${wordmarkHeights[size]} w-auto object-contain shrink-0 ${
+                themeMode === "auto" ? "rushd-wordmark-dark" : "block"
+              }`}
+            />
+          )}
+        </>
       )}
     </div>
   );

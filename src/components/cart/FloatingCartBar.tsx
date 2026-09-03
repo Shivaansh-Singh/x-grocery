@@ -20,22 +20,22 @@ export function FloatingCartBar() {
 
   return (
     <div className="fixed bottom-16 left-0 right-0 z-30 px-3 pb-1 max-w-xl mx-auto pointer-events-none">
-      <div className="bg-gradient-to-r from-[#FF6B1A] to-[#2D6CFF] text-white rounded-2xl p-3.5 shadow-xl flex items-center justify-between pointer-events-auto border border-white/20">
+      <div className="bg-[#000000] border border-[#111111] text-white rounded-lg p-3.5 shadow-2xl flex items-center justify-between pointer-events-auto">
         <div className="flex flex-col">
           <div className="flex items-center gap-2">
-            <span className="bg-white/20 text-white font-extrabold text-[11px] px-2.5 py-0.5 rounded-lg">
+            <span className="bg-[#DFFF00] text-[#000000] font-black text-[11px] px-2.5 py-0.5 rounded border border-[#111111]">
               {itemCount} {itemCount === 1 ? "Item" : "Items"}
             </span>
-            <span className="font-black text-base">₹{totalAmount.toFixed(0)}</span>
+            <span className="font-extrabold text-base text-white">₹{totalAmount.toFixed(0)}</span>
           </div>
-          <span className="text-[10px] text-white/95 mt-0.5 font-semibold">
-            {deliveryFee === 0 ? "⚡ FREE Delivery Unlocked" : "+ ₹15 Delivery Fee"}
+          <span className="text-[10px] text-[#A3A3A3] mt-0.5 font-medium">
+            {deliveryFee === 0 ? "FREE Delivery Unlocked" : "+ ₹20 Delivery Fee"}
           </span>
         </div>
 
         <Link
           href="/cart"
-          className="px-4 py-2 bg-[#0B0E14] hover:bg-[#141822] text-white rounded-xl font-extrabold text-xs transition-colors shadow-md flex items-center gap-1.5 border border-white/10"
+          className="px-4 py-2 bg-[#DFFF00] hover:bg-[#C8E600] text-[#000000] rounded font-black text-xs transition-colors border border-[#111111] flex items-center gap-1.5"
         >
           <span>View Cart</span>
           <span>→</span>

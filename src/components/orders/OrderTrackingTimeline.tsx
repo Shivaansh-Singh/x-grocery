@@ -4,6 +4,7 @@ import type { OrderRecord } from "./OrderCard";
 
 interface OrderTrackingTimelineProps {
   status: OrderRecord["status"];
+  notes?: string | null;
 }
 
 interface Step {
@@ -12,17 +13,23 @@ interface Step {
   subtitle: string;
 }
 
-export function OrderTrackingTimeline({ status }: OrderTrackingTimelineProps) {
+export function getCleanRejectionReason(notes?: string | null): string | null {
+  if (!notes || !notes.trim()) return null;
+  const clean = notes.replace(/^Rejected by (Admin|Store):\s*/i, "").trim();
+  return clean.length > 0 ? clean : null;
+}
+
+export function OrderTrackingTimeline({ status, notes }: OrderTrackingTimelineProps) {
   const steps: Step[] = [
     {
       key: "PENDING",
       title: "Order Placed",
-      subtitle: "Received by Store X team",
+      subtitle: "Received by RushD partner store",
     },
     {
       key: "ACCEPTED",
       title: "Order Accepted",
-      subtitle: "Store X confirmed your order",
+      subtitle: "Store confirmed your order",
     },
     {
       key: "PREPARING",
@@ -37,7 +44,7 @@ export function OrderTrackingTimeline({ status }: OrderTrackingTimelineProps) {
     {
       key: "OUT_FOR_DELIVERY",
       title: "Out for Delivery",
-      subtitle: "Heading to your off-campus doorstep",
+      subtitle: "Heading to your doorstep",
     },
     {
       key: "DELIVERED",
@@ -59,33 +66,46 @@ export function OrderTrackingTimeline({ status }: OrderTrackingTimelineProps) {
   const isCancelled = status === "CANCELLED" || status === "REJECTED";
 
   if (isCancelled) {
+    const rejectionReason = getCleanRejectionReason(notes);
+
     return (
-      <div className="glass-card p-4 rounded-[20px] border border-[#FF4D4D] text-center space-y-2">
-        <h3 className="font-display font-bold text-sm text-[#FF4D4D]">
+      <div className="bg-white p-4 rounded-lg border border-[#D92D3A] text-center space-y-2.5 text-[#111111]">
+        <h3 className="font-extrabold text-sm text-[#D92D3A]">
           Order Cancelled / Rejected
         </h3>
-        <p className="text-xs text-[#8A90A3]">
-          This order was cancelled or could not be fulfilled.
-        </p>
+        {rejectionReason ? (
+          <div className="pt-1 space-y-1">
+            <span className="text-[10px] font-extrabold text-[#666666] uppercase tracking-wider block">
+              Reason for rejection
+            </span>
+            <p className="text-xs text-[#111111] font-bold bg-[#F5F5F5] border border-[#E5E5E5] p-2.5 rounded-md max-w-sm mx-auto leading-relaxed">
+              &quot;{rejectionReason}&quot;
+            </p>
+          </div>
+        ) : (
+          <p className="text-xs text-[#666666] font-medium">
+            This order was cancelled or could not be fulfilled.
+          </p>
+        )}
       </div>
     );
   }
 
   return (
-    <div className="glass-card p-5 rounded-[20px] shadow-md space-y-4 text-[#F5F6FA]">
+    <div className="bg-white p-5 rounded-lg border border-[#E5E5E5] space-y-4 text-[#111111]">
       <div className="flex items-center justify-between">
-        <h3 className="font-display font-extrabold text-xs text-[#F5F6FA] uppercase tracking-wider">
+        <h3 className="font-extrabold text-xs text-[#111111] uppercase tracking-wider">
           Delivery Progress
         </h3>
-        <span className="text-xs font-bold px-2.5 py-0.5 rounded-lg bg-[#1A1F2C] text-[#FF6B1A] border border-white/8">
-          Target: 15 Mins ⚡
+        <span className="text-xs font-black px-2.5 py-0.5 rounded bg-[#DFFF00] text-[#000000] border border-[#111111]">
+          Target: 10 Mins ⚡
         </span>
       </div>
 
       <div className="relative pl-3 space-y-5">
         {steps.map((step, index) => {
-          const isDone = currentIndex > index;
-          const isCurrent = currentIndex === index;
+          const isDone = currentIndex > index || (status === "DELIVERED" && index <= currentIndex);
+          const isCurrent = currentIndex === index && status !== "DELIVERED";
           const isLast = index === steps.length - 1;
 
           return (
@@ -93,22 +113,20 @@ export function OrderTrackingTimeline({ status }: OrderTrackingTimelineProps) {
               {/* Connector Vertical Line */}
               {!isLast && (
                 <div
-                  className={`absolute left-[13px] top-6 bottom--5 w-0.5 transition-colors duration-300 ${
-                    isDone
-                      ? "bg-gradient-to-b from-[#FF6B1A] to-[#2D6CFF] shadow-[0_0_8px_rgba(45,108,255,0.4)]"
-                      : "bg-white/8"
+                  className={`absolute left-[13px] top-6 bottom--5 w-0.5 transition-colors duration-200 ${
+                    isDone || isCurrent ? "bg-[#111111]" : "bg-[#E5E5E5]"
                   }`}
                 />
               )}
 
               {/* Node Bullet Icon */}
               <div
-                className={`relative z-10 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-200 ${
+                className={`relative z-10 w-7 h-7 rounded-full flex items-center justify-center text-xs font-black transition-all duration-150 border ${
                   isCurrent
-                    ? "bg-gradient-to-r from-[#FF6B1A] to-[#2D6CFF] text-white shadow-[0_0_12px_rgba(255,107,26,0.4)] ring-4 ring-[#FF6B1A]/20 scale-105"
+                    ? "bg-[#DFFF00] text-[#000000] border-[#111111] ring-4 ring-[#DFFF00]/30 scale-105"
                     : isDone
-                    ? "bg-[#2D6CFF] text-white"
-                    : "bg-[#1A1F2C] text-[#8A90A3] border border-white/8"
+                    ? "bg-[#111111] text-white border-[#111111]"
+                    : "bg-[#F5F5F5] text-[#666666] border-[#E5E5E5]"
                 }`}
               >
                 {isDone ? "✓" : index + 1}
@@ -117,17 +135,17 @@ export function OrderTrackingTimeline({ status }: OrderTrackingTimelineProps) {
               {/* Step Info */}
               <div className="flex-1 pt-0.5">
                 <h4
-                  className={`text-xs font-bold transition-colors ${
+                  className={`text-xs font-black transition-colors ${
                     isCurrent
-                      ? "text-[#FF6B1A]"
+                      ? "text-[#111111]"
                       : isDone
-                      ? "text-[#F5F6FA]"
-                      : "text-[#8A90A3]"
+                      ? "text-[#111111]"
+                      : "text-[#666666]"
                   }`}
                 >
                   {step.title}
                 </h4>
-                <p className="text-[11px] text-[#8A90A3] mt-0.5 leading-snug">
+                <p className="text-[11px] text-[#666666] mt-0.5 leading-snug font-medium">
                   {step.subtitle}
                 </p>
               </div>

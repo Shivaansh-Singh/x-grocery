@@ -26,7 +26,7 @@ export function CategoryPills({
         {[1, 2, 3, 4, 5, 6].map((i) => (
           <div
             key={i}
-            className="h-8 w-28 bg-[#141822] border border-white/8 rounded-xl shrink-0"
+            className="h-8 w-28 bg-[#F5F5F5] border border-[#E5E5E5] rounded-lg shrink-0"
           />
         ))}
       </div>
@@ -35,14 +35,14 @@ export function CategoryPills({
 
   const allCategory: CategoryItem = {
     id: "all",
-    name: "⚡ All Items",
+    name: "All Items",
     slug: "all",
   };
 
   const fullList = [allCategory, ...categories];
 
   return (
-    <div className="sticky top-[56px] z-30 bg-[#0B0E14]/90 backdrop-blur-md py-2 border-b border-white/8 -mx-4 px-4 sm:-mx-6 sm:px-6">
+    <div className="sticky top-[56px] z-30 bg-white py-2 border-b border-[#E5E5E5] -mx-4 px-4 sm:-mx-6 sm:px-6">
       <div className="flex gap-2 overflow-x-auto no-scrollbar scroll-smooth py-0.5 flex-nowrap">
         {fullList.map((cat) => {
           const isSelected = activeCategory === cat.slug;
@@ -50,10 +50,10 @@ export function CategoryPills({
             <button
               key={cat.slug}
               onClick={() => onSelectCategory(cat.slug)}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold whitespace-nowrap transition-all shrink-0 select-none flex items-center gap-1.5 ${
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-extrabold whitespace-nowrap transition-colors shrink-0 select-none flex items-center gap-1.5 ${
                 isSelected
-                  ? "bg-gradient-to-r from-[#FF6B1A] to-[#2D6CFF] text-white shadow-[0_0_14px_rgba(45,108,255,0.30)] scale-[1.02]"
-                  : "bg-[#141822] text-[#8A90A3] hover:text-[#F5F6FA] hover:bg-[#1A1F2C] border border-white/8"
+                  ? "bg-[#DFFF00] text-[#000000] border border-[#111111]"
+                  : "bg-white text-[#111111] hover:bg-[#F5F5F5] border border-[#E5E5E5]"
               }`}
             >
               <span>{cat.name}</span>

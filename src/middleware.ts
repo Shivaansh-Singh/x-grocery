@@ -19,7 +19,10 @@ export async function middleware(request: NextRequest) {
 
   // 2. Check Supabase Auth user if configured
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co";
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-anon-key";
+  const supabaseKey =
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    "placeholder-anon-key";
 
   if (process.env.NEXT_PUBLIC_SUPABASE_URL && !process.env.NEXT_PUBLIC_SUPABASE_URL.includes("placeholder")) {
     const supabase = createServerClient(supabaseUrl, supabaseKey, {
@@ -71,18 +74,17 @@ export async function middleware(request: NextRequest) {
   const isAuthenticated = Boolean(userRole || userEmail);
 
   // -------------------------------------------------------------
-  // LOGIN PAGE LOGIC
+  // PUBLIC AUTH ROUTES (LOGIN, FORGOT/RESET PASSWORD, OAUTH CALLBACK)
   // -------------------------------------------------------------
-  if (pathname === "/login") {
-    if (isAuthenticated) {
-      if (userRole === "STORE_ADMIN") {
-        return NextResponse.redirect(new URL("/admin", request.url));
-      }
-      if (userRole === "DELIVERY_PARTNER") {
-        return NextResponse.redirect(new URL("/delivery", request.url));
-      }
-      return NextResponse.redirect(new URL("/", request.url));
-    }
+  const isPublicAuthRoute =
+    pathname === "/login" ||
+    pathname === "/forgot-password" ||
+    pathname === "/reset-password" ||
+    pathname === "/terms" ||
+    pathname.startsWith("/auth/callback") ||
+    pathname.startsWith("/api/auth");
+
+  if (isPublicAuthRoute) {
     return response;
   }
 
@@ -101,8 +103,8 @@ export async function middleware(request: NextRequest) {
 
   // A. STORE_ADMIN Rules
   if (userRole === "STORE_ADMIN") {
-    // Admin trying to access /delivery or customer root /
-    if (pathname.startsWith("/delivery") || pathname === "/" || pathname.startsWith("/cart") || pathname.startsWith("/categories")) {
+    // Admin trying to access delivery portal
+    if (pathname.startsWith("/delivery")) {
       return NextResponse.redirect(new URL("/admin", request.url));
     }
     return response;
@@ -110,8 +112,8 @@ export async function middleware(request: NextRequest) {
 
   // B. DELIVERY_PARTNER Rules
   if (userRole === "DELIVERY_PARTNER") {
-    // Rider trying to access /admin or customer root /
-    if (pathname.startsWith("/admin") || pathname === "/" || pathname.startsWith("/cart") || pathname.startsWith("/categories")) {
+    // Rider trying to access admin hub
+    if (pathname.startsWith("/admin")) {
       return NextResponse.redirect(new URL("/delivery", request.url));
     }
     return response;

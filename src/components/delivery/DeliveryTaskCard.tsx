@@ -22,21 +22,21 @@ export function DeliveryTaskCard({
   const cleanPhone = rawPhone.replace(/\s+/g, "");
 
   return (
-    <div className="glass-card rounded-[20px] p-4 shadow-md space-y-3 text-[#F5F6FA]">
+    <div className="bg-white rounded-lg p-4 border border-[#E5E5E5] space-y-3 text-[#111111]">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <span className="font-display font-extrabold text-base text-[#F5F6FA]">
+            <span className="font-extrabold text-base text-[#111111]">
               #{order.orderNumber}
             </span>
             <span
-              className={`px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
+              className={`px-2.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ${
                 isOutForDelivery
-                  ? "bg-gradient-to-r from-[#FF6B1A] to-[#2D6CFF] text-white"
+                  ? "bg-[#DFFF00] text-[#000000] border border-[#111111]"
                   : isAssigned
-                  ? "bg-[#2D6CFF] text-white"
-                  : "bg-[#1A1F2C] text-[#8A90A3]"
+                  ? "bg-[#111111] text-white"
+                  : "bg-[#F5F5F5] text-[#666666]"
               }`}
             >
               {order.status === "OUT_FOR_DELIVERY"
@@ -46,7 +46,7 @@ export function DeliveryTaskCard({
                 : "Delivered"}
             </span>
           </div>
-          <span className="text-[10px] text-[#8A90A3] font-medium block mt-0.5">
+          <span className="text-[10px] text-[#666666] font-medium block mt-0.5">
             {new Date(order.createdAt).toLocaleTimeString("en-IN", {
               hour: "2-digit",
               minute: "2-digit",
@@ -56,35 +56,35 @@ export function DeliveryTaskCard({
 
         {/* Payment Collection Badge */}
         <div className="text-right">
-          <span className="text-sm font-black text-[#FF6B1A] block">
+          <span className="text-sm font-black text-[#111111] block">
             ₹{order.totalAmount.toFixed(0)}
           </span>
-          <span className="text-[10px] font-bold px-2 py-0.5 rounded-md inline-block mt-0.5 bg-[#1A1F2C] text-[#8A90A3] border border-white/8">
+          <span className="text-[10px] font-bold px-2 py-0.5 rounded inline-block mt-0.5 bg-[#F5F5F5] text-[#666666] border border-[#E5E5E5]">
             {order.paymentMethod === "COD" ? "Cash" : "UPI QR"}
           </span>
         </div>
       </div>
 
       {/* Customer Call Bar & Off-Campus Address */}
-      <div className="bg-[#1A1F2C] p-3.5 rounded-xl border border-white/8 space-y-2">
+      <div className="bg-[#F5F5F5] p-3.5 rounded-lg border border-[#E5E5E5] space-y-2">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5 font-extrabold text-xs text-[#F5F6FA]">
-            <span>Student Customer</span>
+          <div className="flex items-center gap-1.5 font-bold text-xs text-[#111111]">
+            <span>Customer Details</span>
           </div>
           <a
             href={`tel:${cleanPhone}`}
-            className="px-3.5 py-1.5 bg-[#2D6CFF] hover:bg-[#2D6CFF]/90 text-white font-bold text-xs rounded-xl shadow-xs transition-colors flex items-center gap-1.5"
+            className="px-3.5 py-1.5 bg-[#111111] hover:bg-black text-white font-black text-xs rounded transition-colors flex items-center gap-1.5"
           >
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1.11 1.11 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
             </svg>
-            <span>Call Student</span>
+            <span>Call Customer</span>
           </a>
         </div>
 
-        <div className="text-xs text-[#F5F6FA] font-medium leading-normal">
-          <span className="text-[#8A90A3] block text-[10px] uppercase font-bold tracking-wider">
-            Off-Campus Address
+        <div className="text-xs text-[#111111] font-medium leading-normal">
+          <span className="text-[#666666] block text-[10px] uppercase font-extrabold tracking-wider">
+            Delivery Address
           </span>
           <span>{order.deliveryAddress}</span>
         </div>
@@ -92,19 +92,19 @@ export function DeliveryTaskCard({
 
       {/* Item Checklist */}
       <div className="space-y-1 text-xs">
-        <span className="text-[10px] font-bold text-[#8A90A3] uppercase tracking-wider block">
+        <span className="text-[10px] font-extrabold text-[#666666] uppercase tracking-wider block">
           Grocery Package Items ({order.items.length})
         </span>
         <div className="space-y-1 max-h-24 overflow-y-auto no-scrollbar">
           {order.items.map((item) => (
             <div
               key={item.id}
-              className="flex justify-between bg-[#1A1F2C] px-2.5 py-1 rounded-lg border border-white/8"
+              className="flex justify-between bg-[#F5F5F5] px-2.5 py-1 rounded border border-[#E5E5E5]"
             >
-              <span className="text-[#F5F6FA] font-medium truncate">
+              <span className="text-[#111111] font-bold truncate">
                 {item.productName}
               </span>
-              <span className="font-bold text-[#8A90A3]">x{item.quantity}</span>
+              <span className="font-bold text-[#666666]">x{item.quantity}</span>
             </div>
           ))}
         </div>
@@ -116,9 +116,9 @@ export function DeliveryTaskCard({
           {isAssigned && (
             <button
               onClick={() => onStartDelivery?.(order.id)}
-              className="w-full py-3 bg-gradient-to-r from-[#FF6B1A] to-[#2D6CFF] hover:opacity-90 text-white rounded-xl font-extrabold text-xs shadow-sm transition-all flex items-center justify-center gap-1.5"
+              className="w-full py-3 bg-[#DFFF00] hover:bg-[#C8E600] text-[#000000] rounded font-black text-xs transition-colors border border-[#111111] flex items-center justify-center gap-1.5"
             >
-              <span>Start Delivery Trip 🛵</span>
+              <span>START DELIVERY 🛵</span>
               <span>→</span>
             </button>
           )}
@@ -126,9 +126,9 @@ export function DeliveryTaskCard({
           {isOutForDelivery && (
             <button
               onClick={() => onOpenPaymentModal?.(order)}
-              className="w-full py-3 bg-gradient-to-r from-[#FF6B1A] to-[#2D6CFF] hover:opacity-90 text-white rounded-xl font-extrabold text-xs shadow-sm transition-all flex items-center justify-center gap-1.5"
+              className="w-full py-3 bg-[#DFFF00] hover:bg-[#C8E600] text-[#000000] rounded font-black text-xs transition-colors border border-[#111111] flex items-center justify-center gap-1.5"
             >
-              <span>Mark Order Delivered 🎉</span>
+              <span>MARK DELIVERED 🎉</span>
               <span>→</span>
             </button>
           )}

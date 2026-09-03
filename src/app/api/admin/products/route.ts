@@ -44,11 +44,35 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, slug, price, unit, stock, categoryId, description, imageUrl } = body;
+    const { name, slug, price, unit, stock, categoryId, description, imageUrl, isAvailable } = body;
 
-    if (!name || !price || !categoryId) {
+    // Backend validation
+    if (!name || typeof name !== "string" || name.trim() === "") {
       return NextResponse.json(
-        { error: "Missing required product fields (name, price, categoryId)" },
+        { error: "Product name is required." },
+        { status: 400 }
+      );
+    }
+
+    if (!categoryId) {
+      return NextResponse.json(
+        { error: "Category is required." },
+        { status: 400 }
+      );
+    }
+
+    const parsedPrice = Number(price);
+    if (isNaN(parsedPrice) || parsedPrice < 0) {
+      return NextResponse.json(
+        { error: "Price must be a non-negative number." },
+        { status: 400 }
+      );
+    }
+
+    const parsedStock = parseInt(String(stock ?? 0), 10);
+    if (isNaN(parsedStock) || parsedStock < 0) {
+      return NextResponse.json(
+        { error: "Stock must be a non-negative integer." },
         { status: 400 }
       );
     }
@@ -64,18 +88,21 @@ export async function POST(request: NextRequest) {
     const productSlug =
       slug || name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
+    // isActive = explicit availability override (default true), independent from stock
+    const explicitActive = isAvailable !== undefined ? Boolean(isAvailable) : true;
+
     const newProductRaw = await prisma.product.create({
       data: {
         storeId: store.id,
-        name,
+        name: name.trim(),
         slug: `${productSlug}-${Date.now().toString().slice(-4)}`,
-        price: Number(price),
+        price: parsedPrice,
         unitDisplay: unit || "1 pack",
-        stock: Number(stock || 0),
+        stock: parsedStock,
         categoryId,
         description: description || null,
         imageUrl: imageUrl || "/images/placeholder.jpg",
-        isActive: Number(stock || 0) > 0,
+        isActive: explicitActive,
       },
       include: { category: true },
     });

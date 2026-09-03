@@ -22,33 +22,34 @@ export function AdminHeader({ pendingOrdersCount = 0 }: AdminHeaderProps) {
       badge: pendingOrdersCount > 0 ? pendingOrdersCount : null,
     },
     { href: "/admin/delivery-staff", label: "Riders" },
+    { href: "/admin/feedback", label: "Customer Feedback" },
   ];
 
   return (
-    <header className="bg-[#141822] text-[#F5F6FA] rounded-2xl p-4 shadow-md border border-white/8 space-y-3 mb-4">
+    <header className="bg-white text-[#111111] rounded-lg p-4 border border-[#111111] space-y-3 mb-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <RushDLogo size="sm" href="/admin" />
-          <div className="border-l border-white/8 pl-2.5">
-            <h2 className="font-extrabold text-xs leading-tight text-[#F5F6FA]">
+          <div className="border-l border-[#E5E5E5] pl-2.5">
+            <h2 className="font-extrabold text-xs leading-tight text-[#111111]">
               Admin Hub
             </h2>
-            <p className="text-[10px] text-[#8A90A3] font-medium">
-              Store Owner X
+            <p className="text-[10px] text-[#666666] font-medium">
+              Store Operations
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
           {activeUser && (
-            <span className="text-[10px] font-bold text-[#2D6CFF] bg-[#2D6CFF]/15 border border-[#2D6CFF]/30 px-2 py-1 rounded-lg">
-              ⚡ STORE ADMIN
+            <span className="text-[10px] font-black text-[#000000] bg-[#DFFF00] border border-[#111111] px-2 py-1 rounded">
+              STORE ADMIN
             </span>
           )}
 
           <button
             onClick={() => signOut()}
-            className="text-xs text-[#FF4D4D] hover:bg-[#FF4D4D]/20 transition-colors bg-[#1A1F2C] px-3 py-1.5 rounded-xl font-bold border border-[#FF4D4D]/30"
+            className="text-xs text-[#D92D3A] hover:bg-[#F5F5F5] transition-colors bg-white px-3 py-1.5 rounded font-bold border border-[#E5E5E5]"
           >
             Sign Out
           </button>
@@ -62,15 +63,15 @@ export function AdminHeader({ pendingOrdersCount = 0 }: AdminHeaderProps) {
             <Link
               key={link.href}
               href={link.href}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 shrink-0 ${
+              className={`px-3 py-1.5 rounded text-xs font-extrabold transition-colors flex items-center gap-1.5 shrink-0 border ${
                 isActive
-                  ? "bg-[#2D6CFF] text-white shadow-xs"
-                  : "bg-[#1A1F2C] text-[#8A90A3] hover:bg-white/10 hover:text-white"
+                  ? "bg-[#111111] text-white border-[#111111]"
+                  : "bg-[#F5F5F5] text-[#666666] hover:bg-white hover:text-[#111111] border-[#E5E5E5]"
               }`}
             >
               <span>{link.label}</span>
               {link.badge && (
-                <span className="px-1.5 py-0.2 rounded bg-gradient-to-r from-[#FF6B1A] to-[#2D6CFF] text-white text-[10px] font-black">
+                <span className="px-1.5 py-0.2 rounded bg-[#DFFF00] text-[#000000] text-[10px] font-black border border-[#111111]">
                   {link.badge}
                 </span>
               )}

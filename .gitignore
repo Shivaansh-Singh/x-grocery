@@ -39,3 +39,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# scratch directory
+scratch/
+
+# runtime uploads
+/public/uploads/
+public/uploads/
+

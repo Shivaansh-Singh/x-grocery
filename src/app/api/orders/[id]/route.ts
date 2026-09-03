@@ -19,6 +19,14 @@ export async function GET(
       },
       include: {
         items: true,
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+            email: true,
+          },
+        },
         store: {
           select: {
             id: true,
@@ -41,7 +49,10 @@ export async function GET(
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ order });
+    // Never expose internal deliveryOtpHash to clients
+    const { deliveryOtpHash, ...safeOrder } = order as typeof order & { deliveryOtpHash?: string };
+
+    return NextResponse.json({ order: safeOrder });
   } catch (error) {
     console.error("GET /api/orders/[id] error:", error);
     return NextResponse.json(

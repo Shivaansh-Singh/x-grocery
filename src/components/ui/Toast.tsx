@@ -36,15 +36,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         {toasts.map((toast) => (
           <div
             key={toast.id}
-            className={`pointer-events-auto p-3 rounded-2xl text-xs font-semibold shadow-lg flex items-center gap-2 border transition-all duration-300 animate-slideDown ${
-              toast.type === "warning"
-                ? "bg-amber-900 text-amber-100 border-amber-700"
-                : toast.type === "error"
-                ? "bg-rose-900 text-rose-100 border-rose-700"
-                : toast.type === "success"
-                ? "bg-emerald-900 text-emerald-100 border-emerald-700"
-                : "bg-zinc-900 text-zinc-100 border-zinc-700"
-            }`}
+            className="pointer-events-auto p-3 rounded-lg text-xs font-bold shadow-md flex items-center gap-2 border bg-white text-[#111111] border-[#111111] transition-all duration-300"
           >
             <span className="text-base">
               {toast.type === "warning"
@@ -55,7 +47,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 ? "✅"
                 : "ℹ️"}
             </span>
-            <span className="flex-1">{toast.message}</span>
+            <span className="flex-1 font-bold text-[#111111]">{toast.message}</span>
           </div>
         ))}
       </div>

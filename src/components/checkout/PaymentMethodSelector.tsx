@@ -27,8 +27,8 @@ export function PaymentMethodSelector({
   ];
 
   return (
-    <div className="glass-card p-4 rounded-[20px] shadow-md space-y-3 text-[#F5F6FA]">
-      <h3 className="font-display font-extrabold text-xs text-[#F5F6FA] uppercase tracking-wider">
+    <div className="bg-white p-4 rounded-lg border border-[#E5E5E5] space-y-3 text-[#111111]">
+      <h3 className="font-extrabold text-xs text-[#111111] uppercase tracking-wider">
         Payment Method
       </h3>
 
@@ -39,10 +39,10 @@ export function PaymentMethodSelector({
             <div
               key={method.id}
               onClick={() => onChange(method.id)}
-              className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-start gap-3 ${
+              className={`p-3.5 rounded-lg border transition-colors cursor-pointer flex items-start gap-3 ${
                 isSelected
-                  ? "bg-[#1A1F2C] border-[#FF6B1A] shadow-sm"
-                  : "bg-[#1A1F2C]/60 border-white/8 hover:border-[#2D6CFF]"
+                  ? "bg-[#F5F5F5] border-[#111111]"
+                  : "bg-white border-[#E5E5E5] hover:border-[#111111]"
               }`}
             >
               <div className="mt-0.5">
@@ -51,20 +51,20 @@ export function PaymentMethodSelector({
                   name="paymentMethod"
                   checked={isSelected}
                   onChange={() => onChange(method.id)}
-                  className="w-4 h-4 text-[#FF6B1A] focus:ring-[#FF6B1A]"
+                  className="w-4 h-4 accent-[#111111]"
                 />
               </div>
 
               <div className="flex-1">
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-xs text-[#F5F6FA]">
+                  <span className="font-extrabold text-xs text-[#111111]">
                     {method.title}
                   </span>
-                  <span className="text-[10px] font-bold text-[#2D6CFF] px-2 py-0.5 rounded-md bg-[#2D6CFF]/15 border border-[#2D6CFF]/30">
+                  <span className="text-[10px] font-black text-[#000000] px-2 py-0.5 rounded bg-[#DFFF00] border border-[#111111]">
                     {method.badge}
                   </span>
                 </div>
-                <p className="text-[11px] text-[#8A90A3] mt-1 leading-normal">
+                <p className="text-[11px] text-[#666666] mt-1 leading-normal font-medium">
                   {method.subtitle}
                 </p>
               </div>
