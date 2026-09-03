@@ -72,9 +72,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 1. Get Store X
+    // 1. Get Store X (select only id to minimize query payload)
     const store = await prisma.store.findUnique({
       where: { slug: "store-x" },
+      select: { id: true },
     });
 
     if (!store) {
@@ -201,54 +202,60 @@ export async function POST(request: NextRequest) {
     const pricing = calculateOrderPricing(calculatedSubtotal, orderItemsData.length);
     const totalAmount = pricing.totalAmount;
 
-    // 7. Atomic transaction: Create order + deduct stock simultaneously
-    const newOrder = await prisma.$transaction(async (tx) => {
-      // Generate cryptographically secure 6-digit delivery OTP and hash
-      const { otp: deliveryOtp, hash: deliveryOtpHash } = generateDeliveryOtp();
+    // 7. Atomic transaction: Create order + deduct stock simultaneously (with WAN pooler timeouts)
+    const newOrder = await prisma.$transaction(
+      async (tx) => {
+        // Generate cryptographically secure 6-digit delivery OTP and hash
+        const { otp: deliveryOtp, hash: deliveryOtpHash } = generateDeliveryOtp();
 
-      // Create the order with frozen item price snapshots and delivery verification OTP
-      const order = await tx.order.create({
-        data: {
-          orderNumber,
-          storeId: store.id,
-          customerId: customer.id,
-          status: OrderStatus.PENDING,
-          paymentMethod: (paymentMethod as PaymentMethod) || PaymentMethod.COD,
-          paymentStatus: PaymentStatus.PENDING,
-          totalAmount,
-          deliveryAddress,
-          notes: notes || null,
-          deliveryOtp,
-          deliveryOtpHash,
-          deliveryOtpVerified: false,
-          items: {
-            create: orderItemsData,
-          },
-        },
-        include: { items: true },
-      });
-
-      // Atomically deduct stock and record inventory logs sequentially within the transaction
-      for (const item of orderItemsData) {
-        const updatedProduct = await tx.product.update({
-          where: { id: item.productId },
-          data: { stock: { decrement: item.quantity } },
-          select: { id: true, stock: true },
-        });
-
-        await tx.inventoryLog.create({
+        // Create the order with frozen item price snapshots and delivery verification OTP
+        const order = await tx.order.create({
           data: {
-            productId: item.productId,
-            previousStock: updatedProduct.stock + item.quantity,
-            newStock: updatedProduct.stock,
-            changeQuantity: -item.quantity,
-            reason: `ORDER_PLACED:${order.orderNumber}`,
+            orderNumber,
+            storeId: store.id,
+            customerId: customer.id,
+            status: OrderStatus.PENDING,
+            paymentMethod: (paymentMethod as PaymentMethod) || PaymentMethod.COD,
+            paymentStatus: PaymentStatus.PENDING,
+            totalAmount,
+            deliveryAddress,
+            notes: notes || null,
+            deliveryOtp,
+            deliveryOtpHash,
+            deliveryOtpVerified: false,
+            items: {
+              create: orderItemsData,
+            },
           },
+          include: { items: true },
         });
-      }
 
-      return order;
-    });
+        // Atomically deduct stock and record inventory logs sequentially within the transaction
+        for (const item of orderItemsData) {
+          const updatedProduct = await tx.product.update({
+            where: { id: item.productId },
+            data: { stock: { decrement: item.quantity } },
+            select: { id: true, stock: true },
+          });
+
+          await tx.inventoryLog.create({
+            data: {
+              productId: item.productId,
+              previousStock: updatedProduct.stock + item.quantity,
+              newStock: updatedProduct.stock,
+              changeQuantity: -item.quantity,
+              reason: `ORDER_PLACED:${order.orderNumber}`,
+            },
+          });
+        }
+
+        return order;
+      },
+      {
+        maxWait: 10000,
+        timeout: 20000,
+      }
+    );
 
     return NextResponse.json({ order: newOrder }, { status: 201 });
   } catch (error) {

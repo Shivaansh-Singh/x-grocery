@@ -132,6 +132,7 @@ model Product {
   orderItems    OrderItem[]
 
   @@unique([storeId, slug])
+  @@index([storeId, isActive, createdAt])
 }
 
 model InventoryLog {

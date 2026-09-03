@@ -592,7 +592,13 @@ export default function CheckoutPage() {
       </div>
 
       {/* Place Order Submit Button */}
-      <div className="pt-2">
+      <div className="pt-2 space-y-2">
+        {errorMessage && (
+          <div className="p-3 bg-white border border-[#D92D3A] text-[#D92D3A] rounded text-xs font-bold flex items-center gap-2">
+            <span>⚠️</span>
+            <span>{errorMessage}</span>
+          </div>
+        )}
         <button
           type="submit"
           disabled={submitting}
