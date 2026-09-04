@@ -68,6 +68,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const placeOrderStart = performance.now();
   try {
     const body = await request.json();
     const {
@@ -243,7 +244,15 @@ export async function POST(request: NextRequest) {
           include: { items: true },
         });
 
-        // Atomically deduct stock and record inventory logs sequentially within the transaction
+        // Atomically deduct stock and collect inventory logs for batch insert
+        const inventoryLogData: {
+          productId: string;
+          previousStock: number;
+          newStock: number;
+          changeQuantity: number;
+          reason: string;
+        }[] = [];
+
         for (const item of orderItemsData) {
           const updatedProduct = await tx.product.update({
             where: { id: item.productId },
@@ -251,14 +260,18 @@ export async function POST(request: NextRequest) {
             select: { id: true, stock: true },
           });
 
-          await tx.inventoryLog.create({
-            data: {
-              productId: item.productId,
-              previousStock: updatedProduct.stock + item.quantity,
-              newStock: updatedProduct.stock,
-              changeQuantity: -item.quantity,
-              reason: `ORDER_PLACED:${order.orderNumber}`,
-            },
+          inventoryLogData.push({
+            productId: item.productId,
+            previousStock: updatedProduct.stock + item.quantity,
+            newStock: updatedProduct.stock,
+            changeQuantity: -item.quantity,
+            reason: `ORDER_PLACED:${order.orderNumber}`,
+          });
+        }
+
+        if (inventoryLogData.length > 0) {
+          await tx.inventoryLog.createMany({
+            data: inventoryLogData,
           });
         }
 
@@ -268,6 +281,10 @@ export async function POST(request: NextRequest) {
         maxWait: 10000,
         timeout: 20000,
       }
+    );
+
+    console.log(
+      `[PERF][PLACE_ORDER] items=${orderItemsData.length} time=${(performance.now() - placeOrderStart).toFixed(1)}ms`
     );
 
     return NextResponse.json({ order: newOrder }, { status: 201 });
