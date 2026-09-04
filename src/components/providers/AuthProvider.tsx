@@ -59,42 +59,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     document.cookie = "rushd_user_email=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
   };
 
-  const roleFetchCacheRef = React.useRef<Map<string, Promise<{ id: string; name: string; role: Role } | null>>>(new Map());
-
-  // Helper to fetch authoritative role from Database API with deduplication
-  const fetchAuthoritativeRole = (email: string): Promise<{ id: string; name: string; role: Role } | null> => {
-    const cleanEmail = email.toLowerCase().trim();
-    if (!cleanEmail) return Promise.resolve(null);
-
-    const existingPromise = roleFetchCacheRef.current.get(cleanEmail);
-    if (existingPromise) return existingPromise;
-
-    const promise = (async () => {
-      try {
-        const res = await fetch(`/api/auth/role?email=${encodeURIComponent(cleanEmail)}`, {
-          cache: "no-store",
-          headers: { "Cache-Control": "no-cache" },
-        });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.user) {
-            return {
-              id: data.user.id,
-              name: data.user.name,
-              role: data.user.role as Role,
-            };
-          }
+  // Helper to fetch authoritative role from Database API
+  const fetchAuthoritativeRole = async (email: string): Promise<{ id: string; name: string; role: Role } | null> => {
+    try {
+      const res = await fetch(`/api/auth/role?email=${encodeURIComponent(email)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.user) {
+          return {
+            id: data.user.id,
+            name: data.user.name,
+            role: data.user.role as Role,
+          };
         }
-      } catch (err) {
-        console.error("Error fetching authoritative role:", err);
-      } finally {
-        roleFetchCacheRef.current.delete(cleanEmail);
       }
-      return null;
-    })();
-
-    roleFetchCacheRef.current.set(cleanEmail, promise);
-    return promise;
+    } catch (err) {
+      console.error("Error fetching authoritative role:", err);
+    }
+    return null;
   };
 
   useEffect(() => {

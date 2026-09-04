@@ -1,13 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
-
-const NO_CACHE_HEADERS = {
-  "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
-};
-
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -58,12 +51,12 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json({ products }, { headers: NO_CACHE_HEADERS });
+    return NextResponse.json({ products });
   } catch (error) {
     console.error("GET /api/products error:", error);
     return NextResponse.json(
       { error: "Failed to fetch products" },
-      { status: 500, headers: NO_CACHE_HEADERS }
+      { status: 500 }
     );
   }
 }

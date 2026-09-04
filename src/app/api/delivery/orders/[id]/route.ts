@@ -16,51 +16,17 @@ const NO_CACHE_HEADERS = {
 // Maximum 5 failed attempts per order before locking for 5 minutes
 const failedOtpAttempts = new Map<string, { count: number; lockedUntil: number }>();
 
-function extractEmailFromSupabaseCookie(request: NextRequest): string | null {
-  try {
-    const allCookies = request.cookies.getAll();
-    const authCookies = allCookies
-      .filter((c) => c.name.includes("auth-token"))
-      .sort((a, b) => a.name.localeCompare(b.name));
-
-    if (authCookies.length > 0) {
-      const combinedValue = authCookies.map((c) => c.value).join("");
-      let parsed: any;
-      try {
-        parsed = JSON.parse(combinedValue);
-      } catch {
-        try {
-          parsed = JSON.parse(Buffer.from(combinedValue, "base64").toString("utf-8"));
-        } catch {
-          parsed = null;
-        }
-      }
-      const accessToken = parsed?.access_token || (typeof parsed === "string" ? parsed : null);
-      if (accessToken && typeof accessToken === "string" && accessToken.includes(".")) {
-        const parts = accessToken.split(".");
-        if (parts.length === 3) {
-          const payloadJson = Buffer.from(parts[1], "base64").toString("utf-8");
-          const payload = JSON.parse(payloadJson);
-          const nowSeconds = Math.floor(Date.now() / 1000);
-          if (payload.exp && payload.exp > nowSeconds && payload.email) {
-            return payload.email.toLowerCase().trim();
-          }
-        }
-      }
-    }
-  } catch {
-    // ignore
-  }
-  return null;
-}
-
 async function resolveAuthenticatedUser(request: NextRequest) {
   try {
-    // 1. Fast zero-latency local JWT extraction from Supabase auth cookie
-    const fastEmail = extractEmailFromSupabaseCookie(request);
-    if (fastEmail) {
+    // 1. Check Supabase Auth Session
+    const supabase = await createClient();
+    const {
+      data: { user: authUser },
+    } = await supabase.auth.getUser();
+
+    if (authUser?.email) {
       const dbUser = await prisma.user.findUnique({
-        where: { email: fastEmail },
+        where: { email: authUser.email.toLowerCase().trim() },
       });
       if (dbUser) return dbUser;
     }
@@ -77,20 +43,7 @@ async function resolveAuthenticatedUser(request: NextRequest) {
       if (dbUser) return dbUser;
     }
 
-    // 3. Fallback to Supabase Auth API if local cookie is missing or expired
-    const supabase = await createClient();
-    const {
-      data: { user: authUser },
-    } = await supabase.auth.getUser();
-
-    if (authUser?.email) {
-      const dbUser = await prisma.user.findUnique({
-        where: { email: authUser.email.toLowerCase().trim() },
-      });
-      if (dbUser) return dbUser;
-    }
-
-    // 4. Fallback check for user role cookie if admin testing
+    // 3. Fallback check for user role cookie if admin testing
     const roleCookie =
       request.cookies.get("rushd_user_role")?.value ||
       request.headers.get("x-user-role");
