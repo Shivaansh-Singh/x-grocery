@@ -1,6 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+const NO_CACHE_HEADERS = {
+  "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+};
+
 const DEFAULT_CATEGORIES = [
   { name: "Fresh Produce", slug: "fresh-produce", icon: "carrot", sortOrder: 1 },
   { name: "Dairy & Eggs", slug: "dairy-eggs", icon: "milk", sortOrder: 2 },
@@ -12,24 +19,8 @@ const DEFAULT_CATEGORIES = [
 
 export async function GET() {
   try {
-    let store = await prisma.store.findUnique({
-      where: { slug: "store-x" },
-    });
-
-    if (!store) {
-      store = await prisma.store.create({
-        data: {
-          name: "Store X (VIT Bhopal Off-Campus Hub)",
-          slug: "store-x",
-          address: "Kotri Kalan, Near VIT Bhopal Campus Road, Bhopal, MP",
-          phone: "+91 9244302120",
-          isActive: true,
-        },
-      });
-    }
-
     let categories = await prisma.category.findMany({
-      where: { storeId: store.id },
+      where: { store: { slug: "store-x" } },
       include: {
         _count: {
           select: { products: true },
@@ -39,6 +30,22 @@ export async function GET() {
     });
 
     if (categories.length === 0) {
+      let store = await prisma.store.findUnique({
+        where: { slug: "store-x" },
+      });
+
+      if (!store) {
+        store = await prisma.store.create({
+          data: {
+            name: "Store X (VIT Bhopal Off-Campus Hub)",
+            slug: "store-x",
+            address: "Kotri Kalan, Near VIT Bhopal Campus Road, Bhopal, MP",
+            phone: "+91 9244302120",
+            isActive: true,
+          },
+        });
+      }
+
       for (const cat of DEFAULT_CATEGORIES) {
         await prisma.category.upsert({
           where: {
@@ -69,12 +76,12 @@ export async function GET() {
       });
     }
 
-    return NextResponse.json({ categories });
+    return NextResponse.json({ categories }, { headers: NO_CACHE_HEADERS });
   } catch (error) {
     console.error("GET /api/categories error:", error);
     return NextResponse.json(
       { error: "Failed to fetch categories" },
-      { status: 500 }
+      { status: 500, headers: NO_CACHE_HEADERS }
     );
   }
 }

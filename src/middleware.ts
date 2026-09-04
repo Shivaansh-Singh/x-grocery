@@ -17,14 +17,52 @@ export async function middleware(request: NextRequest) {
   let userRole = roleCookie || null;
   let userEmail = emailCookie || null;
 
-  // 2. Check Supabase Auth user if configured
+  // Fast local JWT extraction from Supabase auth cookie to avoid 4s outbound network delay
+  if (!userEmail) {
+    try {
+      const allCookies = request.cookies.getAll();
+      const authCookies = allCookies
+        .filter((c) => c.name.includes("auth-token"))
+        .sort((a, b) => a.name.localeCompare(b.name));
+
+      if (authCookies.length > 0) {
+        const combinedValue = authCookies.map((c) => c.value).join("");
+        let parsed: any;
+        try {
+          parsed = JSON.parse(combinedValue);
+        } catch {
+          try {
+            parsed = JSON.parse(Buffer.from(combinedValue, "base64").toString("utf-8"));
+          } catch {
+            parsed = null;
+          }
+        }
+        const accessToken = parsed?.access_token || (typeof parsed === "string" ? parsed : null);
+        if (accessToken && typeof accessToken === "string" && accessToken.includes(".")) {
+          const parts = accessToken.split(".");
+          if (parts.length === 3) {
+            const payloadJson = Buffer.from(parts[1], "base64").toString("utf-8");
+            const payload = JSON.parse(payloadJson);
+            const nowSeconds = Math.floor(Date.now() / 1000);
+            if (payload.exp && payload.exp > nowSeconds && payload.email) {
+              userEmail = payload.email.toLowerCase().trim();
+            }
+          }
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  // 2. Check Supabase Auth user if configured and email is still missing
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co";
   const supabaseKey =
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
     "placeholder-anon-key";
 
-  if (process.env.NEXT_PUBLIC_SUPABASE_URL && !process.env.NEXT_PUBLIC_SUPABASE_URL.includes("placeholder")) {
+  if (!userEmail && process.env.NEXT_PUBLIC_SUPABASE_URL && !process.env.NEXT_PUBLIC_SUPABASE_URL.includes("placeholder")) {
     const supabase = createServerClient(supabaseUrl, supabaseKey, {
       cookies: {
         getAll() {

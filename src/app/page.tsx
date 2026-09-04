@@ -36,15 +36,19 @@ function CustomerHomeContent() {
   // Fetch categories
   useEffect(() => {
     let ignore = false;
-    async function loadCategories() {
+    async function loadCategories(attempt = 1) {
       try {
-        const res = await fetch("/api/categories");
+        const res = await fetch("/api/categories", { cache: "no-store" });
         const data = await res.json();
         if (!ignore && data.categories) {
           setCategories(data.categories);
         }
       } catch (err) {
         console.error("Error loading categories:", err);
+        if (!ignore && attempt < 2) {
+          setTimeout(() => loadCategories(attempt + 1), 1000);
+          return;
+        }
       } finally {
         if (!ignore) setLoadingCategories(false);
       }
@@ -59,7 +63,7 @@ function CustomerHomeContent() {
   useEffect(() => {
     let ignore = false;
 
-    async function loadProducts() {
+    async function loadProducts(attempt = 1) {
       try {
         const params = new URLSearchParams();
         if (activeCategory && activeCategory !== "all") {
@@ -70,13 +74,17 @@ function CustomerHomeContent() {
         }
         const queryString = params.toString() ? `?${params.toString()}` : "";
 
-        const res = await fetch(`/api/products${queryString}`);
+        const res = await fetch(`/api/products${queryString}`, { cache: "no-store" });
         const data = await res.json();
         if (!ignore && data.products) {
           setProducts(data.products);
         }
       } catch (err) {
         console.error("Error loading products:", err);
+        if (!ignore && attempt < 2) {
+          setTimeout(() => loadProducts(attempt + 1), 1000);
+          return;
+        }
       } finally {
         if (!ignore) setLoadingProducts(false);
       }
