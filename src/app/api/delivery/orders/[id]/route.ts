@@ -16,14 +16,78 @@ const NO_CACHE_HEADERS = {
 // Maximum 5 failed attempts per order before locking for 5 minutes
 const failedOtpAttempts = new Map<string, { count: number; lockedUntil: number }>();
 
+async function getAuthUserFromToken(request: NextRequest) {
+  try {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const anonKey =
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+
+    if (!supabaseUrl || !anonKey || supabaseUrl.includes("placeholder")) {
+      return null;
+    }
+
+    // 1. Try Authorization header first
+    let accessToken: string | null = null;
+    const authHeader = request.headers.get("authorization");
+    if (authHeader && authHeader.toLowerCase().startsWith("bearer ")) {
+      accessToken = authHeader.substring(7).trim();
+    }
+
+    // 2. Try Supabase SSR cookie if header is not present
+    if (!accessToken) {
+      const allCookies = request.cookies.getAll();
+      const authCookies = allCookies
+        .filter((c) => c.name.includes("auth-token"))
+        .sort((a, b) => a.name.localeCompare(b.name));
+
+      if (authCookies.length > 0) {
+        const combinedValue = authCookies.map((c) => c.value).join("");
+        let parsed: any;
+        try {
+          parsed = JSON.parse(combinedValue);
+        } catch {
+          try {
+            parsed = JSON.parse(Buffer.from(combinedValue, "base64").toString("utf-8"));
+          } catch {
+            parsed = null;
+          }
+        }
+        if (parsed?.access_token && typeof parsed.access_token === "string") {
+          accessToken = parsed.access_token;
+        } else if (typeof parsed === "string" && parsed.includes(".")) {
+          accessToken = parsed;
+        }
+      }
+    }
+
+    if (!accessToken) return null;
+
+    // 3. Cryptographically verify token directly with Supabase Auth GoTrue API
+    const res = await fetch(`${supabaseUrl}/auth/v1/user`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        apikey: anonKey,
+      },
+      cache: "no-store",
+    });
+
+    if (res.ok) {
+      const user = await res.json();
+      if (user?.email) {
+        return user;
+      }
+    }
+  } catch (err) {
+    console.error("Fast Supabase Auth verification error:", err);
+  }
+  return null;
+}
+
 async function resolveAuthenticatedUser(request: NextRequest) {
   try {
-    // 1. Check Supabase Auth Session
-    const supabase = await createClient();
-    const {
-      data: { user: authUser },
-    } = await supabase.auth.getUser();
-
+    // 1. Fast 1-shot direct Supabase Auth token verification
+    const authUser = await getAuthUserFromToken(request);
     if (authUser?.email) {
       const dbUser = await prisma.user.findUnique({
         where: { email: authUser.email.toLowerCase().trim() },
@@ -31,7 +95,20 @@ async function resolveAuthenticatedUser(request: NextRequest) {
       if (dbUser) return dbUser;
     }
 
-    // 2. Cookie / Header fallback for SSR and hybrid role propagation
+    // 2. Fallback to @supabase/ssr createClient session if direct token fetch didn't resolve
+    const supabase = await createClient();
+    const {
+      data: { user: ssrUser },
+    } = await supabase.auth.getUser();
+
+    if (ssrUser?.email) {
+      const dbUser = await prisma.user.findUnique({
+        where: { email: ssrUser.email.toLowerCase().trim() },
+      });
+      if (dbUser) return dbUser;
+    }
+
+    // 3. Cookie / Header fallback for SSR and hybrid role propagation
     const emailCookie =
       request.cookies.get("rushd_user_email")?.value ||
       request.headers.get("x-user-email");
@@ -43,7 +120,7 @@ async function resolveAuthenticatedUser(request: NextRequest) {
       if (dbUser) return dbUser;
     }
 
-    // 3. Fallback check for user role cookie if admin testing
+    // 4. Fallback check for user role cookie if admin testing
     const roleCookie =
       request.cookies.get("rushd_user_role")?.value ||
       request.headers.get("x-user-role");
@@ -92,10 +169,18 @@ export async function PATCH(
     const body = await request.json();
     const { status, paymentStatus, otp } = body;
 
-    // 3. Fetch existing order
+    // 3. Fetch existing order (select minimal required fields for validation & OTP check)
     const existingOrder = await prisma.order.findFirst({
       where: {
         OR: [{ id }, { orderNumber: id }],
+      },
+      select: {
+        id: true,
+        orderNumber: true,
+        status: true,
+        deliveryPartnerId: true,
+        deliveryOtp: true,
+        deliveryOtpHash: true,
       },
     });
 

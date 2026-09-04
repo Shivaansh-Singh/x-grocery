@@ -82,7 +82,7 @@ export default function CheckoutPage() {
     loadSavedAddresses();
   }, [loadSavedAddresses]);
 
-  if (itemCount === 0) {
+  if (itemCount === 0 && !submitting) {
     return (
       <div className="space-y-6 pt-6 text-center text-[#111111]">
         <div className="bg-white border border-[#E5E5E5] rounded-lg p-8 space-y-4 max-w-md mx-auto">
