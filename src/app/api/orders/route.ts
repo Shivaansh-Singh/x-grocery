@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { OrderStatus, PaymentMethod, PaymentStatus } from "@prisma/client";
+import { OrderStatus, PaymentMethod, PaymentStatus, Role } from "@prisma/client";
 import { generateDeliveryOtp } from "@/lib/otp";
 import { calculateOrderPricing } from "@/lib/pricing";
+import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -11,41 +12,88 @@ const NO_CACHE_HEADERS = {
   "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
 };
 
-export async function GET(request: NextRequest) {
+// Resolve the requesting user from the verified Supabase session (SSR auth cookies).
+// The matching DB user is the authoritative source of identity and role. This never
+// trusts the client-writable rushd_user_role / rushd_user_email cookies or any
+// client-supplied identifier.
+async function resolveRequestUser() {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    const email = user?.email?.toLowerCase().trim();
+    if (!email) return null;
+
+    return await prisma.user.findUnique({
+      where: { email },
+      select: { id: true, email: true, role: true },
+    });
+  } catch (err) {
+    console.error("[GET_ORDERS] Auth resolution error:", err);
+    return null;
+  }
+}
+
+export async function GET() {
   const startTime = performance.now();
   try {
-    const { searchParams } = new URL(request.url);
-    const customerId = searchParams.get("customerId");
+    // 1. Authentication: require a verified Supabase session (no anonymous access).
+    const user = await resolveRequestUser();
+    if (!user) {
+      return NextResponse.json(
+        { error: "Authentication required." },
+        { status: 401, headers: NO_CACHE_HEADERS }
+      );
+    }
 
+    // 2. Authorization scope derived ONLY from the authenticated user's DB role.
+    //    Client query parameters can never widen the result to other customers' orders.
     const whereCondition: {
-      store?: { slug: string };
+      store: { slug: string };
       customerId?: string;
+      deliveryPartnerId?: string;
     } = {
       store: { slug: "store-x" },
     };
 
-    if (customerId) {
-      whereCondition.customerId = customerId;
+    if (user.role === Role.STORE_ADMIN) {
+      // Store admin: full store order queue (existing intended admin path).
+    } else if (user.role === Role.DELIVERY_PARTNER) {
+      // Delivery partner: only orders assigned to them.
+      whereCondition.deliveryPartnerId = user.id;
+    } else {
+      // Customer: strictly their own orders.
+      whereCondition.customerId = user.id;
     }
 
     const orders = await prisma.order.findMany({
       where: whereCondition,
-      include: {
+      // SECURITY: deliveryOtp and deliveryOtpHash are intentionally omitted here —
+      // delivery secrets must never be exposed through the general orders list endpoint.
+      select: {
+        id: true,
+        orderNumber: true,
+        storeId: true,
+        customerId: true,
+        deliveryPartnerId: true,
+        status: true,
+        paymentMethod: true,
+        paymentStatus: true,
+        totalAmount: true,
+        deliveryAddress: true,
+        notes: true,
+        deliveryOtpVerified: true,
+        deliveryOtpVerifiedAt: true,
+        createdAt: true,
+        updatedAt: true,
         items: true,
         customer: {
-          select: {
-            id: true,
-            name: true,
-            phone: true,
-            email: true,
-          },
+          select: { id: true, name: true, phone: true, email: true },
         },
         deliveryPartner: {
-          select: {
-            id: true,
-            name: true,
-            phone: true,
-          },
+          select: { id: true, name: true, phone: true },
         },
       },
       orderBy: { createdAt: "desc" },
@@ -53,7 +101,7 @@ export async function GET(request: NextRequest) {
 
     const elapsed = performance.now() - startTime;
     if (elapsed > 500) {
-      console.log(`[PERF][GET_ORDERS] count=${orders.length} time=${elapsed.toFixed(1)}ms`);
+      console.log(`[PERF][GET_ORDERS] role=${user.role} count=${orders.length} time=${elapsed.toFixed(1)}ms`);
     }
 
     return NextResponse.json({ orders }, { headers: NO_CACHE_HEADERS });
