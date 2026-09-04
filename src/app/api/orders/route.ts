@@ -12,12 +12,61 @@ const NO_CACHE_HEADERS = {
   "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
 };
 
-// Resolve the requesting user from the verified Supabase session (SSR auth cookies).
-// The matching DB user is the authoritative source of identity and role. This never
-// trusts the client-writable rushd_user_role / rushd_user_email cookies or any
-// client-supplied identifier.
-async function resolveRequestUser() {
+// Fast 1-shot direct Supabase Auth token verification
+async function getAuthUserFromToken(request: NextRequest) {
   try {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const anonKey =
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+
+    if (!supabaseUrl || !anonKey || supabaseUrl.includes("placeholder")) {
+      return null;
+    }
+
+    let accessToken: string | null = null;
+    const authHeader = request.headers.get("authorization");
+    if (authHeader && authHeader.toLowerCase().startsWith("bearer ")) {
+      accessToken = authHeader.substring(7).trim();
+    }
+
+    if (!accessToken) return null;
+
+    const res = await fetch(`${supabaseUrl}/auth/v1/user`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        apikey: anonKey,
+      },
+      cache: "no-store",
+    });
+
+    if (res.ok) {
+      const user = await res.json();
+      if (user?.email) {
+        return user;
+      }
+    }
+  } catch (err) {
+    console.error("Fast Supabase Auth verification error in /api/orders:", err);
+  }
+  return null;
+}
+
+// Resolve the requesting user from verified Supabase session or token.
+// The matching DB user is the authoritative source of identity and role.
+async function resolveRequestUser(request?: NextRequest) {
+  try {
+    if (request) {
+      const tokenUser = await getAuthUserFromToken(request);
+      if (tokenUser?.email) {
+        const dbUser = await prisma.user.findUnique({
+          where: { email: tokenUser.email.toLowerCase().trim() },
+          select: { id: true, email: true, role: true },
+        });
+        if (dbUser) return dbUser;
+      }
+    }
+
     const supabase = await createClient();
     const {
       data: { user },
@@ -36,11 +85,11 @@ async function resolveRequestUser() {
   }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const startTime = performance.now();
   try {
     // 1. Authentication: require a verified Supabase session (no anonymous access).
-    const user = await resolveRequestUser();
+    const user = await resolveRequestUser(request);
     if (!user) {
       return NextResponse.json(
         { error: "Authentication required." },

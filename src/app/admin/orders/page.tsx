@@ -9,11 +9,13 @@ import { OrderDetailsModal } from "@/components/admin/OrderDetailsModal";
 import { RiderAssignModal } from "@/components/admin/RiderAssignModal";
 import type { OrderRecord } from "@/components/orders/OrderCard";
 import { getCleanRejectionReason } from "@/components/orders/OrderTrackingTimeline";
-import { getLocalOrders, updateLocalOrderStatus, getLocalRiders, updateRiderStatus, DeliveryStaffRider } from "@/lib/orderSync";
+import { getLocalOrders, updateLocalOrderStatus, updateRiderStatus, DeliveryStaffRider } from "@/lib/orderSync";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 function AdminOrdersContent() {
   const searchParams = useSearchParams();
   const initialTab = (searchParams.get("tab") as string) || "all";
+  const { session } = useAuth();
 
   const [orders, setOrders] = useState<OrderRecord[]>([]);
   const [riders, setRiders] = useState<DeliveryStaffRider[]>([]);
@@ -28,6 +30,7 @@ function AdminOrdersContent() {
 
   // Active in-flight order mutation tracker to guard against double-clicks and polling races
   const mutatingOrdersRef = useRef<Map<string, Partial<OrderRecord>>>(new Map());
+  const lastMutationTimeRef = useRef<Map<string, number>>(new Map());
   const [mutatingIds, setMutatingIds] = useState<Set<string>>(new Set());
 
   // Modals state
@@ -45,10 +48,17 @@ function AdminOrdersContent() {
     isFetchingRef.current = true;
     if (!isBackground) setLoading(true);
 
+    const requestStartTime = Date.now();
+
     try {
+      const headers: Record<string, string> = { "Cache-Control": "no-cache" };
+      if (session?.access_token) {
+        headers["Authorization"] = `Bearer ${session.access_token}`;
+      }
+
       const [ordersRes, ridersRes] = await Promise.all([
-        fetch("/api/orders", { cache: "no-store", headers: { "Cache-Control": "no-cache" } }),
-        fetch("/api/admin/delivery-staff", { cache: "no-store", headers: { "Cache-Control": "no-cache" } }),
+        fetch("/api/orders", { cache: "no-store", headers }),
+        fetch("/api/admin/delivery-staff", { cache: "no-store", headers }),
       ]);
 
       const ordersData = await ordersRes.json();
@@ -65,7 +75,10 @@ function AdminOrdersContent() {
         apiOrders.forEach((o) => {
           const isMutating =
             mutatingOrdersRef.current.has(o.id) || mutatingOrdersRef.current.has(o.orderNumber);
-          if (isMutating) {
+          const lastMutationTime =
+            lastMutationTimeRef.current.get(o.id) || lastMutationTimeRef.current.get(o.orderNumber) || 0;
+
+          if (isMutating || lastMutationTime > requestStartTime) {
             const existing =
               currentOrders.find((cur) => cur.id === o.id || cur.orderNumber === o.orderNumber) || o;
             orderMap.set(o.id, existing);
@@ -109,7 +122,7 @@ function AdminOrdersContent() {
     }
     init();
 
-    // 12s interval for background updates, skipped when tab is in background
+    // 12s interval for background updates, skipped when tab is in background or mutating
     const interval = setInterval(() => {
       if (ignore) return;
       if (typeof document !== "undefined" && document.hidden) return;
@@ -136,7 +149,7 @@ function AdminOrdersContent() {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("storage", handleStorageChange);
     };
-  }, []);
+  }, [session?.access_token]);
 
   const handleUpdateStatus = async (
     orderId: string,
@@ -146,6 +159,8 @@ function AdminOrdersContent() {
   ) => {
     // Guard against rapid duplicate clicks on the same order while in flight
     if (mutatingOrdersRef.current.has(orderId)) return;
+
+    lastMutationTimeRef.current.set(orderId, Date.now());
 
     // 1. Snapshot previous state for rollback on error
     const previousOrders = [...orders];
@@ -211,10 +226,15 @@ function AdminOrdersContent() {
       else showToast(`Order status updated to ${newStatus}.`);
 
       // 5. Backend PATCH in background
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (session?.access_token) {
+        headers["Authorization"] = `Bearer ${session.access_token}`;
+      }
+
       const url = `/api/admin/orders/${orderId}`;
       const res = await fetch(url, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({
           status: newStatus,
           deliveryPartnerId,
@@ -258,7 +278,7 @@ function AdminOrdersContent() {
   };
 
   const handleAssignRider = (orderId: string, riderId: string) => {
-    handleUpdateStatus(orderId, "ASSIGNED", riderId);
+    return handleUpdateStatus(orderId, "ASSIGNED", riderId);
   };
 
   // Stat Counter Calculations
@@ -483,6 +503,7 @@ function AdminOrdersContent() {
             const customerName = order.customer?.name || "RushD Customer";
             const rawPhone = order.customer?.phone || order.deliveryAddress.split("Phone:")[1]?.trim() || "+91 99999 88888";
             const rejectionReason = getCleanRejectionReason(order.notes);
+            const isMutatingThisOrder = mutatingIds.has(order.id) || mutatingIds.has(order.orderNumber);
 
             const formattedDate = new Date(order.createdAt).toLocaleString("en-IN", {
               day: "numeric",
@@ -597,17 +618,17 @@ function AdminOrdersContent() {
                     <>
                       <button
                         onClick={() => setRejectingOrder(order)}
-                        disabled={mutatingIds.has(order.id) || mutatingIds.has(order.orderNumber)}
-                        className="py-2 px-3.5 rounded bg-white hover:bg-[#FFF0F0] text-[#D92D3A] font-bold text-xs transition-colors border border-[#D92D3A] disabled:opacity-50"
+                        disabled={isMutatingThisOrder}
+                        className="py-2 px-3.5 rounded bg-white hover:bg-[#FFF0F0] text-[#D92D3A] font-bold text-xs transition-colors border border-[#D92D3A] disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        Reject
+                        {isMutatingThisOrder ? "Processing..." : "Reject"}
                       </button>
                       <button
                         onClick={() => handleUpdateStatus(order.id, "ACCEPTED")}
-                        disabled={mutatingIds.has(order.id) || mutatingIds.has(order.orderNumber)}
-                        className="flex-1 py-2 rounded bg-[#DFFF00] hover:bg-[#C8E600] text-[#000000] font-black text-xs transition-colors border border-[#111111] disabled:opacity-50"
+                        disabled={isMutatingThisOrder}
+                        className="flex-1 py-2 rounded bg-[#DFFF00] hover:bg-[#C8E600] text-[#000000] font-black text-xs transition-colors border border-[#111111] disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        ACCEPT ORDER ✓
+                        {isMutatingThisOrder ? "Accepting... ⏳" : "ACCEPT ORDER ✓"}
                       </button>
                     </>
                   )}
@@ -615,30 +636,30 @@ function AdminOrdersContent() {
                   {isAccepted && (
                     <button
                       onClick={() => handleUpdateStatus(order.id, "PREPARING")}
-                      disabled={mutatingIds.has(order.id) || mutatingIds.has(order.orderNumber)}
-                      className="flex-1 py-2 rounded bg-[#111111] hover:bg-black text-white font-black text-xs transition-colors border border-[#111111] disabled:opacity-50"
+                      disabled={isMutatingThisOrder}
+                      className="flex-1 py-2 rounded bg-[#111111] hover:bg-black text-white font-black text-xs transition-colors border border-[#111111] disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Start Packing Items 📦
+                      {isMutatingThisOrder ? "Updating... ⏳" : "Start Packing Items 📦"}
                     </button>
                   )}
 
                   {isPreparing && (
                     <button
                       onClick={() => handleUpdateStatus(order.id, "ASSIGNED")}
-                      disabled={mutatingIds.has(order.id) || mutatingIds.has(order.orderNumber)}
-                      className="flex-1 py-2 rounded bg-[#111111] hover:bg-black text-[#DFFF00] font-black text-xs transition-colors border border-[#111111] disabled:opacity-50"
+                      disabled={isMutatingThisOrder}
+                      className="flex-1 py-2 rounded bg-[#111111] hover:bg-black text-[#DFFF00] font-black text-xs transition-colors border border-[#111111] disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Mark Ready for Pickup ⚡
+                      {isMutatingThisOrder ? "Updating... ⏳" : "Mark Ready for Pickup ⚡"}
                     </button>
                   )}
 
                   {(isAccepted || isPreparing || isReady) && (
                     <button
                       onClick={() => setAssigningOrder(order)}
-                      disabled={mutatingIds.has(order.id) || mutatingIds.has(order.orderNumber)}
-                      className="py-2 px-4 rounded bg-[#DFFF00] hover:bg-[#C8E600] text-[#000000] font-black text-xs transition-colors border border-[#111111] disabled:opacity-50"
+                      disabled={isMutatingThisOrder}
+                      className="py-2 px-4 rounded bg-[#DFFF00] hover:bg-[#C8E600] text-[#000000] font-black text-xs transition-colors border border-[#111111] disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {order.deliveryPartner ? "Reassign Rider 🛵" : "Assign Rider 🛵"}
+                      {isMutatingThisOrder ? "Assigning... 🛵" : order.deliveryPartner ? "Reassign Rider 🛵" : "Assign Rider 🛵"}
                     </button>
                   )}
 

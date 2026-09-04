@@ -6,12 +6,14 @@ interface DeliveryTaskCardProps {
   order: OrderRecord;
   onStartDelivery?: (orderId: string) => void;
   onOpenPaymentModal?: (order: OrderRecord) => void;
+  isMutating?: boolean;
 }
 
 export function DeliveryTaskCard({
   order,
   onStartDelivery,
   onOpenPaymentModal,
+  isMutating = false,
 }: DeliveryTaskCardProps) {
   const isAssigned = order.status === "ASSIGNED";
   const isOutForDelivery = order.status === "OUT_FOR_DELIVERY";
@@ -65,7 +67,7 @@ export function DeliveryTaskCard({
         </div>
       </div>
 
-      {/* Customer Call Bar & Off-Campus Address */}
+      {/* Customer Call Bar & Address */}
       <div className="bg-[#F5F5F5] p-3.5 rounded-lg border border-[#E5E5E5] space-y-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5 font-bold text-xs text-[#111111]">
@@ -116,9 +118,10 @@ export function DeliveryTaskCard({
           {isAssigned && (
             <button
               onClick={() => onStartDelivery?.(order.id)}
-              className="w-full py-3 bg-[#DFFF00] hover:bg-[#C8E600] text-[#000000] rounded font-black text-xs transition-colors border border-[#111111] flex items-center justify-center gap-1.5"
+              disabled={isMutating}
+              className="w-full py-3 bg-[#DFFF00] hover:bg-[#C8E600] text-[#000000] rounded font-black text-xs transition-colors border border-[#111111] flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <span>START DELIVERY 🛵</span>
+              <span>{isMutating ? "STARTING DELIVERY... 🛵" : "START DELIVERY 🛵"}</span>
               <span>→</span>
             </button>
           )}
@@ -126,9 +129,10 @@ export function DeliveryTaskCard({
           {isOutForDelivery && (
             <button
               onClick={() => onOpenPaymentModal?.(order)}
-              className="w-full py-3 bg-[#DFFF00] hover:bg-[#C8E600] text-[#000000] rounded font-black text-xs transition-colors border border-[#111111] flex items-center justify-center gap-1.5"
+              disabled={isMutating}
+              className="w-full py-3 bg-[#DFFF00] hover:bg-[#C8E600] text-[#000000] rounded font-black text-xs transition-colors border border-[#111111] flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <span>MARK DELIVERED 🎉</span>
+              <span>{isMutating ? "PROCESSING... ⏳" : "MARK DELIVERED 🎉"}</span>
               <span>→</span>
             </button>
           )}

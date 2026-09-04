@@ -8,7 +8,7 @@ interface RiderAssignModalProps {
   order: OrderRecord;
   riders: DeliveryStaffRider[];
   onClose: () => void;
-  onAssignRider: (orderId: string, riderId: string) => void;
+  onAssignRider: (orderId: string, riderId: string) => Promise<void> | void;
 }
 
 export function RiderAssignModal({
@@ -18,19 +18,27 @@ export function RiderAssignModal({
   onAssignRider,
 }: RiderAssignModalProps) {
   const [selectedRiderId, setSelectedRiderId] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  // Deduplicate riders by ID and email
+  // Authoritative delivery staff roster deduplicated by ID and email
   const uniqueRiders = riders.filter(
     (rider, index, self) =>
       index === self.findIndex((r) => r.id === rider.id || (r.email && r.email === rider.email))
   );
 
-  const handleConfirm = () => {
-    if (!selectedRiderId) return;
+  const handleConfirm = async () => {
+    if (!selectedRiderId || isSubmitting) return;
     const isValid = uniqueRiders.some((r) => r.id === selectedRiderId);
     if (!isValid) return;
-    onAssignRider(order.id, selectedRiderId);
-    onClose();
+
+    setIsSubmitting(true);
+    try {
+      await onAssignRider(order.id, selectedRiderId);
+      onClose();
+    } catch (err) {
+      console.error("Error during rider assignment:", err);
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -48,7 +56,8 @@ export function RiderAssignModal({
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-[#F5F5F5] hover:bg-gray-200 flex items-center justify-center text-[#666666] hover:text-[#111111] font-bold text-sm transition-colors border border-[#E5E5E5]"
+            disabled={isSubmitting}
+            className="w-8 h-8 rounded-full bg-[#F5F5F5] hover:bg-gray-200 flex items-center justify-center text-[#666666] hover:text-[#111111] font-bold text-sm transition-colors border border-[#E5E5E5] disabled:opacity-50"
           >
             ✕
           </button>
@@ -71,59 +80,62 @@ export function RiderAssignModal({
           </span>
 
           <div className="space-y-2 max-h-60 overflow-y-auto no-scrollbar">
-            {uniqueRiders.map((rider) => {
-              const status = rider.status || "AVAILABLE";
-              const isAvailable = status === "AVAILABLE";
-              const isSelected = selectedRiderId === rider.id;
+            {uniqueRiders.length === 0 ? (
+              <p className="text-xs text-[#666666] italic text-center py-4">
+                No active delivery staff members found. Please onboard a rider first.
+              </p>
+            ) : (
+              uniqueRiders.map((rider) => {
+                const status = rider.status || "AVAILABLE";
+                const isSelected = selectedRiderId === rider.id;
 
-              return (
-                <div
-                  key={rider.id}
-                  onClick={() => {
-                    if (isAvailable) setSelectedRiderId(rider.id);
-                  }}
-                  className={`p-3 rounded-lg border transition-colors flex items-center justify-between ${
-                    isAvailable
-                      ? isSelected
-                        ? "bg-[#DFFF00] border-[#111111] text-[#000000] cursor-pointer"
-                        : "bg-white border-[#E5E5E5] hover:border-[#111111] cursor-pointer"
-                      : "bg-[#F5F5F5] border-[#E5E5E5] opacity-50 cursor-not-allowed"
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`w-3 h-3 rounded-full shrink-0 ${
-                        isAvailable
-                          ? "bg-[#168A55]"
-                          : status === "ASSIGNED" || status === "ON_DELIVERY"
-                          ? "bg-[#111111]"
-                          : "bg-[#666666]"
-                      }`}
-                    />
+                return (
+                  <div
+                    key={rider.id}
+                    onClick={() => {
+                      if (!isSubmitting) setSelectedRiderId(rider.id);
+                    }}
+                    className={`p-3 rounded-lg border transition-colors flex items-center justify-between cursor-pointer ${
+                      isSelected
+                        ? "bg-[#DFFF00] border-[#111111] text-[#000000]"
+                        : "bg-white border-[#E5E5E5] hover:border-[#111111]"
+                    } ${isSubmitting ? "opacity-60 cursor-not-allowed" : ""}`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`w-3 h-3 rounded-full shrink-0 ${
+                          status === "AVAILABLE"
+                            ? "bg-[#168A55]"
+                            : status === "ASSIGNED" || status === "ON_DELIVERY"
+                            ? "bg-[#111111]"
+                            : "bg-[#666666]"
+                        }`}
+                      />
+                      <div>
+                        <h4 className="font-extrabold text-xs text-[#111111]">
+                          {rider.name}
+                        </h4>
+                        <p className="text-[10px] text-[#666666] font-medium">
+                          {rider.phone || "No contact"} {rider.distanceKm ? `• ${rider.distanceKm} km away` : ""}
+                        </p>
+                      </div>
+                    </div>
+
                     <div>
-                      <h4 className="font-extrabold text-xs text-[#111111]">
-                        {rider.name}
-                      </h4>
-                      <p className="text-[10px] text-[#666666] font-medium">
-                        {rider.phone || "No contact"} {rider.distanceKm ? `• ${rider.distanceKm} km away` : ""}
-                      </p>
+                      {status === "AVAILABLE" ? (
+                        <span className="text-[10px] font-black px-2 py-0.5 rounded bg-white text-[#168A55] border border-[#168A55]">
+                          🟢 Active
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-gray-100 text-[#666666]">
+                          {status === "ON_DELIVERY" ? "🔵 On Delivery" : "🟡 Assigned"}
+                        </span>
+                      )}
                     </div>
                   </div>
-
-                  <div>
-                    {isAvailable ? (
-                      <span className="text-[10px] font-black px-2 py-0.5 rounded bg-white text-[#168A55] border border-[#168A55]">
-                        🟢 Available
-                      </span>
-                    ) : (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-gray-100 text-[#666666]">
-                        {status === "ON_DELIVERY" ? "🔵 On Delivery" : "🟡 Assigned"}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
         </div>
 
@@ -131,16 +143,17 @@ export function RiderAssignModal({
         <div className="flex gap-2 pt-2 border-t border-[#E5E5E5]">
           <button
             onClick={onClose}
-            className="flex-1 py-2.5 bg-[#F5F5F5] hover:bg-gray-200 text-[#666666] font-bold text-xs rounded transition-colors border border-[#E5E5E5]"
+            disabled={isSubmitting}
+            className="flex-1 py-2.5 bg-[#F5F5F5] hover:bg-gray-200 text-[#666666] font-bold text-xs rounded transition-colors border border-[#E5E5E5] disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             onClick={handleConfirm}
-            disabled={!selectedRiderId}
+            disabled={!selectedRiderId || isSubmitting}
             className="flex-1 py-2.5 bg-[#DFFF00] hover:bg-[#C8E600] text-[#000000] rounded font-black text-xs transition-colors disabled:opacity-40 border border-[#111111]"
           >
-            Confirm Assignment 🛵
+            {isSubmitting ? "Assigning Rider... 🛵" : "Confirm Assignment 🛵"}
           </button>
         </div>
       </div>

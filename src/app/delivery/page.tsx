@@ -11,14 +11,16 @@ import { RushDLogo } from "@/components/ui/RushDLogo";
 import { getLocalOrders, updateLocalOrderStatus, updateRiderStatus } from "@/lib/orderSync";
 
 export default function DeliveryPartnerPage() {
-  const { activeUser, signOut } = useAuth();
+  const { activeUser, session, signOut } = useAuth();
   const [orders, setOrders] = useState<OrderRecord[]>([]);
   const [activeTab, setActiveTab] = useState<"active" | "completed">("active");
   const [loading, setLoading] = useState(true);
+  const [mutatingOrderId, setMutatingOrderId] = useState<string | null>(null);
 
   // In-flight fetch and mutation guards
   const isFetchingRef = useRef(false);
   const isMutatingRef = useRef(false);
+  const lastMutationTimeRef = useRef<Map<string, number>>(new Map());
 
   // Modals
   const [paymentModalOrder, setPaymentModalOrder] = useState<OrderRecord | null>(null);
@@ -29,10 +31,17 @@ export default function DeliveryPartnerPage() {
     isFetchingRef.current = true;
     if (!isBackground) setLoading(true);
 
+    const requestStartTime = Date.now();
+
     try {
+      const headers: Record<string, string> = { "Cache-Control": "no-cache" };
+      if (session?.access_token) {
+        headers["Authorization"] = `Bearer ${session.access_token}`;
+      }
+
       const res = await fetch("/api/delivery/orders", {
         cache: "no-store",
-        headers: { "Cache-Control": "no-cache" },
+        headers,
       });
 
       if (!res.ok) {
@@ -42,15 +51,35 @@ export default function DeliveryPartnerPage() {
       const data = await res.json();
       const apiOrders: OrderRecord[] = data.orders || [];
 
-      // Merge with local storage orders if present
+      // Merge with local storage orders if present, preserving fresh mutations
       const localOrders = getLocalOrders();
       const orderMap = new Map<string, OrderRecord>();
-      [...localOrders, ...apiOrders].forEach((o) => orderMap.set(o.id, o));
+      [...localOrders, ...apiOrders].forEach((o) => {
+        const lastMutationTime = lastMutationTimeRef.current.get(o.id) || 0;
+        if (lastMutationTime > requestStartTime) {
+          return;
+        }
+        orderMap.set(o.id, o);
+      });
       const mergedOrders = Array.from(orderMap.values());
 
       // Filter for relevant rider orders
       const riderOrders = apiOrders.length > 0 ? apiOrders : mergedOrders;
-      setOrders(riderOrders);
+      setOrders((prev) => {
+        const updatedMap = new Map<string, OrderRecord>();
+        prev.forEach((existing) => {
+          const lastMutationTime = lastMutationTimeRef.current.get(existing.id) || 0;
+          if (lastMutationTime > requestStartTime) {
+            updatedMap.set(existing.id, existing);
+          }
+        });
+        riderOrders.forEach((newOrd) => {
+          if (!updatedMap.has(newOrd.id)) {
+            updatedMap.set(newOrd.id, newOrd);
+          }
+        });
+        return Array.from(updatedMap.values());
+      });
     } catch (err) {
       console.error("Error loading rider orders from API:", err);
       // Fallback: load from local storage so orders are not lost if offline
@@ -62,7 +91,7 @@ export default function DeliveryPartnerPage() {
       isFetchingRef.current = false;
       setLoading(false);
     }
-  }, []);
+  }, [session?.access_token]);
 
   useEffect(() => {
     let ignore = false;
@@ -105,6 +134,9 @@ export default function DeliveryPartnerPage() {
   const handleStartDelivery = async (orderId: string) => {
     if (isMutatingRef.current) return;
     isMutatingRef.current = true;
+    setMutatingOrderId(orderId);
+    lastMutationTimeRef.current.set(orderId, Date.now());
+
     const previousOrders = [...orders];
 
     try {
@@ -117,9 +149,14 @@ export default function DeliveryPartnerPage() {
         prev.map((o) => (o.id === orderId ? { ...o, status: "OUT_FOR_DELIVERY" } : o))
       );
 
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (session?.access_token) {
+        headers["Authorization"] = `Bearer ${session.access_token}`;
+      }
+
       const res = await fetch(`/api/delivery/orders/${orderId}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({ status: "OUT_FOR_DELIVERY" }),
       });
 
@@ -137,6 +174,7 @@ export default function DeliveryPartnerPage() {
       setOrders(previousOrders);
     } finally {
       isMutatingRef.current = false;
+      setMutatingOrderId(null);
     }
   };
 
@@ -148,11 +186,18 @@ export default function DeliveryPartnerPage() {
       return { success: false, error: "Mutation in progress, please wait." };
     }
     isMutatingRef.current = true;
+    setMutatingOrderId(orderId);
+    lastMutationTimeRef.current.set(orderId, Date.now());
 
     try {
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (session?.access_token) {
+        headers["Authorization"] = `Bearer ${session.access_token}`;
+      }
+
       const res = await fetch(`/api/delivery/orders/${orderId}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({
           status: "DELIVERED",
           paymentStatus: "COMPLETED",
@@ -195,6 +240,7 @@ export default function DeliveryPartnerPage() {
       };
     } finally {
       isMutatingRef.current = false;
+      setMutatingOrderId(null);
     }
   };
 
@@ -315,6 +361,7 @@ export default function DeliveryPartnerPage() {
                 order={order}
                 onStartDelivery={handleStartDelivery}
                 onOpenPaymentModal={(ord) => setPaymentModalOrder(ord)}
+                isMutating={mutatingOrderId === order.id}
               />
               <button
                 onClick={() => setSelectedOrderDetails(order)}

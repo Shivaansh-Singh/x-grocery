@@ -11,9 +11,57 @@ const NO_CACHE_HEADERS = {
   "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
 };
 
+async function getAuthUserFromToken(request: NextRequest) {
+  try {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const anonKey =
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+
+    if (!supabaseUrl || !anonKey || supabaseUrl.includes("placeholder")) {
+      return null;
+    }
+
+    let accessToken: string | null = null;
+    const authHeader = request.headers.get("authorization");
+    if (authHeader && authHeader.toLowerCase().startsWith("bearer ")) {
+      accessToken = authHeader.substring(7).trim();
+    }
+
+    if (!accessToken) return null;
+
+    const res = await fetch(`${supabaseUrl}/auth/v1/user`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        apikey: anonKey,
+      },
+      cache: "no-store",
+    });
+
+    if (res.ok) {
+      const user = await res.json();
+      if (user?.email) {
+        return user;
+      }
+    }
+  } catch (err) {
+    console.error("Fast Supabase Auth verification error in /api/delivery/orders:", err);
+  }
+  return null;
+}
+
 async function resolveAuthenticatedUser(request: NextRequest) {
   try {
-    // 1. Check Supabase Auth Session
+    // 1. Fast 1-shot direct Supabase Auth token verification
+    const tokenUser = await getAuthUserFromToken(request);
+    if (tokenUser?.email) {
+      const dbUser = await prisma.user.findUnique({
+        where: { email: tokenUser.email.toLowerCase().trim() },
+      });
+      if (dbUser) return dbUser;
+    }
+
+    // 2. Check Supabase Auth Session
     const supabase = await createClient();
     const {
       data: { user: authUser },
@@ -26,7 +74,7 @@ async function resolveAuthenticatedUser(request: NextRequest) {
       if (dbUser) return dbUser;
     }
 
-    // 2. Cookie / Header fallback for SSR and hybrid role propagation
+    // 3. Cookie / Header fallback for SSR and hybrid role propagation
     const emailCookie =
       request.cookies.get("rushd_user_email")?.value ||
       request.headers.get("x-user-email");
@@ -38,7 +86,7 @@ async function resolveAuthenticatedUser(request: NextRequest) {
       if (dbUser) return dbUser;
     }
 
-    // 3. Fallback check for user role cookie if admin testing
+    // 4. Fallback check for user role cookie if admin testing
     const roleCookie =
       request.cookies.get("rushd_user_role")?.value ||
       request.headers.get("x-user-role");
