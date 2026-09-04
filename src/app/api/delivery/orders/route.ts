@@ -4,6 +4,13 @@ import { createClient } from "@/lib/supabase/server";
 import { Role } from "@prisma/client";
 import { normalizeRiderId } from "@/app/api/admin/delivery-staff/route";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+const NO_CACHE_HEADERS = {
+  "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+};
+
 async function resolveAuthenticatedUser(request: NextRequest) {
   try {
     // 1. Check Supabase Auth Session
@@ -48,13 +55,14 @@ async function resolveAuthenticatedUser(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
+  const startTime = performance.now();
   try {
     const user = await resolveAuthenticatedUser(request);
 
     if (!user) {
       return NextResponse.json(
         { error: "Authentication required. Please log in." },
-        { status: 401 }
+        { status: 401, headers: NO_CACHE_HEADERS }
       );
     }
 
@@ -99,7 +107,7 @@ export async function GET(request: NextRequest) {
     } else {
       return NextResponse.json(
         { error: "Unauthorized. Delivery partner role required." },
-        { status: 403 }
+        { status: 403, headers: NO_CACHE_HEADERS }
       );
     }
 
@@ -133,12 +141,18 @@ export async function GET(request: NextRequest) {
       return safeOrder;
     });
 
-    return NextResponse.json({ orders: sanitizedOrders });
+    const elapsed = performance.now() - startTime;
+    if (elapsed > 500) {
+      console.log(`[PERF][GET_RIDER_ORDERS] count=${sanitizedOrders.length} time=${elapsed.toFixed(1)}ms`);
+    }
+
+    return NextResponse.json({ orders: sanitizedOrders }, { headers: NO_CACHE_HEADERS });
   } catch (error) {
-    console.error("GET /api/delivery/orders error:", error);
+    const elapsed = performance.now() - startTime;
+    console.error(`[PERF][GET_RIDER_ORDERS_ERROR] time=${elapsed.toFixed(1)}ms error:`, error);
     return NextResponse.json(
       { error: "Failed to fetch rider delivery tasks" },
-      { status: 500 }
+      { status: 500, headers: NO_CACHE_HEADERS }
     );
   }
 }

@@ -5,6 +5,13 @@ import { verifyDeliveryOtp } from "@/lib/otp";
 import { createClient } from "@/lib/supabase/server";
 import { normalizeRiderId } from "@/app/api/admin/delivery-staff/route";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+const NO_CACHE_HEADERS = {
+  "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+};
+
 // In-memory rate limiting map for failed OTP attempts per order
 // Maximum 5 failed attempts per order before locking for 5 minutes
 const failedOtpAttempts = new Map<string, { count: number; lockedUntil: number }>();
@@ -56,14 +63,20 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const startTime = performance.now();
+  let authTime = 0;
+  let dbUpdateTime = 0;
+
   try {
     // 1. Authentication Check
+    const authStart = performance.now();
     const user = await resolveAuthenticatedUser(request);
+    authTime = performance.now() - authStart;
 
     if (!user) {
       return NextResponse.json(
         { error: "Authentication required. Please log in." },
-        { status: 401 }
+        { status: 401, headers: NO_CACHE_HEADERS }
       );
     }
 
@@ -71,7 +84,7 @@ export async function PATCH(
     if (user.role === Role.CUSTOMER) {
       return NextResponse.json(
         { error: "Forbidden. Customer accounts cannot update delivery tasks." },
-        { status: 403 }
+        { status: 403, headers: NO_CACHE_HEADERS }
       );
     }
 
@@ -192,14 +205,28 @@ export async function PATCH(
       updateData.paymentStatus = paymentStatus as PaymentStatus;
     }
 
+    const dbStart = performance.now();
     const updatedOrder = await prisma.order.update({
       where: { id: existingOrder.id },
       data: updateData,
       include: {
         items: true,
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+          },
+        },
         deliveryPartner: true,
       },
     });
+    dbUpdateTime = performance.now() - dbStart;
+
+    const totalTime = performance.now() - startTime;
+    console.log(
+      `[PERF][RIDER_DELIVERY_UPDATE] order=${existingOrder.orderNumber} status=${updateData.status || existingOrder.status} auth=${authTime.toFixed(1)}ms db=${dbUpdateTime.toFixed(1)}ms total=${totalTime.toFixed(1)}ms`
+    );
 
     // Sanitize output to ensure OTP values are never exposed in response
     const { deliveryOtp, deliveryOtpHash, ...safeOrder } = updatedOrder as typeof updatedOrder & {
@@ -207,12 +234,13 @@ export async function PATCH(
       deliveryOtpHash?: string;
     };
 
-    return NextResponse.json({ order: safeOrder, success: true });
+    return NextResponse.json({ order: safeOrder, success: true }, { headers: NO_CACHE_HEADERS });
   } catch (error) {
-    console.error("PATCH /api/delivery/orders/[id] error:", error);
+    const totalTime = performance.now() - startTime;
+    console.error(`[PERF][RIDER_DELIVERY_UPDATE_ERROR] total=${totalTime.toFixed(1)}ms error:`, error);
     return NextResponse.json(
       { error: "Failed to update delivery task status" },
-      { status: 500 }
+      { status: 500, headers: NO_CACHE_HEADERS }
     );
   }
 }

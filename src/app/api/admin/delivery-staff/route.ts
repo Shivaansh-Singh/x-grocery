@@ -3,6 +3,13 @@ import { prisma } from "@/lib/prisma";
 import { Role } from "@prisma/client";
 import { createClient } from "@/lib/supabase/server";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+const NO_CACHE_HEADERS = {
+  "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+};
+
 export function normalizeRiderId(rider: { id: string; email?: string | null; name?: string | null }): string {
   return rider.id;
 }
@@ -51,20 +58,21 @@ async function resolveAuthenticatedUser(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
+  const startTime = performance.now();
   try {
     const user = await resolveAuthenticatedUser(request);
 
     if (!user) {
       return NextResponse.json(
         { error: "Authentication required. Please log in." },
-        { status: 401 }
+        { status: 401, headers: NO_CACHE_HEADERS }
       );
     }
 
     if (user.role !== Role.STORE_ADMIN && user.role !== Role.DELIVERY_PARTNER) {
       return NextResponse.json(
         { error: "Unauthorized. Delivery staff access requires STORE_ADMIN or DELIVERY_PARTNER role." },
-        { status: 403 }
+        { status: 403, headers: NO_CACHE_HEADERS }
       );
     }
 
@@ -80,12 +88,18 @@ export async function GET(request: NextRequest) {
       orderBy: { name: "asc" },
     });
 
-    return NextResponse.json({ riders });
+    const elapsed = performance.now() - startTime;
+    if (elapsed > 500) {
+      console.log(`[PERF][GET_DELIVERY_STAFF] count=${riders.length} time=${elapsed.toFixed(1)}ms`);
+    }
+
+    return NextResponse.json({ riders }, { headers: NO_CACHE_HEADERS });
   } catch (error) {
-    console.error("GET /api/admin/delivery-staff error:", error);
+    const elapsed = performance.now() - startTime;
+    console.error(`[PERF][GET_DELIVERY_STAFF_ERROR] time=${elapsed.toFixed(1)}ms error:`, error);
     return NextResponse.json(
       { error: "Failed to fetch delivery staff" },
-      { status: 500 }
+      { status: 500, headers: NO_CACHE_HEADERS }
     );
   }
 }

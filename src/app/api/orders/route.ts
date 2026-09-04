@@ -4,7 +4,15 @@ import { OrderStatus, PaymentMethod, PaymentStatus } from "@prisma/client";
 import { generateDeliveryOtp } from "@/lib/otp";
 import { calculateOrderPricing } from "@/lib/pricing";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+const NO_CACHE_HEADERS = {
+  "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+};
+
 export async function GET(request: NextRequest) {
+  const startTime = performance.now();
   try {
     const { searchParams } = new URL(request.url);
     const customerId = searchParams.get("customerId");
@@ -43,12 +51,18 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json({ orders });
+    const elapsed = performance.now() - startTime;
+    if (elapsed > 500) {
+      console.log(`[PERF][GET_ORDERS] count=${orders.length} time=${elapsed.toFixed(1)}ms`);
+    }
+
+    return NextResponse.json({ orders }, { headers: NO_CACHE_HEADERS });
   } catch (error) {
-    console.error("GET /api/orders error:", error);
+    const elapsed = performance.now() - startTime;
+    console.error(`[PERF][GET_ORDERS_ERROR] time=${elapsed.toFixed(1)}ms error:`, error);
     return NextResponse.json(
       { error: "Failed to fetch orders" },
-      { status: 500 }
+      { status: 500, headers: NO_CACHE_HEADERS }
     );
   }
 }

@@ -41,14 +41,14 @@ function AdminOrdersContent() {
   };
 
   const loadOrdersAndRiders = async (isBackground = false) => {
-    if (isFetchingRef.current) return;
+    if (isFetchingRef.current || (isBackground && mutatingOrdersRef.current.size > 0)) return;
     isFetchingRef.current = true;
     if (!isBackground) setLoading(true);
 
     try {
       const [ordersRes, ridersRes] = await Promise.all([
-        fetch("/api/orders"),
-        fetch("/api/admin/delivery-staff"),
+        fetch("/api/orders", { cache: "no-store", headers: { "Cache-Control": "no-cache" } }),
+        fetch("/api/admin/delivery-staff", { cache: "no-store", headers: { "Cache-Control": "no-cache" } }),
       ]);
 
       const ordersData = await ordersRes.json();
@@ -226,14 +226,29 @@ function AdminOrdersContent() {
 
       if (!res.ok) {
         // Rollback optimistic update on error
+        mutatingOrdersRef.current.delete(orderId);
+        setMutatingIds(new Set(mutatingOrdersRef.current.keys()));
         setOrders(previousOrders);
         showToast(data.error || "Order could not be updated.");
       } else {
-        // Silent non-blocking background sync with fresh authoritative server data
-        loadOrdersAndRiders(true);
+        // Authoritatively commit returned server order to state
+        if (data.order) {
+          setOrders((prev) =>
+            prev.map((o) =>
+              o.id === orderId || o.orderNumber === orderId
+                ? { ...o, ...data.order }
+                : o
+            )
+          );
+          updateLocalOrderStatus(orderId, data.order);
+        }
+        mutatingOrdersRef.current.delete(orderId);
+        setMutatingIds(new Set(mutatingOrdersRef.current.keys()));
       }
     } catch (err) {
       console.error("Error updating order status:", err);
+      mutatingOrdersRef.current.delete(orderId);
+      setMutatingIds(new Set(mutatingOrdersRef.current.keys()));
       setOrders(previousOrders);
       showToast("Order could not be updated.");
     } finally {

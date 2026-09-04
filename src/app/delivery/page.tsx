@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import { DeliveryTaskCard } from "@/components/delivery/DeliveryTaskCard";
 import { DoorstepPaymentModal } from "@/components/delivery/DoorstepPaymentModal";
@@ -16,13 +16,24 @@ export default function DeliveryPartnerPage() {
   const [activeTab, setActiveTab] = useState<"active" | "completed">("active");
   const [loading, setLoading] = useState(true);
 
+  // In-flight fetch and mutation guards
+  const isFetchingRef = useRef(false);
+  const isMutatingRef = useRef(false);
+
   // Modals
   const [paymentModalOrder, setPaymentModalOrder] = useState<OrderRecord | null>(null);
   const [selectedOrderDetails, setSelectedOrderDetails] = useState<OrderRecord | null>(null);
 
-  const fetchRiderOrders = useCallback(async () => {
+  const fetchRiderOrders = useCallback(async (isBackground = false) => {
+    if (isFetchingRef.current || isMutatingRef.current) return;
+    isFetchingRef.current = true;
+    if (!isBackground) setLoading(true);
+
     try {
-      const res = await fetch("/api/delivery/orders");
+      const res = await fetch("/api/delivery/orders", {
+        cache: "no-store",
+        headers: { "Cache-Control": "no-cache" },
+      });
 
       if (!res.ok) {
         throw new Error(`API returned HTTP status ${res.status}: ${res.statusText}`);
@@ -48,6 +59,7 @@ export default function DeliveryPartnerPage() {
         setOrders(localOrders);
       }
     } finally {
+      isFetchingRef.current = false;
       setLoading(false);
     }
   }, []);
@@ -56,20 +68,28 @@ export default function DeliveryPartnerPage() {
     let ignore = false;
     async function init() {
       if (!ignore) {
-        await fetchRiderOrders();
+        await fetchRiderOrders(false);
       }
     }
     init();
 
+    // 10s interval for background updates, skipped when in-flight, mutating, or tab hidden
     const interval = setInterval(() => {
-      if (!ignore) {
-        fetchRiderOrders();
+      if (ignore) return;
+      if (typeof document !== "undefined" && document.hidden) return;
+      fetchRiderOrders(true);
+    }, 10000);
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden && !ignore) {
+        fetchRiderOrders(true);
       }
-    }, 4000);
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     const handleStorageChange = (e: StorageEvent) => {
       if (!ignore && (e.key === "rushd_orders" || e.key === "x_grocery_orders" || e.key === "rushd_riders")) {
-        fetchRiderOrders();
+        fetchRiderOrders(true);
       }
     };
     window.addEventListener("storage", handleStorageChange);
@@ -77,27 +97,46 @@ export default function DeliveryPartnerPage() {
     return () => {
       ignore = true;
       clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("storage", handleStorageChange);
     };
   }, [fetchRiderOrders]);
 
   const handleStartDelivery = async (orderId: string) => {
+    if (isMutatingRef.current) return;
+    isMutatingRef.current = true;
+    const previousOrders = [...orders];
+
     try {
       // Update local status for immediate UI sync
       updateLocalOrderStatus(orderId, { status: "OUT_FOR_DELIVERY" });
       if (activeUser) {
         updateRiderStatus(activeUser.id, "ON_DELIVERY");
       }
+      setOrders((prev) =>
+        prev.map((o) => (o.id === orderId ? { ...o, status: "OUT_FOR_DELIVERY" } : o))
+      );
 
-      await fetch(`/api/delivery/orders/${orderId}`, {
+      const res = await fetch(`/api/delivery/orders/${orderId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "OUT_FOR_DELIVERY" }),
       });
 
-      fetchRiderOrders();
+      const data = await res.json();
+      if (!res.ok) {
+        setOrders(previousOrders);
+      } else if (data.order) {
+        setOrders((prev) =>
+          prev.map((o) => (o.id === orderId ? { ...o, ...data.order } : o))
+        );
+        updateLocalOrderStatus(orderId, data.order);
+      }
     } catch (err) {
       console.error("Error starting delivery:", err);
+      setOrders(previousOrders);
+    } finally {
+      isMutatingRef.current = false;
     }
   };
 
@@ -105,6 +144,11 @@ export default function DeliveryPartnerPage() {
     orderId: string,
     otp: string
   ): Promise<{ success: boolean; error?: string }> => {
+    if (isMutatingRef.current) {
+      return { success: false, error: "Mutation in progress, please wait." };
+    }
+    isMutatingRef.current = true;
+
     try {
       const res = await fetch(`/api/delivery/orders/${orderId}`, {
         method: "PATCH",
@@ -128,13 +172,20 @@ export default function DeliveryPartnerPage() {
       }
 
       // Update local status for immediate UI sync ONLY after server confirmation
-      updateLocalOrderStatus(orderId, { status: "DELIVERED", paymentStatus: "COMPLETED" });
+      if (data.order) {
+        setOrders((prev) =>
+          prev.map((o) => (o.id === orderId ? { ...o, ...data.order } : o))
+        );
+        updateLocalOrderStatus(orderId, data.order);
+      } else {
+        updateLocalOrderStatus(orderId, { status: "DELIVERED", paymentStatus: "COMPLETED" });
+      }
+
       if (activeUser) {
         updateRiderStatus(activeUser.id, "AVAILABLE");
       }
 
       setPaymentModalOrder(null);
-      fetchRiderOrders();
       return { success: true };
     } catch (err) {
       console.error("Error completing delivery:", err);
@@ -142,6 +193,8 @@ export default function DeliveryPartnerPage() {
         success: false,
         error: "Unable to verify the OTP. Please try again.",
       };
+    } finally {
+      isMutatingRef.current = false;
     }
   };
 
