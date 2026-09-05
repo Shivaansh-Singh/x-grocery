@@ -46,19 +46,25 @@ export async function PATCH(
 
     // 2. Fetch existing order (fetch items only if stock restoration is required)
     const lookupStart = performance.now();
-    const existingOrder = await prisma.order.findFirst({
-      where: {
-        OR: [{ id }, { orderNumber: id }],
-      },
-      select: {
-        id: true,
-        orderNumber: true,
-        status: true,
-        notes: true,
-        deliveryPartnerId: true,
-        ...(isIncomingRejectionOrCancellation ? { items: true } : {}),
-      },
-    });
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    const selectFields = {
+      id: true,
+      orderNumber: true,
+      status: true,
+      notes: true,
+      deliveryPartnerId: true,
+      ...(isIncomingRejectionOrCancellation ? { items: true } : {}),
+    };
+
+    const existingOrder = isUuid
+      ? await prisma.order.findUnique({
+          where: { id },
+          select: selectFields,
+        })
+      : await prisma.order.findUnique({
+          where: { orderNumber: id },
+          select: selectFields,
+        });
     orderLookupTime = performance.now() - lookupStart;
 
     if (!existingOrder) {
@@ -167,34 +173,54 @@ export async function PATCH(
 
     if (isBecomingRejectedOrCancelled && "items" in existingOrder && Array.isArray(existingOrder.items)) {
       updatedOrder = await prisma.$transaction(async (tx) => {
-        // Safe sequential stock restoration (prevents deadlock / serialization contention on duplicate items)
-        for (const item of existingOrder.items) {
-          const product = await tx.product.findUnique({
-            where: { id: item.productId },
-            select: { id: true, stock: true },
-          });
+        const productIds = existingOrder.items.map((i) => i.productId);
+        const products = await tx.product.findMany({
+          where: { id: { in: productIds } },
+          select: { id: true, stock: true },
+        });
+        const productMap = new Map(products.map((p) => [p.id, p]));
 
+        for (const item of existingOrder.items) {
+          const product = productMap.get(item.productId);
           if (!product) {
             throw new Error(`Product not found: "${item.productName}" (${item.productId})`);
           }
+        }
 
-          const updatedProduct = await tx.product.update({
+        const inventoryLogData: {
+          productId: string;
+          previousStock: number;
+          newStock: number;
+          changeQuantity: number;
+          reason: string;
+        }[] = [];
+
+        for (const item of existingOrder.items) {
+          const product = productMap.get(item.productId)!;
+          const previousStock = product.stock;
+          const newStock = previousStock + item.quantity;
+          product.stock = newStock;
+
+          await tx.product.update({
             where: { id: item.productId },
             data: { stock: { increment: item.quantity } },
-            select: { id: true, stock: true },
           });
 
-          await tx.inventoryLog.create({
-            data: {
-              productId: item.productId,
-              previousStock: product.stock,
-              newStock: updatedProduct.stock,
-              changeQuantity: item.quantity,
-              reason:
-                updateData.status === OrderStatus.REJECTED
-                  ? `ORDER_REJECTED:${existingOrder.orderNumber}`
-                  : `ORDER_CANCELLED:${existingOrder.orderNumber}`,
-            },
+          inventoryLogData.push({
+            productId: item.productId,
+            previousStock,
+            newStock,
+            changeQuantity: item.quantity,
+            reason:
+              updateData.status === OrderStatus.REJECTED
+                ? `ORDER_REJECTED:${existingOrder.orderNumber}`
+                : `ORDER_CANCELLED:${existingOrder.orderNumber}`,
+          });
+        }
+
+        if (inventoryLogData.length > 0) {
+          await tx.inventoryLog.createMany({
+            data: inventoryLogData,
           });
         }
 

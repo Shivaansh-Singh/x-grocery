@@ -170,19 +170,25 @@ export async function PATCH(
     const { status, paymentStatus, otp } = body;
 
     // 3. Fetch existing order (select minimal required fields for validation & OTP check)
-    const existingOrder = await prisma.order.findFirst({
-      where: {
-        OR: [{ id }, { orderNumber: id }],
-      },
-      select: {
-        id: true,
-        orderNumber: true,
-        status: true,
-        deliveryPartnerId: true,
-        deliveryOtp: true,
-        deliveryOtpHash: true,
-      },
-    });
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    const selectFields = {
+      id: true,
+      orderNumber: true,
+      status: true,
+      deliveryPartnerId: true,
+      deliveryOtp: true,
+      deliveryOtpHash: true,
+    };
+
+    const existingOrder = isUuid
+      ? await prisma.order.findUnique({
+          where: { id },
+          select: selectFields,
+        })
+      : await prisma.order.findUnique({
+          where: { orderNumber: id },
+          select: selectFields,
+        });
 
     if (!existingOrder) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
