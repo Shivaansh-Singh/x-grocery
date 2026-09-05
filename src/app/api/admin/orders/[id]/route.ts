@@ -42,7 +42,7 @@ export async function PATCH(
     const isIncomingRejectionOrCancellation =
       status === OrderStatus.REJECTED || status === OrderStatus.CANCELLED || Boolean(rejectionReason);
 
-    // 2. Fetch existing order (fetch items only if stock restoration is required)
+    // 2. Fetch existing order and rider user in parallel (independent READ queries)
     const lookupStart = performance.now();
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
     const selectFields = {
@@ -54,15 +54,23 @@ export async function PATCH(
       ...(isIncomingRejectionOrCancellation ? { items: true } : {}),
     };
 
-    const existingOrder = isUuid
-      ? await prisma.order.findUnique({
-          where: { id },
-          select: selectFields,
-        })
-      : await prisma.order.findUnique({
-          where: { orderNumber: id },
-          select: selectFields,
-        });
+    const [existingOrder, riderUser] = await Promise.all([
+      isUuid
+        ? prisma.order.findUnique({
+            where: { id },
+            select: selectFields,
+          })
+        : prisma.order.findUnique({
+            where: { orderNumber: id },
+            select: selectFields,
+          }),
+      deliveryPartnerId
+        ? prisma.user.findUnique({
+            where: { id: deliveryPartnerId },
+            select: { id: true, role: true, name: true },
+          })
+        : Promise.resolve(null),
+    ]);
     orderLookupTime = performance.now() - lookupStart;
 
     if (!existingOrder) {
@@ -135,11 +143,6 @@ export async function PATCH(
     // 5. Authoritative Delivery Partner Validation
     if (deliveryPartnerId !== undefined) {
       if (deliveryPartnerId) {
-        const riderUser = await prisma.user.findUnique({
-          where: { id: deliveryPartnerId },
-          select: { id: true, role: true, name: true },
-        });
-
         if (!riderUser || riderUser.role !== Role.DELIVERY_PARTNER) {
           return NextResponse.json(
             { error: "Invalid delivery partner. Selected user is not an active delivery partner." },
