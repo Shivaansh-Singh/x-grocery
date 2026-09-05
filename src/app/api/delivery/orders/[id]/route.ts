@@ -1,3 +1,4 @@
+import { resolveVerifiedUser } from "@/lib/auth-verifier";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { OrderStatus, PaymentStatus, Role } from "@prisma/client";
@@ -147,7 +148,7 @@ export async function PATCH(
   try {
     // 1. Authentication Check
     const authStart = performance.now();
-    const user = await resolveAuthenticatedUser(request);
+    const user = await resolveVerifiedUser(request);
     authTime = performance.now() - authStart;
 
     if (!user) {

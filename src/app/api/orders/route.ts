@@ -1,3 +1,4 @@
+import { resolveVerifiedUser } from "@/lib/auth-verifier";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { OrderStatus, PaymentMethod, PaymentStatus, Role } from "@prisma/client";
@@ -89,7 +90,7 @@ export async function GET(request: NextRequest) {
   const startTime = performance.now();
   try {
     // 1. Authentication: require a verified Supabase session (no anonymous access).
-    const user = await resolveRequestUser(request);
+    const user = await resolveVerifiedUser(request);
     if (!user) {
       return NextResponse.json(
         { error: "Authentication required." },

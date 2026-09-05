@@ -1,3 +1,4 @@
+import { resolveVerifiedUser } from "@/lib/auth-verifier";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { OrderStatus, Role } from "@prisma/client";
@@ -19,11 +20,8 @@ export async function PATCH(
 
   try {
     // 1. Authorization Guard
-    const roleCookie = request.cookies.get("rushd_user_role")?.value;
-    const authHeader = request.headers.get("x-user-role");
-    const userRole = roleCookie || authHeader;
-
-    if (userRole && userRole === "CUSTOMER") {
+    const user = await resolveVerifiedUser(request);
+    if (!user || user.role === Role.CUSTOMER) {
       return NextResponse.json(
         { error: "Unauthorized. Admin privileges required." },
         { status: 403, headers: NO_CACHE_HEADERS }
