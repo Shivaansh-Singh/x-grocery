@@ -10,7 +10,7 @@ function createPrismaClient(): PrismaClient {
   const connectionString = process.env.DATABASE_URL;
   const pool = new Pool({
     connectionString,
-    max: 2,
+    max: 1,
     idleTimeoutMillis: 1000,
     connectionTimeoutMillis: 3000,
   });
