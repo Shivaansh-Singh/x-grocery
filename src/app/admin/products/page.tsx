@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { ProductEditModal } from "@/components/admin/ProductEditModal";
 import { CreateProductModal } from "@/components/admin/CreateProductModal";
@@ -277,10 +278,20 @@ export default function AdminProductsPage() {
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                   {/* Info */}
                   <div className="flex items-start gap-3 min-w-0 flex-1">
-                    <div className={`w-10 h-10 rounded border flex items-center justify-center shrink-0 overflow-hidden font-black text-xs ${
+                    <div className={`relative w-10 h-10 rounded border flex items-center justify-center shrink-0 overflow-hidden font-black text-xs ${
                       isActive ? "bg-[#111111] text-[#DFFF00] border-[#111111]" : "bg-[#F5F5F5] text-[#999999] border-[#E5E5E5]"
                     }`}>
-                      P
+                      {product.imageUrl ? (
+                        <Image
+                          src={product.imageUrl}
+                          alt={product.name}
+                          fill
+                          unoptimized
+                          className="object-contain p-0.5 bg-white"
+                        />
+                      ) : (
+                        "P"
+                      )}
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5 flex-wrap">
