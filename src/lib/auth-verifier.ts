@@ -25,6 +25,24 @@ export interface VerifiedJwtPayload {
   exp?: number;
   iss?: string;
   aud?: string | string[];
+  app_metadata?: {
+    role?: string;
+    [key: string]: unknown;
+  };
+  user_metadata?: {
+    full_name?: string;
+    name?: string;
+    [key: string]: unknown;
+  };
+}
+
+export function isValidRole(value: unknown): value is Role {
+  return (
+    typeof value === "string" &&
+    (value === Role.CUSTOMER ||
+      value === Role.STORE_ADMIN ||
+      value === Role.DELIVERY_PARTNER)
+  );
 }
 
 let jwksCache: SupabaseJwk[] | null = null;
@@ -176,19 +194,74 @@ export async function verifySupabaseAccessToken(token: string): Promise<Verified
   }
 }
 
-export async function resolveVerifiedUser(request: NextRequest) {
+export async function resolveVerifiedUser(request: NextRequest): Promise<{
+  id: string;
+  email: string;
+  role: Role;
+  name?: string | null;
+} | null> {
   try {
     const token = extractAccessTokenFromRequest(request);
     if (token) {
       const verifiedPayload = await verifySupabaseAccessToken(token);
       if (verifiedPayload?.email) {
+        const cleanEmail = verifiedPayload.email.toLowerCase().trim();
+        const appMetadataRole = verifiedPayload.app_metadata?.role;
+
+        // 1. Authoritative JWT Fast Path
+        if (appMetadataRole !== undefined) {
+          if (!isValidRole(appMetadataRole)) {
+            // Invalid or unrecognized role claim: reject immediately, no fallback
+            return null;
+          }
+
+          if (appMetadataRole === Role.CUSTOMER) {
+            return {
+              id: verifiedPayload.sub,
+              email: cleanEmail,
+              name:
+                verifiedPayload.user_metadata?.full_name ||
+                verifiedPayload.user_metadata?.name ||
+                cleanEmail.split("@")[0],
+              role: Role.CUSTOMER,
+            };
+          }
+
+          if (appMetadataRole === Role.STORE_ADMIN) {
+            return {
+              id: verifiedPayload.sub,
+              email: cleanEmail,
+              name:
+                verifiedPayload.user_metadata?.full_name ||
+                verifiedPayload.user_metadata?.name ||
+                cleanEmail.split("@")[0] ||
+                "Store Admin",
+              role: Role.STORE_ADMIN,
+            };
+          }
+
+          if (appMetadataRole === Role.DELIVERY_PARTNER) {
+            const dbUser = await prisma.user.findUnique({
+              where: { email: cleanEmail },
+            });
+            if (dbUser && dbUser.role === Role.DELIVERY_PARTNER) {
+              return dbUser;
+            }
+            return null;
+          }
+
+          return null;
+        }
+
+        // 2. Legacy Token Fallback: Only when app_metadata.role === undefined
         const dbUser = await prisma.user.findUnique({
-          where: { email: verifiedPayload.email.toLowerCase().trim() },
+          where: { email: cleanEmail },
         });
         if (dbUser) return dbUser;
       }
     }
 
+    // 3. Existing Legacy Cookie Fallback (Only reachable if no token was provided)
     const emailCookie =
       request.cookies.get("rushd_user_email")?.value ||
       request.headers.get("x-user-email");
