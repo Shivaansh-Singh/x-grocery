@@ -5,8 +5,7 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { RushDLogo } from "@/components/ui/RushDLogo";
 
 export function Header() {
-  const { user, activeUser, role, signOut } = useAuth();
-  const isAuthenticated = Boolean(user || activeUser);
+  const { role } = useAuth();
 
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-[#111111] px-4 py-3">
@@ -32,15 +31,6 @@ export function Header() {
               className="text-xs font-extrabold px-3 py-1.5 rounded bg-[#111111] text-white hover:bg-black transition-colors"
             >
               Rider Portal
-            </Link>
-          )}
-
-          {!isAuthenticated && (
-            <Link
-              href="/login"
-              className="text-xs font-extrabold text-[#111111] bg-[#DFFF00] hover:bg-[#C8E600] transition-colors px-3.5 py-1.5 rounded border border-[#111111]"
-            >
-              Sign In
             </Link>
           )}
         </div>

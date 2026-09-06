@@ -2,18 +2,26 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { useCart } from "@/components/providers/CartProvider";
 
 export function FloatingCartBar() {
   const pathname = usePathname();
+  const { user, activeUser } = useAuth();
+  const isAuthenticated = Boolean(user || activeUser);
   const { itemCount, totalAmount, deliveryFee } = useCart();
 
-  // Hide floating cart bar on cart & checkout pages or admin/delivery portals
+  // The floating "View Cart" bar requires an authenticated user with items in cart.
+  // Hide if not authenticated, no items, on cart/checkout pages, or on admin/delivery/auth routes.
   if (
+    !isAuthenticated ||
     itemCount === 0 ||
     pathname.startsWith("/cart") ||
     pathname.startsWith("/admin") ||
-    pathname.startsWith("/delivery")
+    pathname.startsWith("/delivery") ||
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/forgot-password") ||
+    pathname.startsWith("/reset-password")
   ) {
     return null;
   }

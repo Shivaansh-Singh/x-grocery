@@ -8,8 +8,14 @@ export function BottomNav() {
   const pathname = usePathname();
   const { itemCount } = useCart();
 
-  // Hide bottom nav on admin and delivery routes
-  if (pathname.startsWith("/admin") || pathname.startsWith("/delivery")) {
+  // Hide bottom nav on admin, delivery, and authentication routes
+  if (
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/delivery") ||
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/forgot-password") ||
+    pathname.startsWith("/reset-password")
+  ) {
     return null;
   }
 
