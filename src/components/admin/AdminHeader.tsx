@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { RushDLogo } from "@/components/ui/RushDLogo";
 import { useAuth } from "@/components/providers/AuthProvider";
 
 interface AdminHeaderProps {
@@ -28,16 +27,13 @@ export function AdminHeader({ pendingOrdersCount = 0 }: AdminHeaderProps) {
   return (
     <header className="bg-white text-[#111111] rounded-lg p-4 border border-[#111111] space-y-3 mb-4">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <RushDLogo size="sm" href="/admin" />
-          <div className="border-l border-[#E5E5E5] pl-2.5">
-            <h2 className="font-extrabold text-xs leading-tight text-[#111111]">
-              Admin Hub
-            </h2>
-            <p className="text-[10px] text-[#666666] font-medium">
-              Store Operations
-            </p>
-          </div>
+        <div>
+          <h2 className="font-extrabold text-xs leading-tight text-[#111111]">
+            Admin Hub
+          </h2>
+          <p className="text-[10px] text-[#666666] font-medium">
+            Store Operations
+          </p>
         </div>
 
         <div className="flex items-center gap-2">

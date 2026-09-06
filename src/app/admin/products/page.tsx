@@ -274,17 +274,17 @@ export default function AdminProductsPage() {
                   !isActive ? "border-[#E5E5E5] opacity-60" : "border-[#E5E5E5] hover:border-[#111111]"
                 }`}
               >
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                   {/* Info */}
-                  <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex items-start gap-3 min-w-0 flex-1">
                     <div className={`w-10 h-10 rounded border flex items-center justify-center shrink-0 overflow-hidden font-black text-xs ${
                       isActive ? "bg-[#111111] text-[#DFFF00] border-[#111111]" : "bg-[#F5F5F5] text-[#999999] border-[#E5E5E5]"
                     }`}>
                       P
                     </div>
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <h4 className="font-extrabold text-xs text-[#111111] truncate">
+                        <h4 className="font-extrabold text-xs text-[#111111] break-words">
                           {product.name}
                         </h4>
                         {!isActive && (
@@ -310,63 +310,71 @@ export default function AdminProductsPage() {
                   </div>
 
                   {/* Controls */}
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex flex-col md:flex-row md:items-center gap-2.5 md:gap-2 shrink-0 pt-2.5 md:pt-0 border-t border-[#F0F0F0] md:border-t-0">
                     {/* Inline Stock Stepper */}
-                    <div className="flex items-center gap-1 bg-[#111111] text-white p-1 rounded border border-[#111111]">
-                      <button
-                        onClick={() => handleStockAdjust(product.id, product.stock, -1)}
-                        className="w-6 h-6 rounded bg-[#000000] font-bold text-xs text-white hover:text-[#DFFF00]"
-                      >
-                        -
-                      </button>
-                      <span
-                        className={`text-xs font-black px-2 ${
-                          isOutOfStock
-                            ? "text-[#D92D3A]"
-                            : isLowStock
-                            ? "text-[#DFFF00]"
-                            : "text-white"
-                        }`}
-                      >
-                        {product.stock}
+                    <div className="flex items-center justify-between md:justify-start gap-2">
+                      <span className="text-xs font-bold text-[#666666] md:hidden">
+                        Quantity:
                       </span>
-                      <button
-                        onClick={() => handleStockAdjust(product.id, product.stock, 1)}
-                        className="w-6 h-6 rounded bg-[#000000] font-bold text-xs text-white hover:text-[#DFFF00]"
-                      >
-                        +
-                      </button>
+                      <div className="flex items-center gap-1 bg-[#111111] text-white p-1 rounded border border-[#111111]">
+                        <button
+                          onClick={() => handleStockAdjust(product.id, product.stock, -1)}
+                          className="w-6 h-6 rounded bg-[#000000] font-bold text-xs text-white hover:text-[#DFFF00]"
+                        >
+                          -
+                        </button>
+                        <span
+                          className={`text-xs font-black px-2 ${
+                            isOutOfStock
+                              ? "text-[#D92D3A]"
+                              : isLowStock
+                              ? "text-[#DFFF00]"
+                              : "text-white"
+                          }`}
+                        >
+                          {product.stock}
+                        </span>
+                        <button
+                          onClick={() => handleStockAdjust(product.id, product.stock, 1)}
+                          className="w-6 h-6 rounded bg-[#000000] font-bold text-xs text-white hover:text-[#DFFF00]"
+                        >
+                          +
+                        </button>
+                      </div>
                     </div>
 
-                    {/* Edit Button */}
-                    <button
-                      onClick={() => setEditingProduct(product)}
-                      className="px-3 py-1.5 bg-[#F5F5F5] hover:bg-gray-200 text-[#111111] font-extrabold text-xs rounded transition-colors border border-[#E5E5E5]"
-                    >
-                      Edit
-                    </button>
+                    {/* Actions */}
+                    <div className="flex items-center gap-2">
+                      {/* Edit Button */}
+                      <button
+                        onClick={() => setEditingProduct(product)}
+                        className="flex-1 md:flex-initial px-3 py-1.5 bg-[#F5F5F5] hover:bg-gray-200 text-[#111111] font-extrabold text-xs rounded transition-colors border border-[#E5E5E5]"
+                      >
+                        Edit
+                      </button>
 
-                    {/* Deactivate / Reactivate Toggle */}
-                    <button
-                      onClick={() => handleToggleAvailability(product)}
-                      title={isActive ? "Deactivate (hide from customers)" : "Reactivate (show to customers)"}
-                      className={`px-3 py-1.5 font-extrabold text-xs rounded transition-colors border ${
-                        isActive
-                          ? "bg-white border-[#E5E5E5] text-[#666666] hover:bg-[#FFF0F0] hover:border-[#D92D3A] hover:text-[#D92D3A]"
-                          : "bg-white border-[#E5E5E5] text-[#22C55E] hover:bg-[#F0FFF4] hover:border-[#22C55E]"
-                      }`}
-                    >
-                      {isActive ? "Deactivate" : "Activate"}
-                    </button>
+                      {/* Deactivate / Reactivate Toggle */}
+                      <button
+                        onClick={() => handleToggleAvailability(product)}
+                        title={isActive ? "Deactivate (hide from customers)" : "Reactivate (show to customers)"}
+                        className={`flex-1 md:flex-initial px-3 py-1.5 font-extrabold text-xs rounded transition-colors border ${
+                          isActive
+                            ? "bg-white border-[#E5E5E5] text-[#666666] hover:bg-[#FFF0F0] hover:border-[#D92D3A] hover:text-[#D92D3A]"
+                            : "bg-white border-[#E5E5E5] text-[#22C55E] hover:bg-[#F0FFF4] hover:border-[#22C55E]"
+                        }`}
+                      >
+                        {isActive ? "Deactivate" : "Activate"}
+                      </button>
 
-                    {/* Delete Button */}
-                    <button
-                      onClick={() => handleDelete(product)}
-                      title="Delete product (soft-deactivates if it has historical orders)"
-                      className="w-7 h-7 flex items-center justify-center rounded bg-white border border-[#E5E5E5] text-[#999999] hover:bg-[#FFF0F0] hover:border-[#D92D3A] hover:text-[#D92D3A] transition-colors font-bold text-xs"
-                    >
-                      🗑
-                    </button>
+                      {/* Delete Button */}
+                      <button
+                        onClick={() => handleDelete(product)}
+                        title="Delete product (soft-deactivates if it has historical orders)"
+                        className="w-7 h-7 flex items-center justify-center rounded bg-white border border-[#E5E5E5] text-[#999999] hover:bg-[#FFF0F0] hover:border-[#D92D3A] hover:text-[#D92D3A] transition-colors font-bold text-xs shrink-0"
+                      >
+                        🗑
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
