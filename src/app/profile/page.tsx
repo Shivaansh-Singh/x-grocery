@@ -201,9 +201,6 @@ function CustomerAccountHubContent() {
                 <span className="font-extrabold text-xs text-[#111111] dark:text-[#F5F5F5] block">
                   Contact Us
                 </span>
-                <span className="text-[10px] text-[#666666] dark:text-[#A3A3A3] block">
-                  Customer care &amp; helpline (+91 9244302120)
-                </span>
               </div>
             </div>
             <span className="text-[#999999] dark:text-[#666666] group-hover:text-[#111111] dark:group-hover:text-white transition-colors font-bold text-sm pl-2">
@@ -222,9 +219,6 @@ function CustomerAccountHubContent() {
               <div>
                 <span className="font-extrabold text-xs text-[#111111] dark:text-[#F5F5F5] block">
                   Complaints &amp; Feedback
-                </span>
-                <span className="text-[10px] text-[#666666] dark:text-[#A3A3A3] block">
-                  Report missing items or request grocery products
                 </span>
               </div>
             </div>
@@ -270,26 +264,20 @@ function CustomerAccountHubContent() {
         </div>
       </div>
 
-      {/* Section 5: LEGAL & POLICIES */}
-      <div className="space-y-1.5">
-        <h2 className="text-[11px] font-bold uppercase tracking-wider text-[#666666] dark:text-[#A3A3A3] px-1">
-          Legal &amp; Policies
-        </h2>
-        <div className="bg-white dark:bg-[#141414] rounded-xl border border-[#E5E5E5] dark:border-[#262626] overflow-hidden shadow-xs divide-y divide-[#F0F0F0] dark:divide-[#222222] transition-colors">
+      {/* Privacy Policy */}
+      <div className="pt-1">
+        <div className="bg-white dark:bg-[#141414] rounded-xl border border-[#E5E5E5] dark:border-[#262626] overflow-hidden shadow-xs transition-colors">
           <Link
-            href="/terms"
+            href="/privacy-policy"
             className="flex items-center justify-between p-3.5 hover:bg-[#F9F9F9] dark:hover:bg-[#1E1E1E] transition-colors group cursor-pointer"
           >
             <div className="flex items-center gap-3 min-w-0">
               <span className="w-8 h-8 rounded-lg bg-[#F5F5F5] dark:bg-[#222222] flex items-center justify-center text-sm shrink-0 group-hover:scale-105 transition-transform border border-[#E5E5E5]/50 dark:border-[#333333]">
-                ⚖️
+                🔒
               </span>
               <div>
                 <span className="font-extrabold text-xs text-[#111111] dark:text-[#F5F5F5] block">
-                  Terms &amp; Conditions
-                </span>
-                <span className="text-[10px] text-[#666666] block">
-
+                  Privacy Policy
                 </span>
               </div>
             </div>
@@ -300,7 +288,7 @@ function CustomerAccountHubContent() {
         </div>
       </div>
 
-      {/* Section 6: ACCOUNT / LOG OUT */}
+      {/* Section 5: ACCOUNT / LOG OUT */}
       <div className="space-y-1.5 pt-2">
         <h2 className="text-[11px] font-bold uppercase tracking-wider text-[#666666] dark:text-[#A3A3A3] px-1">
           Session

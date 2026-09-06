@@ -5,7 +5,7 @@ import Image from "next/image";
 
 interface RushDLogoProps {
   variant?: "full" | "symbol";
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "xl" | "hero";
   href?: string;
   className?: string;
   themeMode?: "auto" | "light" | "dark";
@@ -14,7 +14,7 @@ interface RushDLogoProps {
 export function RushDLogo({
   variant = "full",
   size = "md",
-  href = "/",
+  href,
   className = "",
   themeMode = "auto",
 }: RushDLogoProps) {
@@ -22,16 +22,28 @@ export function RushDLogo({
     sm: "h-7 w-7",
     md: "h-9 w-9",
     lg: "h-11 w-11",
+    xl: "h-13 w-13",
+    hero: "h-[54px] w-[54px] min-[390px]:h-[63px] min-[390px]:w-[63px] sm:h-[72px] sm:w-[72px] md:h-[90px] md:w-[90px]",
   };
 
   const wordmarkHeights = {
     sm: "h-5",
     md: "h-6.5",
     lg: "h-8",
+    xl: "h-9.5",
+    hero: "h-9 min-[390px]:h-[43px] sm:h-[50px] md:h-[61px]",
+  };
+
+  const gapDimensions = {
+    sm: "gap-2",
+    md: "gap-2.5",
+    lg: "gap-3",
+    xl: "gap-3.5",
+    hero: "gap-3 min-[390px]:gap-3.5 sm:gap-4 md:gap-5",
   };
 
   const logoElements = (
-    <div className={`inline-flex items-center gap-2.5 select-none shrink-0 ${className}`}>
+    <div className={`inline-flex items-center ${gapDimensions[size]} select-none shrink-0 ${className}`}>
       {/* Supplied R Icon Emblem Image Asset */}
       <Image
         src="/brand/rushd-icon.png"

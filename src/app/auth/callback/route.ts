@@ -1,6 +1,11 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
+import {
+  CURRENT_PRIVACY_POLICY_VERSION,
+  PRIVACY_POLICY_DOCUMENT_NAME,
+  CONSENT_COOKIE_NAME,
+} from "@/config/privacy.config";
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
@@ -198,6 +203,22 @@ export async function GET(request: NextRequest) {
         maxAge: 2592000,
         sameSite: "lax",
       });
+
+      // Check for current privacy policy consent and populate cookie
+      const existingConsent = await prisma.userConsent.findFirst({
+        where: {
+          userId: dbUser.id,
+          document: PRIVACY_POLICY_DOCUMENT_NAME,
+          version: CURRENT_PRIVACY_POLICY_VERSION,
+        },
+      });
+      if (existingConsent) {
+        response.cookies.set(CONSENT_COOKIE_NAME, CURRENT_PRIVACY_POLICY_VERSION, {
+          path: "/",
+          maxAge: 31536000,
+          sameSite: "lax",
+        });
+      }
 
       // Determine destination without creating a new response object (preserves all Set-Cookie headers)
       let destination = "/";

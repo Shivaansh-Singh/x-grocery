@@ -1,14 +1,20 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import {
+  CURRENT_PRIVACY_POLICY_VERSION,
+  CONSENT_COOKIE_NAME,
+} from "@/config/privacy.config";
 
 export async function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-pathname", pathname);
+
   let response = NextResponse.next({
     request: {
-      headers: request.headers,
+      headers: requestHeaders,
     },
   });
-
-  const pathname = request.nextUrl.pathname;
 
   // 1. Read cookies for role and email
   const roleCookie = request.cookies.get("rushd_user_role")?.value;
@@ -32,7 +38,7 @@ export async function middleware(request: NextRequest) {
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-          response = NextResponse.next({ request });
+          response = NextResponse.next({ request: { headers: requestHeaders } });
           cookiesToSet.forEach(({ name, value, options }) =>
             response.cookies.set(name, value, options)
           );
@@ -80,7 +86,7 @@ export async function middleware(request: NextRequest) {
     pathname === "/login" ||
     pathname === "/forgot-password" ||
     pathname === "/reset-password" ||
-    pathname === "/terms" ||
+    pathname === "/privacy-policy" ||
     pathname.startsWith("/auth/callback") ||
     pathname.startsWith("/api/auth");
 
@@ -131,6 +137,8 @@ export async function middleware(request: NextRequest) {
       url.searchParams.set("error", "unauthorized_delivery_access");
       return NextResponse.redirect(url);
     }
+
+    // Customer routes are authoritatively gated by server-side CustomerConsentGuard against PostgreSQL
     return response;
   }
 

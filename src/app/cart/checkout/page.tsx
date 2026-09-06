@@ -7,7 +7,7 @@ import { useCart } from "@/components/providers/CartProvider";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { PaymentMethodSelector, PaymentChoice } from "@/components/checkout/PaymentMethodSelector";
 import { addLocalOrder } from "@/lib/orderSync";
-import { validateIndianMobileNumber, validateIndianPincode } from "@/lib/validation";
+import { validateIndianMobileNumber } from "@/lib/validation";
 import type { SavedAddress } from "@/app/profile/page";
 
 export default function CheckoutPage() {
@@ -29,7 +29,7 @@ export default function CheckoutPage() {
   // Add Address Inline state
   const [showAddInline, setShowAddInline] = useState(false);
   const [newAddr, setNewAddr] = useState({
-    label: "Hostel",
+    label: "Home",
     buildingColony: "Royal City Flats, Block B",
     flatRoomNo: "",
     landmark: "Near Main Gate Area",
@@ -123,12 +123,6 @@ export default function CheckoutPage() {
       return;
     }
 
-    const cleanPincode = newAddr.pincode.trim();
-    if (!validateIndianPincode(cleanPincode)) {
-      setErrorMessage("Enter a valid 6-digit Indian pincode.");
-      return;
-    }
-
     try {
       const res = await fetch("/api/addresses", {
         method: "POST",
@@ -138,10 +132,10 @@ export default function CheckoutPage() {
           label: newAddr.label,
           buildingColony: newAddr.buildingColony.trim(),
           flatRoomNo: newAddr.flatRoomNo.trim(),
-          landmark: newAddr.landmark.trim(),
-          city: newAddr.city.trim(),
-          state: newAddr.state.trim(),
-          pincode: cleanPincode,
+          landmark: newAddr.landmark ? newAddr.landmark.trim() : "",
+          city: newAddr.city ? newAddr.city.trim() : "Bhopal",
+          state: newAddr.state ? newAddr.state.trim() : "Madhya Pradesh",
+          pincode: newAddr.pincode ? newAddr.pincode.trim() : "466114",
           phone: cleanPhone,
           isDefault: savedAddresses.length === 0 ? true : newAddr.isDefault,
         }),
@@ -206,14 +200,12 @@ export default function CheckoutPage() {
         return;
       }
 
-      const cleanPincode = newAddr.pincode.trim();
-      if (!validateIndianPincode(cleanPincode)) {
-        setErrorMessage("Enter a valid 6-digit Indian pincode.");
-        return;
-      }
+      const cityStr = newAddr.city?.trim() || "Bhopal";
+      const stateStr = newAddr.state?.trim() || "Madhya Pradesh";
+      const pincodeStr = newAddr.pincode?.trim() || "466114";
 
       finalPhone = cleanPhone;
-      finalFormattedAddress = `${newAddr.flatRoomNo.trim()}, ${newAddr.buildingColony.trim()}, ${newAddr.city.trim()}, ${newAddr.state.trim()} - ${cleanPincode}${
+      finalFormattedAddress = `${newAddr.flatRoomNo.trim()}, ${newAddr.buildingColony.trim()}, ${cityStr}, ${stateStr} - ${pincodeStr}${
         newAddr.landmark ? ` (Landmark: ${newAddr.landmark.trim()})` : ""
       } • Phone: ${finalPhone}`;
 
@@ -227,10 +219,10 @@ export default function CheckoutPage() {
             label: newAddr.label,
             buildingColony: newAddr.buildingColony.trim(),
             flatRoomNo: newAddr.flatRoomNo.trim(),
-            landmark: newAddr.landmark.trim(),
-            city: newAddr.city.trim(),
-            state: newAddr.state.trim(),
-            pincode: cleanPincode,
+            landmark: newAddr.landmark ? newAddr.landmark.trim() : "",
+            city: cityStr,
+            state: stateStr,
+            pincode: pincodeStr,
             phone: cleanPhone,
             isDefault: savedAddresses.length === 0,
           }),
@@ -294,7 +286,7 @@ export default function CheckoutPage() {
       <div className="flex items-center justify-between border-b border-[#E5E5E5] pb-2.5">
         <div>
           <h1 className="font-extrabold text-xl text-[#111111] tracking-tight">
-            Off-Campus Checkout
+            Checkout
           </h1>
           <p className="text-xs text-[#666666] font-medium">
             RushD Express Delivery
@@ -327,7 +319,7 @@ export default function CheckoutPage() {
             <button
               type="button"
               onClick={() => setShowAddInline(true)}
-              className="text-xs font-extrabold text-[#111111] bg-[#DFFF00] hover:bg-[#C8E600] px-3 py-1 rounded border border-[#111111] transition-colors"
+              className="text-xs font-extrabold !text-[#000000] text-[#000000] bg-[#DFFF00] hover:bg-[#C8E600] px-3 py-1 rounded border border-[#111111] transition-colors"
             >
               + Add New Address
             </button>
@@ -411,8 +403,8 @@ export default function CheckoutPage() {
               <label className="font-bold text-[#111111] block mb-1">
                 Address Label
               </label>
-              <div className="grid grid-cols-4 gap-1.5">
-                {["Hostel", "Home", "Work", "Other"].map((lbl) => (
+              <div className="grid grid-cols-3 gap-1.5">
+                {["Home", "Work", "Other"].map((lbl) => (
                   <button
                     type="button"
                     key={lbl}
@@ -470,53 +462,17 @@ export default function CheckoutPage() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="font-bold text-[#111111] block mb-1">City</label>
-                <input
-                  type="text"
-                  value={newAddr.city}
-                  onChange={(e) => setNewAddr({ ...newAddr, city: e.target.value })}
-                  required
-                  className="w-full px-3 py-2 rounded border border-[#111111] bg-white text-[#111111] focus:outline-none focus:ring-2 focus:ring-[#DFFF00]"
-                />
-              </div>
-              <div>
-                <label className="font-bold text-[#111111] block mb-1">State</label>
-                <input
-                  type="text"
-                  value={newAddr.state}
-                  onChange={(e) => setNewAddr({ ...newAddr, state: e.target.value })}
-                  required
-                  className="w-full px-3 py-2 rounded border border-[#111111] bg-white text-[#111111] focus:outline-none focus:ring-2 focus:ring-[#DFFF00]"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="font-bold text-[#111111] block mb-1">Pincode (6 digits)</label>
-                <input
-                  type="text"
-                  value={newAddr.pincode}
-                  onChange={(e) => setNewAddr({ ...newAddr, pincode: e.target.value })}
-                  maxLength={6}
-                  required
-                  className="w-full px-3 py-2 rounded border border-[#111111] bg-white text-[#111111] focus:outline-none focus:ring-2 focus:ring-[#DFFF00]"
-                />
-              </div>
-              <div>
-                <label className="font-bold text-[#111111] block mb-1">Contact Phone (10 digits) *</label>
-                <input
-                  type="text"
-                  value={newAddr.phone}
-                  onChange={(e) => setNewAddr({ ...newAddr, phone: e.target.value })}
-                  maxLength={10}
-                  placeholder="9876543210"
-                  required
-                  className="w-full px-3 py-2 rounded border border-[#111111] bg-white text-[#111111] focus:outline-none focus:ring-2 focus:ring-[#DFFF00]"
-                />
-              </div>
+            <div>
+              <label className="font-bold text-[#111111] block mb-1">Contact Phone (10 digits) *</label>
+              <input
+                type="text"
+                value={newAddr.phone}
+                onChange={(e) => setNewAddr({ ...newAddr, phone: e.target.value })}
+                maxLength={10}
+                placeholder="9876543210"
+                required
+                className="w-full px-3 py-2 rounded border border-[#111111] bg-white text-[#111111] focus:outline-none focus:ring-2 focus:ring-[#DFFF00]"
+              />
             </div>
 
             {savedAddresses.length > 0 && (
@@ -578,7 +534,7 @@ export default function CheckoutPage() {
           </div>
 
           <div className="flex items-center justify-between text-[#666666] font-medium">
-            <span>Platform & Packaging Fee</span>
+            <span>Handling Fee</span>
             <span className="font-bold text-[#111111]">₹{platformPackagingFee.toFixed(0)}</span>
           </div>
 

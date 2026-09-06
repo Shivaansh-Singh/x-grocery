@@ -130,7 +130,7 @@ function CustomerHomeContent() {
           <div className="relative z-10 space-y-3">
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-black tracking-wider uppercase px-2.5 py-0.5 rounded bg-[#DFFF00] text-[#000000]">
-                10-MIN EXPRESS
+                INSTANT DELIVERY
               </span>
             </div>
             <h2 className="font-extrabold text-2xl sm:text-3xl text-white tracking-tight leading-tight max-w-md">

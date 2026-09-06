@@ -1,6 +1,10 @@
 import { resolveVerifiedUser } from "@/lib/auth-verifier";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import {
+  CURRENT_PRIVACY_POLICY_VERSION,
+  PRIVACY_POLICY_DOCUMENT_NAME,
+} from "@/config/privacy.config";
 import { OrderStatus, PaymentMethod, PaymentStatus, Role } from "@prisma/client";
 import { generateDeliveryOtp } from "@/lib/otp";
 import { calculateOrderPricing } from "@/lib/pricing";
@@ -209,6 +213,25 @@ export async function POST(request: NextRequest) {
         phone: "+91 99999 88888",
       },
     });
+
+    // Privacy Policy Consent Guard: Customer must have accepted the current privacy policy version
+    const userConsent = await prisma.userConsent.findFirst({
+      where: {
+        userId: customer.id,
+        document: PRIVACY_POLICY_DOCUMENT_NAME,
+        version: CURRENT_PRIVACY_POLICY_VERSION,
+      },
+    });
+
+    if (!userConsent) {
+      return NextResponse.json(
+        {
+          error: "Privacy Policy acceptance required before placing an order.",
+          code: "CONSENT_REQUIRED",
+        },
+        { status: 403, headers: NO_CACHE_HEADERS }
+      );
+    }
 
     // 3. Deduplication Guard: Check for duplicate submission from same customer & address in last 10 seconds
     const tenSecondsAgo = new Date(Date.now() - 10000);

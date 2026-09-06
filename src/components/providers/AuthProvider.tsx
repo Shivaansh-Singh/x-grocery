@@ -57,6 +57,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const clearRoleCookie = () => {
     document.cookie = "rushd_user_role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
     document.cookie = "rushd_user_email=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    document.cookie = "rushd_consent_version=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
   };
 
   // Helper to fetch authoritative role from Database API
@@ -224,6 +225,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem("rushd_active_user", JSON.stringify(userObj));
       }
 
+
+      if (userRole === "CUSTOMER") {
+        try {
+          const consentRes = await fetch("/api/consent/status");
+          if (consentRes.ok) {
+            const consentData = await consentRes.json();
+            if (!consentData.accepted) {
+              router.push(targetRedirect && targetRedirect !== "/" ? `/consent?redirect=${encodeURIComponent(targetRedirect)}` : "/consent");
+              return { success: true };
+            }
+          }
+        } catch {
+          // Fallback to standard redirect and middleware gate
+        }
+      }
 
       redirectAfterLogin(userRole, targetRedirect);
       return { success: true };

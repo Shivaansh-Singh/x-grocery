@@ -13,6 +13,7 @@ export function BottomNav() {
     pathname.startsWith("/admin") ||
     pathname.startsWith("/delivery") ||
     pathname.startsWith("/login") ||
+    pathname.startsWith("/consent") ||
     pathname.startsWith("/forgot-password") ||
     pathname.startsWith("/reset-password")
   ) {

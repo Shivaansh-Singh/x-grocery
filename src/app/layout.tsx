@@ -6,6 +6,7 @@ import { AuthProvider } from "@/components/providers/AuthProvider";
 import { ToastProvider } from "@/components/ui/Toast";
 import { CartProvider } from "@/components/providers/CartProvider";
 import { AppShell } from "@/components/layout/AppShell";
+import { CustomerConsentGuard } from "@/components/legal/CustomerConsentGuard";
 import { FloatingCartBar } from "@/components/cart/FloatingCartBar";
 
 const geistSans = Geist({
@@ -58,7 +59,7 @@ export default function RootLayout({
           <ToastProvider>
             <AuthProvider>
               <CartProvider>
-                <AppShell>{children}</AppShell>
+                <CustomerConsentGuard><AppShell>{children}</AppShell></CustomerConsentGuard>
                 <FloatingCartBar />
               </CartProvider>
             </AuthProvider>

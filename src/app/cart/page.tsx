@@ -189,7 +189,7 @@ export default function CartPage() {
           </div>
 
           <div className="flex items-center justify-between text-[#666666]">
-            <span>Platform & Packaging Fee</span>
+            <span>Handling Fee</span>
             <span className="font-bold text-[#111111]">₹{platformPackagingFee.toFixed(0)}</span>
           </div>
 

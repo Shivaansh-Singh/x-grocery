@@ -59,6 +59,7 @@ model User {
   assignedOrders  Order[]           @relation("DeliveryPartnerOrders")
   inventoryLogs   InventoryLog[]
   feedbacks       CustomerFeedback[]
+  consents        UserConsent[]
 }
 
 model CustomerAddress {
@@ -218,4 +219,16 @@ model CustomerFeedback {
   adminNotes String?
   createdAt  DateTime       @default(now())
   updatedAt  DateTime       @updatedAt
+}
+
+model UserConsent {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  document   String   @default("PRIVACY_POLICY")
+  version    String
+  acceptedAt DateTime @default(now())
+
+  @@unique([userId, document, version])
+  @@index([userId, document])
 }
