@@ -416,6 +416,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setRole("CUSTOMER");
       clearRoleCookie();
       if (typeof window !== "undefined") {
+        try {
+          window.dispatchEvent(new CustomEvent("rushd:clear-cart"));
+          const keysToRemove: string[] = [];
+          for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            if (k && (k.startsWith("rushd_cart") || k === "x_grocery_cart")) {
+              keysToRemove.push(k);
+            }
+          }
+          keysToRemove.forEach((k) => localStorage.removeItem(k));
+          for (let i = 0; i < sessionStorage.length; i++) {
+            const k = sessionStorage.key(i);
+            if (k && (k.startsWith("rushd_cart") || k === "x_grocery_cart")) {
+              sessionStorage.removeItem(k);
+            }
+          }
+        } catch (e) {
+          console.error("Error clearing cart storage on logout:", e);
+        }
         localStorage.removeItem("rushd_active_user");
         // Use full location reload/navigation to cleanly terminate all component timers and background requests
         window.location.href = "/login";

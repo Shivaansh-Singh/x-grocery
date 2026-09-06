@@ -79,14 +79,48 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [userKey, activeUser?.id]);
 
+  // Clear in-memory cart state and storage on logout event
+  useEffect(() => {
+    const handleClearCart = () => {
+      setItems([]);
+      try {
+        const keysToRemove: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && (k.startsWith("rushd_cart") || k === "x_grocery_cart")) {
+            keysToRemove.push(k);
+          }
+        }
+        keysToRemove.forEach((k) => localStorage.removeItem(k));
+        for (let i = 0; i < sessionStorage.length; i++) {
+          const k = sessionStorage.key(i);
+          if (k && (k.startsWith("rushd_cart") || k === "x_grocery_cart")) {
+            sessionStorage.removeItem(k);
+          }
+        }
+      } catch (e) {
+        console.error("Error clearing cart storage on event:", e);
+      }
+    };
+
+    window.addEventListener("rushd:clear-cart", handleClearCart);
+    return () => window.removeEventListener("rushd:clear-cart", handleClearCart);
+  }, []);
+
   // 2. Persist cart changes ONLY AFTER initial hydration completes
   useEffect(() => {
     if (!isHydrated) return;
     try {
-      const dataString = JSON.stringify(items);
-      localStorage.setItem(userKey, dataString);
-      localStorage.setItem("rushd_cart", dataString);
-      localStorage.setItem("x_grocery_cart", dataString);
+      if (items.length === 0) {
+        localStorage.removeItem(userKey);
+        localStorage.removeItem("rushd_cart");
+        localStorage.removeItem("x_grocery_cart");
+      } else {
+        const dataString = JSON.stringify(items);
+        localStorage.setItem(userKey, dataString);
+        localStorage.setItem("rushd_cart", dataString);
+        localStorage.setItem("x_grocery_cart", dataString);
+      }
     } catch (e) {
       console.error("Failed to save cart to localStorage", e);
     }
@@ -183,6 +217,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const clearCart = () => {
     setItems([]);
+    try {
+      localStorage.removeItem(userKey);
+      localStorage.removeItem("rushd_cart");
+      localStorage.removeItem("x_grocery_cart");
+      localStorage.removeItem("rushd_cart_guest");
+    } catch (e) {
+      console.error("Failed to clear cart in localStorage", e);
+    }
   };
 
   const getQuantity = (productId: string) => {
