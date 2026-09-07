@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useCart } from "@/components/providers/CartProvider";
 import { FREE_DELIVERY_THRESHOLD } from "@/lib/pricing";
 
@@ -19,6 +19,28 @@ export default function CartPage() {
     clearCart,
   } = useCart();
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
+  const [servicePaused, setServicePaused] = useState(false);
+
+  useEffect(() => {
+    let ignore = false;
+    async function checkService() {
+      try {
+        const res = await fetch("/api/service-status", { cache: "no-store" });
+        if (res.ok) {
+          const data = await res.json();
+          if (!ignore && data.isPaused) {
+            setServicePaused(true);
+          }
+        }
+      } catch (err) {
+        // non-blocking
+      }
+    }
+    checkService();
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   const freeDeliveryThreshold = FREE_DELIVERY_THRESHOLD;
   const amountForFreeDelivery = Math.max(0, freeDeliveryThreshold - subtotal);
@@ -201,7 +223,12 @@ export default function CartPage() {
       </div>
 
       {/* Checkout Action Button */}
-      <div className="pt-2">
+      <div className="pt-2 space-y-2">
+        {servicePaused && (
+          <div className="p-3 bg-[#FFFBEB] border border-[#FDE68A] rounded-lg text-center text-xs font-semibold text-[#92400E]">
+            RushD is taking a short break. New orders are temporarily paused, but your cart items are saved.
+          </div>
+        )}
         <Link
           href="/cart/checkout"
           className="w-full py-3.5 bg-[#DFFF00] hover:bg-[#C8E600] text-[#000000] rounded font-black text-xs transition-colors flex items-center justify-center gap-2 border border-[#111111]"

@@ -835,7 +835,7 @@ function AdminDashboardContent() {
               </div>
               <Link
                 href="/admin/products"
-                className="text-xs font-black text-[#111111] px-3 py-1.5 rounded border border-[#111111] bg-[#DFFF00] hover:bg-[#C8E600] transition-colors"
+                className="text-xs font-black text-black px-3 py-1.5 rounded border border-[#111111] bg-[#DFFF00] hover:bg-[#C8E600] transition-colors"
               >
                 + Restock Products
               </Link>

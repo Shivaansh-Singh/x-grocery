@@ -179,16 +179,26 @@ export async function POST(request: NextRequest) {
       seenProductIds.add(productId);
     }
 
-    // 1. Get Store X (select only id to minimize query payload)
+    // 1. Get Store X and verify active operational status
     const store = await prisma.store.findUnique({
       where: { slug: "store-x" },
-      select: { id: true },
+      select: { id: true, isActive: true },
     });
 
     if (!store) {
       return NextResponse.json(
         { error: "Store X default hub not found" },
-        { status: 404 }
+        { status: 404, headers: NO_CACHE_HEADERS }
+      );
+    }
+
+    if (!store.isActive) {
+      return NextResponse.json(
+        {
+          error: "RushD is temporarily unavailable. We're currently taking a short break. Please try again later.",
+          code: "SERVICE_PAUSED",
+        },
+        { status: 503, headers: NO_CACHE_HEADERS }
       );
     }
 

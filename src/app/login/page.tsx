@@ -126,9 +126,8 @@ function LoginContent() {
 
         {/* Redirect Notice Banner */}
         {redirectParam && (
-          <div className="w-full max-w-[310px] min-[390px]:max-w-[330px] sm:max-w-[380px] md:max-w-[420px] bg-white/[0.06] border border-white/[0.1] p-3 rounded-xl text-xs text-white/90 flex items-center justify-center gap-2 mt-5 backdrop-blur-md">
-            <span>🔒</span>
-            <span>Sign in to access <strong className="text-[#FF5A1F]">{redirectParam}</strong></span>
+          <div className="w-full max-w-[310px] min-[390px]:max-w-[330px] sm:max-w-[380px] md:max-w-[420px] bg-white/[0.06] border border-white/[0.1] p-3 rounded-xl text-xs text-white/90 flex items-center justify-center mt-5 backdrop-blur-md">
+            <span>Everything you need. One tap away.</span>
           </div>
         )}
 

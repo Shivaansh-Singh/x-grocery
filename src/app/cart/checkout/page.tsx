@@ -43,6 +43,7 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentChoice>("COD");
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [servicePaused, setServicePaused] = useState(false);
 
   // Load saved addresses with stale response guard
   const loadSavedAddresses = useCallback(async () => {
@@ -81,6 +82,27 @@ export default function CheckoutPage() {
   useEffect(() => {
     loadSavedAddresses();
   }, [loadSavedAddresses]);
+
+  useEffect(() => {
+    let ignore = false;
+    async function checkService() {
+      try {
+        const res = await fetch("/api/service-status", { cache: "no-store" });
+        if (res.ok) {
+          const data = await res.json();
+          if (!ignore && data.isPaused) {
+            setServicePaused(true);
+          }
+        }
+      } catch (err) {
+        console.error("Error checking service status:", err);
+      }
+    }
+    checkService();
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   if (itemCount === 0 && !submitting) {
     return (
@@ -161,6 +183,11 @@ export default function CheckoutPage() {
     if (submitting) return;
 
     setErrorMessage(null);
+
+    if (servicePaused) {
+      setErrorMessage("RushD is temporarily unavailable. We're currently taking a short break. Please try again later.");
+      return;
+    }
 
     if (itemCount === 0 || items.length === 0) {
       setErrorMessage("Your cart is empty. Please add grocery items before placing an order.");
@@ -296,6 +323,21 @@ export default function CheckoutPage() {
           ← Back to Cart
         </Link>
       </div>
+
+      {servicePaused && (
+        <div className="p-4 bg-[#FFFBEB] border border-[#F59E0B] rounded-lg space-y-1.5 text-[#92400E]">
+          <div className="flex items-center gap-2 font-black text-xs uppercase tracking-wider">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#D97706] shrink-0" />
+            <span>RushD Services Temporarily Paused</span>
+          </div>
+          <p className="text-xs font-semibold leading-relaxed">
+            RushD is temporarily unavailable. We&apos;re currently taking a short break. Please try again later.
+          </p>
+          <p className="text-[11px] text-[#B45309]">
+            Your cart items have been saved. You can continue browsing products while we prepare to resume orders.
+          </p>
+        </div>
+      )}
 
       {errorMessage && (
         <div className="p-3.5 bg-white border border-[#D92D3A] text-[#D92D3A] rounded-lg text-xs font-bold">
@@ -557,10 +599,16 @@ export default function CheckoutPage() {
         )}
         <button
           type="submit"
-          disabled={submitting}
-          className="w-full py-3.5 bg-[#DFFF00] hover:bg-[#C8E600] text-[#000000] rounded font-black text-xs transition-colors disabled:opacity-50 flex items-center justify-center gap-2 border border-[#111111]"
+          disabled={submitting || servicePaused}
+          className={`w-full py-3.5 rounded font-black text-xs transition-colors flex items-center justify-center gap-2 border ${
+            servicePaused
+              ? "bg-[#F5F5F5] text-[#888888] border-[#E5E5E5] cursor-not-allowed"
+              : "bg-[#DFFF00] hover:bg-[#C8E600] text-[#000000] border-[#111111] disabled:opacity-50"
+          }`}
         >
-          {submitting ? (
+          {servicePaused ? (
+            <span>ORDERS TEMPORARILY PAUSED</span>
+          ) : submitting ? (
             <span>Placing Order...</span>
           ) : (
             <>

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { ServiceControlBar } from "@/components/admin/ServiceControlBar";
 
 interface AdminHeaderProps {
   pendingOrdersCount?: number;
@@ -57,6 +58,8 @@ export function AdminHeader({ pendingOrdersCount = 0 }: AdminHeaderProps) {
           </button>
         </div>
       </div>
+
+      <ServiceControlBar />
 
       <nav className="flex items-center gap-1 overflow-x-auto no-scrollbar pt-1">
         {navLinks.map((link) => {
