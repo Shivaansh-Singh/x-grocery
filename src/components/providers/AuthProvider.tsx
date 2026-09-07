@@ -41,6 +41,63 @@ const AuthContext = createContext<AuthContextType>({
   signOut: async () => { },
 });
 
+/**
+ * Reliably detects whether the application is running inside the Capacitor native runtime
+ * (e.g. Android WebView loading the remote Next.js production web application).
+ *
+ * Uses official Capacitor runtime detection APIs and bridge state:
+ * - Capacitor.isNativePlatform()
+ * - Capacitor.getPlatform() === 'android'
+ * - window.Capacitor runtime bridge state from the installed @capacitor/core version
+ *
+ * Guaranteed to return false for standard desktop and mobile web browsers.
+ */
+const isCapacitorNativePlatform = (): boolean => {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  // 1. Official @capacitor/core module methods
+  if (Capacitor.isNativePlatform()) {
+    return true;
+  }
+
+  const platform = Capacitor.getPlatform();
+  if (platform === "android" || platform === "ios") {
+    return true;
+  }
+
+  // 2. Official Capacitor global runtime bridge state on window
+  const winCap = (window as unknown as {
+    Capacitor?: {
+      isNativePlatform?: () => boolean;
+      getPlatform?: () => string;
+      isNative?: boolean;
+      platform?: string;
+    };
+  }).Capacitor;
+
+  if (winCap) {
+    if (typeof winCap.isNativePlatform === "function" && winCap.isNativePlatform()) {
+      return true;
+    }
+    if (typeof winCap.getPlatform === "function") {
+      const p = winCap.getPlatform();
+      if (p === "android" || p === "ios") {
+        return true;
+      }
+    }
+    if (winCap.isNative === true) {
+      return true;
+    }
+    if (winCap.platform === "android" || winCap.platform === "ios") {
+      return true;
+    }
+  }
+
+  return false;
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -183,7 +240,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Handle native deep link callback: com.rushd.app://auth/callback
   useEffect(() => {
-    if (typeof window === "undefined" || !Capacitor.isNativePlatform()) {
+    if (!isCapacitorNativePlatform()) {
       return;
     }
 
@@ -442,7 +499,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     try {
       if (process.env.NEXT_PUBLIC_SUPABASE_URL && !process.env.NEXT_PUBLIC_SUPABASE_URL.includes("placeholder")) {
-        const isNative = typeof window !== "undefined" && Capacitor.isNativePlatform();
+        const isNative = isCapacitorNativePlatform();
 
         if (isNative) {
           if (targetRedirect && typeof window !== "undefined") {
