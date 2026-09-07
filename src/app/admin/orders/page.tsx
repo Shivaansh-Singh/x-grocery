@@ -12,6 +12,19 @@ import { getCleanRejectionReason } from "@/components/orders/OrderTrackingTimeli
 import { getLocalOrders, updateLocalOrderStatus, updateRiderStatus, DeliveryStaffRider } from "@/lib/orderSync";
 import { useAuth } from "@/components/providers/AuthProvider";
 
+function sortOrdersByLatestFirst(ordersList: OrderRecord[]): OrderRecord[] {
+  return [...ordersList].sort((a, b) => {
+    const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    const validA = isNaN(timeA) ? 0 : timeA;
+    const validB = isNaN(timeB) ? 0 : timeB;
+    if (validB !== validA) {
+      return validB - validA;
+    }
+    return (b.orderNumber || b.id || "").localeCompare(a.orderNumber || a.id || "");
+  });
+}
+
 function AdminOrdersContent() {
   const searchParams = useSearchParams();
   const initialTab = (searchParams.get("tab") as string) || "all";
@@ -86,7 +99,7 @@ function AdminOrdersContent() {
             orderMap.set(o.id, o);
           }
         });
-        return Array.from(orderMap.values());
+        return sortOrdersByLatestFirst(Array.from(orderMap.values()));
       });
 
       setErrorMessage(null);
@@ -103,7 +116,7 @@ function AdminOrdersContent() {
       console.error("Error loading admin orders:", err);
       const local = getLocalOrders();
       if (local.length > 0) {
-        setOrders(local);
+        setOrders(sortOrdersByLatestFirst(local));
       } else {
         setErrorMessage("Unable to load orders. Please check network connection.");
       }
@@ -317,8 +330,9 @@ function AdminOrdersContent() {
     }
   };
 
-  // Search filtering
-  const filteredOrders = getTabOrders().filter((order) => {
+  // Search filtering with deterministic latest-first ordering
+  const filteredOrders = sortOrdersByLatestFirst(
+    getTabOrders().filter((order) => {
     if (!searchQuery.trim()) return true;
     const query = searchQuery.toLowerCase().trim();
     const matchesId = order.orderNumber.toLowerCase().includes(query) || order.id.toLowerCase().includes(query);
@@ -326,7 +340,8 @@ function AdminOrdersContent() {
     const matchesPhone = (order.customer?.phone || order.deliveryAddress || "").toLowerCase().includes(query);
     const matchesAddress = order.deliveryAddress.toLowerCase().includes(query);
     return matchesId || matchesCustomer || matchesPhone || matchesAddress;
-  });
+    })
+  );
 
   return (
     <div className="space-y-4 pt-1 pb-8 text-[#111111]">
@@ -429,7 +444,7 @@ function AdminOrdersContent() {
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex overflow-x-auto gap-1.5 p-1.5 rounded-lg bg-[#F5F5F5] border border-[#E5E5E5] no-scrollbar">
+      <div className="grid grid-cols-2 md:flex md:overflow-x-auto gap-1.5 p-1.5 rounded-lg bg-[#F5F5F5] border border-[#E5E5E5] md:no-scrollbar">
         {[
           { key: "all", label: `All (${orders.length})` },
           { key: "pending", label: `Pending (${pendingCount})`, badge: pendingCount > 0 },
@@ -439,18 +454,17 @@ function AdminOrdersContent() {
           { key: "delivery", label: `Out for Delivery (${outForDeliveryCount})` },
           { key: "delivered", label: `Delivered (${deliveredCount})` },
           { key: "rejected", label: `Rejected (${rejectedCount})` },
-          { key: "cancelled", label: `Cancelled (${cancelledCount})` },
         ].map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`px-3 py-1.5 rounded text-xs font-black transition-colors shrink-0 relative border ${
+            className={`px-2.5 py-2 md:px-3 md:py-1.5 rounded text-xs font-black transition-colors md:shrink-0 relative border flex items-center justify-center text-center ${
               activeTab === tab.key
                 ? "bg-[#DFFF00] text-[#000000] border-[#111111]"
-                : "text-[#666666] hover:text-[#111111] border-transparent"
+                : "bg-white md:bg-transparent text-[#666666] hover:text-[#111111] border-[#E5E5E5] md:border-transparent"
             }`}
           >
-            {tab.label}
+            <span>{tab.label}</span>
             {tab.badge && (
               <span className="ml-1 px-1 py-0.2 text-[9px] bg-[#D92D3A] text-white rounded font-black">
                 NEW

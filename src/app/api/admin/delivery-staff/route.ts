@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { Role } from "@prisma/client";
-import { createClient } from "@/lib/supabase/server";
+import { Role, OrderStatus } from "@prisma/client";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
+import { resolveVerifiedUser } from "@/lib/auth-verifier";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -155,32 +156,40 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 5. Check for Duplicate Email
+    // 5. Find Existing RushD User
     const existingUser = await prisma.user.findUnique({
       where: { email: cleanEmail },
-      select: { id: true, email: true, role: true, name: true },
+      select: { id: true, email: true, role: true, name: true, phone: true },
     });
 
-    if (existingUser) {
-      if (existingUser.role === Role.DELIVERY_PARTNER) {
-        return NextResponse.json(
-          { error: `A delivery partner with email "${cleanEmail}" already exists.` },
-          { status: 409 }
-        );
-      }
+    if (!existingUser) {
       return NextResponse.json(
-        { error: `A user with email "${cleanEmail}" already exists with role ${existingUser.role}.` },
+        { error: "This person must sign in to RushD once before they can be onboarded as a rider." },
+        { status: 404 }
+      );
+    }
+
+    if (existingUser.role === Role.DELIVERY_PARTNER) {
+      return NextResponse.json(
+        { error: "This user is already a rider." },
         { status: 409 }
       );
     }
 
-    // 6. Create Delivery Partner User in Database
-    const newRider = await prisma.user.create({
+    if (existingUser.role === Role.STORE_ADMIN) {
+      return NextResponse.json(
+        { error: "This user is currently registered as a store administrator and cannot be converted directly to a rider." },
+        { status: 400 }
+      );
+    }
+
+    // 6. Promote CUSTOMER -> DELIVERY_PARTNER
+    const updatedRider = await prisma.user.update({
+      where: { id: existingUser.id },
       data: {
-        name: cleanName,
-        email: cleanEmail,
-        phone: cleanPhone || null,
         role: Role.DELIVERY_PARTNER,
+        name: cleanName || existingUser.name,
+        phone: cleanPhone || existingUser.phone,
       },
       select: {
         id: true,
@@ -192,19 +201,195 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Graceful Supabase Auth metadata sync
+    try {
+      const supabaseAdmin = createAdminClient();
+      const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+      if (!listError && users) {
+        const authUser = users.find(
+          (u) => u.email?.toLowerCase().trim() === cleanEmail
+        );
+        if (authUser) {
+          await supabaseAdmin.auth.admin.updateUserById(authUser.id, {
+            user_metadata: { ...authUser.user_metadata, role: "DELIVERY_PARTNER" },
+            app_metadata: { ...authUser.app_metadata, role: "DELIVERY_PARTNER" },
+          });
+        }
+      }
+    } catch {
+      // Non-fatal: DB role is the primary authoritative source of truth in RushD
+    }
+
     return NextResponse.json(
       {
         success: true,
-        rider: newRider,
-        message: `Delivery partner "${newRider.name}" successfully onboarded.`,
+        rider: updatedRider,
+        message: `Delivery partner "${updatedRider.name || updatedRider.email}" successfully onboarded.`,
       },
-      { status: 201 }
+      { status: 200 }
     );
   } catch (error) {
     console.error("POST /api/admin/delivery-staff error:", error);
     return NextResponse.json(
       { error: "Failed to onboard delivery staff partner. Please try again." },
       { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    // 1. Authorization Guard: STORE_ADMIN only
+    const user = await resolveVerifiedUser(request);
+
+    const roleCookie = request.cookies.get("rushd_user_role")?.value;
+    const authHeader = request.headers.get("x-user-role");
+    const userRole = user?.role || roleCookie || authHeader;
+
+    if (!userRole) {
+      return NextResponse.json(
+        { error: "Authentication required. Please log in as an administrator." },
+        { status: 401, headers: NO_CACHE_HEADERS }
+      );
+    }
+
+    if (userRole !== Role.STORE_ADMIN && userRole !== "STORE_ADMIN") {
+      return NextResponse.json(
+        { error: "Unauthorized. STORE_ADMIN privileges required to offboard delivery staff." },
+        { status: 403, headers: NO_CACHE_HEADERS }
+      );
+    }
+
+    // Extract rider ID from search params or body
+    const { searchParams } = new URL(request.url);
+    let riderId = searchParams.get("id");
+
+    if (!riderId) {
+      try {
+        const body = await request.json();
+        riderId = body?.id || body?.riderId;
+      } catch {
+        // No body provided
+      }
+    }
+
+    if (!riderId || typeof riderId !== "string" || riderId.trim() === "") {
+      return NextResponse.json(
+        { error: "Rider ID is required." },
+        { status: 400, headers: NO_CACHE_HEADERS }
+      );
+    }
+
+    const cleanRiderId = riderId.trim();
+
+    // 2. Validate Target Delivery Partner
+    const existingRider = await prisma.user.findUnique({
+      where: { id: cleanRiderId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+      },
+    });
+
+    if (!existingRider) {
+      return NextResponse.json(
+        { error: "Delivery partner not found." },
+        { status: 404, headers: NO_CACHE_HEADERS }
+      );
+    }
+
+    if (existingRider.role !== Role.DELIVERY_PARTNER) {
+      return NextResponse.json(
+        { error: `User is not registered as a delivery partner (current role: ${existingRider.role}).` },
+        { status: 400, headers: NO_CACHE_HEADERS }
+      );
+    }
+
+    // 3. Atomic Database Transaction:
+    // a) Demote User role to CUSTOMER (Preserves User row, customer orders, addresses, consents, feedbacks)
+    // b) Unassign active non-terminal orders:
+    //    - ASSIGNED or OUT_FOR_DELIVERY -> unassign rider and revert status to ACCEPTED (re-assignable)
+    //    - other non-terminal statuses -> unassign rider
+    // c) Historical orders (DELIVERED, CANCELLED, REJECTED) are untouched for audit/reporting integrity.
+    const [updatedUser, assignedActiveOrdersUpdated, otherActiveOrdersUpdated] = await prisma.$transaction([
+      prisma.user.update({
+        where: { id: existingRider.id },
+        data: { role: Role.CUSTOMER },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+        },
+      }),
+      prisma.order.updateMany({
+        where: {
+          deliveryPartnerId: existingRider.id,
+          status: {
+            in: [OrderStatus.ASSIGNED, OrderStatus.OUT_FOR_DELIVERY],
+          },
+        },
+        data: {
+          deliveryPartnerId: null,
+          status: OrderStatus.ACCEPTED,
+        },
+      }),
+      prisma.order.updateMany({
+        where: {
+          deliveryPartnerId: existingRider.id,
+          status: {
+            notIn: [
+              OrderStatus.DELIVERED,
+              OrderStatus.CANCELLED,
+              OrderStatus.REJECTED,
+              OrderStatus.ASSIGNED,
+              OrderStatus.OUT_FOR_DELIVERY,
+            ],
+          },
+        },
+        data: {
+          deliveryPartnerId: null,
+        },
+      }),
+    ]);
+
+    // 4. Supabase Auth sync (Optional/Graceful)
+    try {
+      const supabaseAdmin = createAdminClient();
+      if (existingRider.email) {
+        const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+        if (!listError && users) {
+          const authUser = users.find(
+            (u) => u.email?.toLowerCase().trim() === existingRider.email.toLowerCase().trim()
+          );
+          if (authUser) {
+            await supabaseAdmin.auth.admin.updateUserById(authUser.id, {
+              user_metadata: { ...authUser.user_metadata, role: "CUSTOMER" },
+              app_metadata: { ...authUser.app_metadata, role: "CUSTOMER" },
+            });
+          }
+        }
+      }
+    } catch {
+      // Non-fatal: DB role is primary source of truth in RushD
+    }
+
+    return NextResponse.json(
+      {
+        success: true,
+        message: `Delivery partner "${existingRider.name || existingRider.email}" successfully removed and converted to customer.`,
+        rider: updatedUser,
+        unassignedOrdersCount: assignedActiveOrdersUpdated.count + otherActiveOrdersUpdated.count,
+      },
+      { status: 200, headers: NO_CACHE_HEADERS }
+    );
+  } catch (error) {
+    console.error("DELETE /api/admin/delivery-staff error:", error);
+    return NextResponse.json(
+      { error: "Failed to remove delivery partner. Please try again." },
+      { status: 500, headers: NO_CACHE_HEADERS }
     );
   }
 }

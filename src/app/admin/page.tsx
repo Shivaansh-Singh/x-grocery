@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, Suspense } from "react";
 import Link from "next/link";
 import { AdminHeader } from "@/components/admin/AdminHeader";
 import { OrderDetailsModal } from "@/components/admin/OrderDetailsModal";
+import { ManageAdminsModal } from "@/components/admin/ManageAdminsModal";
 import type { OrderRecord } from "@/components/orders/OrderCard";
 
 interface DashboardData {
@@ -105,6 +106,7 @@ function AdminDashboardContent() {
   const [topProductsLimit, setTopProductsLimit] = useState<number>(5);
   const [selectedOrderDetails, setSelectedOrderDetails] = useState<OrderRecord | null>(null);
   const [hoveredBarIndex, setHoveredBarIndex] = useState<number | null>(null);
+  const [isManageAdminsOpen, setIsManageAdminsOpen] = useState(false);
 
   const fetchDashboardData = useCallback(async (isBackground = false) => {
     if (!isBackground) setLoading(true);
@@ -453,6 +455,46 @@ function AdminDashboardContent() {
                   {data?.orderStatusBreakdown.OUT_FOR_DELIVERY || 0} Orders
                 </span>
               </Link>
+            </div>
+          </div>
+
+          {/* ========================================================================= */}
+          {/* 4.5. STORE ADMINISTRATORS & TEAM MANAGEMENT */}
+          {/* ========================================================================= */}
+          <div className="bg-white p-4 sm:p-5 rounded-lg border border-[#111111] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded bg-[#111111] text-[#DFFF00] font-black flex items-center justify-center text-sm shrink-0 border border-[#111111]">
+                ⚙
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="font-extrabold text-sm text-[#111111]">
+                    Manage Store Administrators
+                  </h3>
+                  <span className="text-[10px] font-black px-2 py-0.5 rounded bg-[#DFFF00] text-[#000000] border border-[#111111]">
+                    Team Management
+                  </span>
+                </div>
+                <p className="text-xs text-[#666666] font-medium mt-0.5">
+                  Onboard new store administrators from registered customers or manage team access
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+              <Link
+                href="/admin/delivery-staff"
+                className="px-3.5 py-2 rounded bg-[#F5F5F5] hover:bg-white text-[#111111] font-bold text-xs border border-[#E5E5E5] hover:border-[#111111] transition-colors"
+              >
+                Manage Riders →
+              </Link>
+              <button
+                type="button"
+                onClick={() => setIsManageAdminsOpen(true)}
+                className="px-4 py-2 rounded bg-[#111111] hover:bg-black text-[#DFFF00] font-black text-xs transition-colors flex items-center gap-1.5 cursor-pointer border border-[#111111]"
+              >
+                <span>Manage Admins ⚙</span>
+              </button>
             </div>
           </div>
 
@@ -966,6 +1008,13 @@ function AdminDashboardContent() {
         </>
       )}
 
+      {/* Reusable Manage Admins Modal */}
+      {isManageAdminsOpen && (
+        <ManageAdminsModal
+          onClose={() => setIsManageAdminsOpen(false)}
+          onSuccess={() => fetchDashboardData(true)}
+        />
+      )}
       {/* Reusable Order Details Modal */}
       {selectedOrderDetails && (
         <OrderDetailsModal

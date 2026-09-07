@@ -20,7 +20,6 @@ export function AdminHeader({ pendingOrdersCount = 0 }: AdminHeaderProps) {
       label: "Orders",
       badge: pendingOrdersCount > 0 ? pendingOrdersCount : null,
     },
-    { href: "/admin/delivery-staff", label: "Riders" },
     { href: "/admin/feedback", label: "Customer Feedback" },
   ];
 
@@ -36,7 +35,14 @@ export function AdminHeader({ pendingOrdersCount = 0 }: AdminHeaderProps) {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
+          <Link
+            href="/"
+            className="text-xs font-bold text-[#111111] hover:underline shrink-0"
+          >
+            Customer App ↗
+          </Link>
+
           {activeUser && (
             <span className="text-[10px] font-black text-[#000000] bg-[#DFFF00] border border-[#111111] px-2 py-1 rounded">
               STORE ADMIN

@@ -22,28 +22,31 @@ export function OnboardRiderModal({
     setSaving(true);
     setError(null);
 
-    const riderEmail = email.trim() || `rider-${Date.now()}@rushd.com`;
+    const riderEmail = email.trim().toLowerCase();
 
     try {
       const res = await fetch("/api/admin/delivery-staff", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name,
+          name: name.trim(),
           email: riderEmail,
-          phone,
+          phone: phone.trim(),
         }),
       });
 
+      const data = await res.json().catch(() => ({}));
+
       if (!res.ok) {
-        throw new Error("Failed to onboard delivery staff partner");
+        throw new Error(data.error || "Failed to onboard delivery partner.");
       }
 
       onSuccess();
       onClose();
-    } catch (err) {
+    } catch (err: unknown) {
       console.error(err);
-      setError("Failed to onboard delivery staff. Check phone and name.");
+      const msg = err instanceof Error ? err.message : "Failed to onboard delivery partner.";
+      setError(msg);
     } finally {
       setSaving(false);
     }
@@ -96,14 +99,18 @@ export function OnboardRiderModal({
           </div>
 
           <div>
-            <label className="font-bold text-[#111111] block mb-1">Email Address (Optional)</label>
+            <label className="font-bold text-[#111111] block mb-1">Registered Customer Email *</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="vikram@rushd.com"
+              placeholder="e.g. rider@rushd.com"
+              required
               className="w-full px-3 py-2 rounded border border-[#111111] bg-white text-[#111111] focus:outline-none focus:ring-2 focus:ring-[#DFFF00]"
             />
+            <span className="text-[10px] text-[#666666] block mt-1">
+              Must be an existing RushD account. The person must have signed in at least once.
+            </span>
           </div>
 
           <div className="flex gap-2 pt-3">

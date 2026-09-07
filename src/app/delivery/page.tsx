@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import Link from "next/link";
 import { DeliveryTaskCard } from "@/components/delivery/DeliveryTaskCard";
 import { DoorstepPaymentModal } from "@/components/delivery/DoorstepPaymentModal";
 import { OrderDetailsModal } from "@/components/admin/OrderDetailsModal";
@@ -267,12 +266,6 @@ export default function DeliveryPartnerPage() {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <Link
-            href="/"
-            className="text-xs font-bold text-[#111111] hover:underline"
-          >
-            Customer App ↗
-          </Link>
           <button
             onClick={() => signOut()}
             className="text-xs text-[#D92D3A] hover:bg-[#F5F5F5] transition-colors bg-white px-2.5 py-1 rounded font-bold border border-[#E5E5E5]"
