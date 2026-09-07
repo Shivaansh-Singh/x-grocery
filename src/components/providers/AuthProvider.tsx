@@ -4,6 +4,9 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
+import { Capacitor } from "@capacitor/core";
+import { App } from "@capacitor/app";
+import { Browser } from "@capacitor/browser";
 
 export type Role = "CUSTOMER" | "STORE_ADMIN" | "DELIVERY_PARTNER";
 
@@ -178,6 +181,100 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [supabase.auth]);
 
+  // Handle native deep link callback: com.rushd.app://auth/callback
+  useEffect(() => {
+    if (typeof window === "undefined" || !Capacitor.isNativePlatform()) {
+      return;
+    }
+
+    let removeListener: (() => void) | null = null;
+
+    const registerDeepLinkHandler = async () => {
+      const listenerHandle = await App.addListener("appUrlOpen", async (event) => {
+        const openUrl = event.url;
+        if (!openUrl || !openUrl.startsWith("com.rushd.app://auth/callback")) {
+          return;
+        }
+
+        try {
+          // Close Chrome Custom Tab
+          await Browser.close().catch(() => {});
+
+          // Extract authorization code from URL query string
+          let code: string | null = null;
+          try {
+            const parsed = new URL(openUrl);
+            code = parsed.searchParams.get("code");
+          } catch {
+            const match = openUrl.match(/[?&]code=([^&]+)/);
+            if (match) {
+              code = decodeURIComponent(match[1]);
+            }
+          }
+
+          if (!code) {
+            return;
+          }
+
+          setLoading(true);
+
+          // Exchange authorization code using the same Supabase client instance and WebView storage
+          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+
+          if (error) {
+            console.error("Native OAuth exchangeCodeForSession error:", error.message);
+            setLoading(false);
+            return;
+          }
+
+          if (data?.session?.user) {
+            const email = data.session.user.email || "";
+            const dbAuthoritative = await fetchAuthoritativeRole(email);
+            const detectedRole: Role =
+              dbAuthoritative?.role || (data.session.user.user_metadata?.role as Role) || "CUSTOMER";
+
+            const userObj: ActiveUser = {
+              id: dbAuthoritative?.id || data.session.user.id,
+              email,
+              name: dbAuthoritative?.name || data.session.user.user_metadata?.name || email.split("@")[0] || "User",
+              role: detectedRole,
+            };
+
+            setActiveUser(userObj);
+            setRole(detectedRole);
+            setRoleCookie(detectedRole, userObj.email);
+
+            let targetRedirect: string | null = null;
+            try {
+              targetRedirect = sessionStorage.getItem("rushd_native_auth_redirect");
+              sessionStorage.removeItem("rushd_native_auth_redirect");
+            } catch {
+              // ignore
+            }
+
+            redirectAfterLogin(detectedRole, targetRedirect);
+          }
+        } catch (err) {
+          console.error("Error handling native deep link:", err);
+        } finally {
+          setLoading(false);
+        }
+      });
+
+      removeListener = () => {
+        listenerHandle.remove();
+      };
+    };
+
+    registerDeepLinkHandler();
+
+    return () => {
+      if (removeListener) {
+        removeListener();
+      }
+    };
+  }, [supabase]);
+
   const signIn = async (email: string, password?: string, targetRedirect?: string | null) => {
     setLoading(true);
     const cleanEmail = email.toLowerCase().trim();
@@ -345,6 +442,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     try {
       if (process.env.NEXT_PUBLIC_SUPABASE_URL && !process.env.NEXT_PUBLIC_SUPABASE_URL.includes("placeholder")) {
+        const isNative = typeof window !== "undefined" && Capacitor.isNativePlatform();
+
+        if (isNative) {
+          if (targetRedirect && typeof window !== "undefined") {
+            try {
+              sessionStorage.setItem("rushd_native_auth_redirect", targetRedirect);
+            } catch {
+              // ignore
+            }
+          }
+
+          // NATIVE ANDROID path: Chrome Custom Tabs + PKCE
+          const { data, error } = await supabase.auth.signInWithOAuth({
+            provider: "google",
+            options: {
+              redirectTo: "com.rushd.app://auth/callback",
+              skipBrowserRedirect: true,
+            },
+          });
+
+          if (error) {
+            if (
+              error.message.toLowerCase().includes("provider is not enabled") ||
+              error.message.toLowerCase().includes("unsupported provider") ||
+              error.message.toLowerCase().includes("validation_failed")
+            ) {
+              return {
+                success: false,
+                error: "Google Sign-In is not currently enabled in the Supabase project configuration.",
+              };
+            }
+            throw error;
+          }
+
+          if (data?.url) {
+            // Open in Chrome Custom Tabs (CCT) rather than embedded WebView
+            await Browser.open({ url: data.url });
+            return { success: true };
+          }
+
+          return { success: false, error: "Unable to retrieve Google Sign-In URL." };
+        }
+
+        // WEB BROWSER path: Unchanged standard web redirect
         const origin = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
         const callbackUrl = `${origin}/auth/callback${targetRedirect ? `?redirect=${encodeURIComponent(targetRedirect)}` : ""}`;
 
