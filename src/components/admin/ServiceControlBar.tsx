@@ -102,7 +102,7 @@ export function ServiceControlBar() {
         className={`p-3.5 rounded-lg border transition-all ${
           isPaused
             ? "bg-[#FFFBEB] border-[#F59E0B] text-[#92400E]"
-            : "bg-[#FAFAFA] border-[#E5E5E5] text-[#111111]"
+            : "bg-[#FAFAFA] border-[#E5E5E5] text-black"
         }`}
       >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -123,7 +123,7 @@ export function ServiceControlBar() {
 
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-black text-xs uppercase tracking-wider">
+                <span className={`font-black text-xs uppercase tracking-wider ${isPaused ? "" : "text-black !text-black"}`}>
                   {loading
                     ? "Checking Services..."
                     : isPaused
@@ -144,7 +144,7 @@ export function ServiceControlBar() {
                 )}
               </div>
 
-              <p className="text-[11px] text-[#666666] font-medium mt-0.5">
+              <p className={`text-[11px] font-medium mt-0.5 ${isPaused ? "text-[#666666]" : "text-[#333333] !text-[#333333]"}`}>
                 {isPaused
                   ? "New customer orders are temporarily blocked. Browsing and existing orders remain active."
                   : "All customer checkout and store ordering operations are online."}
