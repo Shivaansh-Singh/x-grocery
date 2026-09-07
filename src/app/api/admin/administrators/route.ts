@@ -18,54 +18,10 @@ async function resolveAdminCaller(request: NextRequest): Promise<{
   name?: string | null;
 } | null> {
   try {
-    // 1. Authoritative token verification
     const user = await resolveVerifiedUser(request);
     if (user && user.role === Role.STORE_ADMIN) {
       return user;
     }
-
-    // 2. Fallback check for Supabase Auth Session
-    const supabase = await createClient();
-    const {
-      data: { user: authUser },
-    } = await supabase.auth.getUser();
-
-    if (authUser?.email) {
-      const dbUser = await prisma.user.findUnique({
-        where: { email: authUser.email.toLowerCase().trim() },
-        select: { id: true, email: true, role: true, name: true },
-      });
-      if (dbUser && dbUser.role === Role.STORE_ADMIN) {
-        return dbUser;
-      }
-    }
-
-    // 3. Fallback check for cookies / headers in hybrid environment
-    const roleCookie =
-      request.cookies.get("rushd_user_role")?.value ||
-      request.headers.get("x-user-role");
-    const emailCookie =
-      request.cookies.get("rushd_user_email")?.value ||
-      request.headers.get("x-user-email");
-
-    if (roleCookie === "STORE_ADMIN" || roleCookie === Role.STORE_ADMIN) {
-      if (emailCookie) {
-        const dbUser = await prisma.user.findUnique({
-          where: { email: emailCookie.toLowerCase().trim() },
-          select: { id: true, email: true, role: true, name: true },
-        });
-        if (dbUser && dbUser.role === Role.STORE_ADMIN) {
-          return dbUser;
-        }
-      }
-      return {
-        id: "admin-session",
-        email: emailCookie || "admin@rushd.com",
-        role: Role.STORE_ADMIN,
-        name: "Store Admin",
-      };
-    }
-
     return null;
   } catch (err) {
     console.error("Error resolving admin caller in /api/admin/administrators:", err);

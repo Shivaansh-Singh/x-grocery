@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { Role } from "@prisma/client";
 import createCrypto from "node:crypto";
 import https from "node:https";
+import { createClient } from "@/lib/supabase/server";
 
 interface SupabaseJwk {
   kty: string;
@@ -45,14 +46,23 @@ export function isValidRole(value: unknown): value is Role {
   );
 }
 
-let jwksCache: SupabaseJwk[] | null = null;
-let lastJwksFetch = 0;
+let jwksCache: SupabaseJwk[] | null = (globalThis as any).__rushd_jwks_cache || null;
+let lastJwksFetch = (globalThis as any).__rushd_last_jwks_fetch || 0;
 const JWKS_CACHE_TTL_MS = 60 * 60 * 1000;
+
+export function setTestJwks(keys: SupabaseJwk[] | null): void {
+  jwksCache = keys;
+  lastJwksFetch = Date.now();
+  (globalThis as any).__rushd_jwks_cache = keys;
+  (globalThis as any).__rushd_last_jwks_fetch = lastJwksFetch;
+}
 
 async function fetchJwks(supabaseUrl: string): Promise<SupabaseJwk[]> {
   const now = Date.now();
-  if (jwksCache && now - lastJwksFetch < JWKS_CACHE_TTL_MS) {
-    return jwksCache;
+  const activeCache = jwksCache || (globalThis as any).__rushd_jwks_cache;
+  const activeLastFetch = lastJwksFetch || (globalThis as any).__rushd_last_jwks_fetch || 0;
+  if (activeCache && now - activeLastFetch < JWKS_CACHE_TTL_MS) {
+    return activeCache;
   }
 
   const cleanUrl = supabaseUrl.replace(/\/$/, "");
@@ -194,6 +204,85 @@ export async function verifySupabaseAccessToken(token: string): Promise<Verified
   }
 }
 
+// Fallback cryptographic verification via Supabase GoTrue API
+async function verifyWithSupabaseGoTrue(token: string): Promise<{
+  id: string;
+  email: string;
+  app_metadata?: { role?: string };
+  user_metadata?: { full_name?: string; name?: string };
+} | null> {
+  try {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const anonKey =
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+
+    if (!supabaseUrl || !anonKey || supabaseUrl.includes("placeholder")) {
+      return null;
+    }
+
+    const cleanUrl = supabaseUrl.replace(/\/$/, "");
+    const res = await fetch(`${cleanUrl}/auth/v1/user`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        apikey: anonKey,
+      },
+      cache: "no-store",
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data?.email && data?.id) {
+        return {
+          id: data.id,
+          email: data.email,
+          app_metadata: data.app_metadata,
+          user_metadata: data.user_metadata,
+        };
+      }
+    }
+  } catch (err) {
+    console.error("Supabase GoTrue token verification error:", err);
+  }
+  return null;
+}
+
+// Cryptographic verification of session cookies via @supabase/ssr
+async function verifyWithSupabaseSsrSession(): Promise<{
+  id: string;
+  email: string;
+  app_metadata?: { role?: string };
+  user_metadata?: { full_name?: string; name?: string };
+} | null> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+
+    if (!error && user?.email && user?.id) {
+      return {
+        id: user.id,
+        email: user.email,
+        app_metadata: user.app_metadata as any,
+        user_metadata: user.user_metadata as any,
+      };
+    }
+  } catch (err) {
+    console.error("Supabase SSR session verification error:", err);
+  }
+  return null;
+}
+
+/**
+ * Authoritatively resolves the requesting user strictly from cryptographically verified
+ * Supabase Auth credentials (Bearer JWT or verified SSR session cookies).
+ *
+ * CRITICAL SECURITY INVARIANT:
+ * Client-controlled headers (e.g. x-user-role, x-user-email) and client-controlled cookies
+ * (e.g. rushd_user_role, rushd_user_email) MUST NEVER be trusted for authentication or role assignment.
+ */
 export async function resolveVerifiedUser(request: NextRequest): Promise<{
   id: string;
   email: string;
@@ -201,87 +290,107 @@ export async function resolveVerifiedUser(request: NextRequest): Promise<{
   name?: string | null;
 } | null> {
   try {
+    let authIdentity: {
+      id: string;
+      email: string;
+      app_metadata?: { role?: string };
+      user_metadata?: { full_name?: string; name?: string };
+    } | null = null;
+
+    // 1. Check Bearer token from request header or auth token cookie
     const token = extractAccessTokenFromRequest(request);
     if (token) {
       const verifiedPayload = await verifySupabaseAccessToken(token);
       if (verifiedPayload?.email) {
-        const cleanEmail = verifiedPayload.email.toLowerCase().trim();
-        const appMetadataRole = verifiedPayload.app_metadata?.role;
-
-        // 1. Authoritative JWT Fast Path
-        if (appMetadataRole !== undefined) {
-          if (!isValidRole(appMetadataRole)) {
-            // Invalid or unrecognized role claim: reject immediately, no fallback
-            return null;
-          }
-
-          if (appMetadataRole === Role.CUSTOMER) {
-            return {
-              id: verifiedPayload.sub,
-              email: cleanEmail,
-              name:
-                verifiedPayload.user_metadata?.full_name ||
-                verifiedPayload.user_metadata?.name ||
-                cleanEmail.split("@")[0],
-              role: Role.CUSTOMER,
-            };
-          }
-
-          if (appMetadataRole === Role.STORE_ADMIN) {
-            return {
-              id: verifiedPayload.sub,
-              email: cleanEmail,
-              name:
-                verifiedPayload.user_metadata?.full_name ||
-                verifiedPayload.user_metadata?.name ||
-                cleanEmail.split("@")[0] ||
-                "Store Admin",
-              role: Role.STORE_ADMIN,
-            };
-          }
-
-          if (appMetadataRole === Role.DELIVERY_PARTNER) {
-            const dbUser = await prisma.user.findUnique({
-              where: { email: cleanEmail },
-            });
-            if (dbUser && dbUser.role === Role.DELIVERY_PARTNER) {
-              return dbUser;
-            }
-            return null;
-          }
-
-          return null;
-        }
-
-        // 2. Legacy Token Fallback: Only when app_metadata.role === undefined
-        const dbUser = await prisma.user.findUnique({
-          where: { email: cleanEmail },
-        });
-        if (dbUser) return dbUser;
+        authIdentity = {
+          id: verifiedPayload.sub,
+          email: verifiedPayload.email,
+          app_metadata: verifiedPayload.app_metadata,
+          user_metadata: verifiedPayload.user_metadata,
+        };
+      } else {
+        authIdentity = await verifyWithSupabaseGoTrue(token);
       }
     }
 
-    // 3. Existing Legacy Cookie Fallback (Only reachable if no token was provided)
-    const emailCookie =
-      request.cookies.get("rushd_user_email")?.value ||
-      request.headers.get("x-user-email");
-
-    if (emailCookie) {
-      const dbUser = await prisma.user.findUnique({
-        where: { email: emailCookie.toLowerCase().trim() },
-      });
-      if (dbUser) return dbUser;
+    // 2. If token is not present or didn't verify, verify Supabase SSR session
+    if (!authIdentity) {
+      authIdentity = await verifyWithSupabaseSsrSession();
     }
 
-    const roleCookie =
-      request.cookies.get("rushd_user_role")?.value ||
-      request.headers.get("x-user-role");
-
-    if (roleCookie === "STORE_ADMIN") {
-      return { id: "admin-session", email: "admin@rushd.com", role: Role.STORE_ADMIN, name: "Store Admin" };
+    // 3. If no legitimate cryptographic Supabase Auth identity was established, REJECT
+    if (!authIdentity?.email) {
+      return null;
     }
 
-    return null;
+    const cleanEmail = authIdentity.email.toLowerCase().trim();
+    const appMetadataRole = authIdentity.app_metadata?.role;
+
+    // 4. Authoritative JWT Fast Path: app_metadata.role
+    if (appMetadataRole !== undefined) {
+      if (!isValidRole(appMetadataRole)) {
+        return null;
+      }
+
+      if (appMetadataRole === Role.CUSTOMER) {
+        return {
+          id: authIdentity.id,
+          email: cleanEmail,
+          name:
+            authIdentity.user_metadata?.full_name ||
+            authIdentity.user_metadata?.name ||
+            cleanEmail.split("@")[0],
+          role: Role.CUSTOMER,
+        };
+      }
+
+      if (appMetadataRole === Role.STORE_ADMIN) {
+        return {
+          id: authIdentity.id,
+          email: cleanEmail,
+          name:
+            authIdentity.user_metadata?.full_name ||
+            authIdentity.user_metadata?.name ||
+            cleanEmail.split("@")[0] ||
+            "Store Admin",
+          role: Role.STORE_ADMIN,
+        };
+      }
+
+      if (appMetadataRole === Role.DELIVERY_PARTNER) {
+        const dbUser = await prisma.user.findUnique({
+          where: { email: cleanEmail },
+          select: { id: true, email: true, name: true, role: true },
+        });
+        if (dbUser && dbUser.role === Role.DELIVERY_PARTNER) {
+          return dbUser;
+        }
+        return null;
+      }
+
+      return null;
+    }
+
+    // 5. Database lookup: Authoritative PostgreSQL User role
+    const dbUser = await prisma.user.findUnique({
+      where: { email: cleanEmail },
+      select: { id: true, email: true, name: true, role: true },
+    });
+
+    if (dbUser) {
+      return dbUser;
+    }
+
+    // Default to CUSTOMER if authenticated with Supabase Auth but no DB row yet
+    return {
+      id: authIdentity.id,
+      email: cleanEmail,
+      name:
+        authIdentity.user_metadata?.full_name ||
+        authIdentity.user_metadata?.name ||
+        cleanEmail.split("@")[0],
+      role: Role.CUSTOMER,
+    };
   } catch (err) {
     console.error("Error in resolveVerifiedUser:", err);
     return null;

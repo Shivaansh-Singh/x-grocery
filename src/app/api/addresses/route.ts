@@ -1,18 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { validateIndianMobileNumber, validateIndianPincode } from "@/lib/validation";
+import { resolveVerifiedUser } from "@/lib/auth-verifier";
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const userId = searchParams.get("userId");
+    const verifiedUser = await resolveVerifiedUser(request);
+    if (!verifiedUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-    if (!userId) {
-      return NextResponse.json({ addresses: [] }, { status: 200 });
+    const { searchParams } = new URL(request.url);
+    const queryUserId = searchParams.get("userId");
+
+    // Cross-user IDOR guard: If another user's ID is requested, block it
+    if (queryUserId && queryUserId !== verifiedUser.id) {
+      return NextResponse.json(
+        { error: "Forbidden: You cannot access another user's addresses" },
+        { status: 403 }
+      );
     }
 
     const addresses = await prisma.customerAddress.findMany({
-      where: { userId },
+      where: { userId: verifiedUser.id },
       orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }],
     });
 
@@ -28,9 +38,14 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const verifiedUser = await resolveVerifiedUser(request);
+    if (!verifiedUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await request.json();
     const {
-      userId,
+      userId: bodyUserId,
       label,
       buildingColony,
       flatRoomNo,
@@ -41,6 +56,14 @@ export async function POST(request: NextRequest) {
       phone,
       isDefault,
     } = body;
+
+    // Cross-user IDOR guard: Cannot create address for another user
+    if (bodyUserId && bodyUserId !== verifiedUser.id) {
+      return NextResponse.json(
+        { error: "Forbidden: You cannot create an address for another user" },
+        { status: 403 }
+      );
+    }
 
     if (!buildingColony || !flatRoomNo || !phone) {
       return NextResponse.json(
@@ -67,23 +90,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const targetUserId = userId || "guest-user-session";
+    // Target user is strictly the authenticated caller
+    const targetUserId = verifiedUser.id;
 
-    // Ensure user entry exists
-    const user = await prisma.user.upsert({
+    // Ensure user entry exists in PostgreSQL for foreign key reference
+    await prisma.user.upsert({
       where: { id: targetUserId },
       update: {},
       create: {
         id: targetUserId,
-        email: `student-${Date.now()}@vitbhopal.ac.in`,
-        name: "Day Scholar Student",
+        email: verifiedUser.email.toLowerCase().trim(),
+        name: verifiedUser.name || "RushD Customer",
         phone: cleanPhone,
+        role: verifiedUser.role,
       },
     });
 
     // Check existing addresses for user
     const existingCount = await prisma.customerAddress.count({
-      where: { userId: user.id },
+      where: { userId: targetUserId },
     });
 
     // First address automatically becomes default
@@ -93,14 +118,14 @@ export async function POST(request: NextRequest) {
     const newAddress = await prisma.$transaction(async (tx) => {
       if (shouldBeDefault) {
         await tx.customerAddress.updateMany({
-          where: { userId: user.id },
+          where: { userId: targetUserId },
           data: { isDefault: false },
         });
       }
 
       return tx.customerAddress.create({
         data: {
-          userId: user.id,
+          userId: targetUserId,
           label: label ? String(label).trim() : "Home",
           buildingColony: String(buildingColony).trim(),
           flatRoomNo: String(flatRoomNo).trim(),

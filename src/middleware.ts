@@ -16,14 +16,15 @@ export async function middleware(request: NextRequest) {
     },
   });
 
-  // 1. Read cookies for role and email
-  const roleCookie = request.cookies.get("rushd_user_role")?.value;
-  const emailCookie = request.cookies.get("rushd_user_email")?.value;
+  // DEFENSE-IN-DEPTH: Initialize state without trusting client-controlled cookies
+  // Client cookies (rushd_user_role, rushd_user_email, admin-session) are deliberately
+  // NEVER trusted for authentication or HTML-shell role authorization.
+  // API route handlers independently enforce resolveVerifiedUser(request) against PostgreSQL.
+  let userRole: string | null = null;
+  let userEmail: string | null = null;
+  let isAuthenticated = false;
 
-  let userRole = roleCookie || null;
-  let userEmail = emailCookie || null;
-
-  // 2. Check Supabase Auth user if configured
+  // 2. Cryptographic Supabase Auth session verification
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co";
   const supabaseKey =
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
@@ -51,10 +52,14 @@ export async function middleware(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (user) {
-      userEmail = user.email || userEmail;
-      if (user.user_metadata?.role) {
+      isAuthenticated = true;
+      userEmail = user.email || null;
+      // Derive role exclusively from verified Supabase metadata (NEVER client cookies)
+      if (user.app_metadata?.role && typeof user.app_metadata.role === "string") {
+        userRole = user.app_metadata.role;
+      } else if (user.user_metadata?.role && typeof user.user_metadata.role === "string") {
         userRole = user.user_metadata.role;
-      } else if (!userRole && user.email) {
+      } else if (user.email) {
         if (user.email.includes("admin") || user.email === "store@rushd.com") {
           userRole = "STORE_ADMIN";
         } else if (user.email.includes("delivery") || user.email.includes("rider")) {
@@ -62,22 +67,15 @@ export async function middleware(request: NextRequest) {
         } else {
           userRole = "CUSTOMER";
         }
+      } else {
+        userRole = "CUSTOMER";
       }
-    }
-  }
-
-  // 3. Fallback role inference from email if roleCookie was empty
-  if (!userRole && userEmail) {
-    if (userEmail.includes("admin") || userEmail === "store@rushd.com") {
-      userRole = "STORE_ADMIN";
-    } else if (userEmail.includes("delivery") || userEmail.includes("rider")) {
-      userRole = "DELIVERY_PARTNER";
     } else {
-      userRole = "CUSTOMER";
+      isAuthenticated = false;
+      userRole = null;
+      userEmail = null;
     }
   }
-
-  const isAuthenticated = Boolean(userRole || userEmail);
 
   // -------------------------------------------------------------
   // PUBLIC AUTH ROUTES (LOGIN, FORGOT/RESET PASSWORD, OAUTH CALLBACK)

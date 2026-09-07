@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { Role } from "@prisma/client";
+import { resolveVerifiedUser } from "@/lib/auth-verifier";
 
 export async function PATCH(
   request: NextRequest,
@@ -7,18 +9,16 @@ export async function PATCH(
 ) {
   try {
     // 1. Authorization Guard: STORE_ADMIN only
-    const roleCookie = request.cookies.get("rushd_user_role")?.value;
-    const authHeader = request.headers.get("x-user-role");
-    const userRole = roleCookie || authHeader;
+    const user = await resolveVerifiedUser(request);
 
-    if (!userRole) {
+    if (!user) {
       return NextResponse.json(
         { error: "Authentication required. Please log in as an administrator." },
         { status: 401 }
       );
     }
 
-    if (userRole !== "STORE_ADMIN") {
+    if (user.role !== Role.STORE_ADMIN) {
       return NextResponse.json(
         { error: "Unauthorized. STORE_ADMIN privileges required." },
         { status: 403 }
@@ -123,18 +123,16 @@ export async function DELETE(
 ) {
   try {
     // 1. Authorization Guard: STORE_ADMIN only
-    const roleCookie = request.cookies.get("rushd_user_role")?.value;
-    const authHeader = request.headers.get("x-user-role");
-    const userRole = roleCookie || authHeader;
+    const user = await resolveVerifiedUser(request);
 
-    if (!userRole) {
+    if (!user) {
       return NextResponse.json(
         { error: "Authentication required. Please log in as an administrator." },
         { status: 401 }
       );
     }
 
-    if (userRole !== "STORE_ADMIN") {
+    if (user.role !== Role.STORE_ADMIN) {
       return NextResponse.json(
         { error: "Unauthorized. STORE_ADMIN privileges required." },
         { status: 403 }

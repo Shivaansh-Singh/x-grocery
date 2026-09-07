@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { FeedbackStatus } from "@prisma/client";
+import { FeedbackStatus, Role } from "@prisma/client";
+import { resolveVerifiedUser } from "@/lib/auth-verifier";
 
 export async function PATCH(
   request: NextRequest,
@@ -9,12 +10,15 @@ export async function PATCH(
   try {
     const { id } = await params;
 
-    // Role guard: Only admin can update feedback status
-    const roleCookie = request.cookies.get("rushd_user_role")?.value;
-    const authHeader = request.headers.get("x-user-role");
-    const userRole = roleCookie || authHeader;
-
-    if (userRole && userRole === "CUSTOMER") {
+    // Role guard: STORE_ADMIN only
+    const user = await resolveVerifiedUser(request);
+    if (!user) {
+      return NextResponse.json(
+        { error: "Authentication required. Admin privileges required." },
+        { status: 401 }
+      );
+    }
+    if (user.role !== Role.STORE_ADMIN) {
       return NextResponse.json(
         { error: "Unauthorized. Admin privileges required." },
         { status: 403 }

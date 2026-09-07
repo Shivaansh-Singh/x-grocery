@@ -1,8 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
+import { checkRateLimit, getClientIp, createRateLimitResponse } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
   try {
+    // Distributed Rate Limit Guard: 5 uploads per hour per client IP
+    const clientIp = getClientIp(request);
+    const rateLimit = await checkRateLimit({
+      key: `rl:upload:${clientIp}`,
+      limit: 5,
+      windowMs: 60 * 60 * 1000,
+    });
+
+    if (!rateLimit.allowed) {
+      return createRateLimitResponse(
+        rateLimit.retryAfterSeconds,
+        "Too many upload requests. Maximum 5 uploads per hour allowed."
+      );
+    }
+
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
 

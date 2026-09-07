@@ -1,14 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
+import { Role } from "@prisma/client";
+import { resolveVerifiedUser } from "@/lib/auth-verifier";
 
 export async function POST(request: NextRequest) {
   try {
-    // 1. Authorization Guard: Admin only
-    const roleCookie = request.cookies.get("rushd_user_role")?.value;
-    const authHeader = request.headers.get("x-user-role");
-    const userRole = roleCookie || authHeader;
+    // 1. Authorization Guard: STORE_ADMIN only
+    const user = await resolveVerifiedUser(request);
+    if (!user) {
+      return NextResponse.json(
+        { error: "Authentication required. Please log in as an administrator." },
+        { status: 401 }
+      );
+    }
 
-    if (userRole !== "STORE_ADMIN") {
+    if (user.role !== Role.STORE_ADMIN) {
       return NextResponse.json(
         { error: "Unauthorized. Admin privileges required to upload product images." },
         { status: 403 }

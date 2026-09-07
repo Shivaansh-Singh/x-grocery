@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { FeedbackType } from "@prisma/client";
+import { resolveVerifiedUser } from "@/lib/auth-verifier";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+const NO_CACHE_HEADERS = {
+  "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+};
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,7 +18,7 @@ export async function POST(request: NextRequest) {
     if (!message || typeof message !== "string" || !message.trim()) {
       return NextResponse.json(
         { error: "Please enter your message/feedback." },
-        { status: 400 }
+        { status: 400, headers: NO_CACHE_HEADERS }
       );
     }
 
@@ -27,18 +35,30 @@ export async function POST(request: NextRequest) {
     let customerPhone = phone ? String(phone).trim() : null;
     let customerEmail = email ? String(email).trim() : null;
 
-    if (customerId) {
-      const user = await prisma.user.findUnique({
-        where: { id: customerId },
-        select: { id: true, name: true, phone: true, email: true },
-      });
+    // 1. Authoritative Identity Resolution
+    const verifiedUser = await resolveVerifiedUser(request);
 
-      if (user) {
-        finalCustomerId = user.id;
-        if (!customerName && user.name) customerName = user.name;
-        if (!customerPhone && user.phone) customerPhone = user.phone;
-        if (!customerEmail && user.email) customerEmail = user.email;
+    if (verifiedUser) {
+      // Authenticated caller: prevent cross-user spoofing if customerId was supplied
+      if (customerId && typeof customerId === "string" && customerId.trim() !== verifiedUser.id) {
+        return NextResponse.json(
+          { error: "Forbidden: Cannot submit feedback under another customer ID" },
+          { status: 403, headers: NO_CACHE_HEADERS }
+        );
       }
+      finalCustomerId = verifiedUser.id;
+      if (!customerName && verifiedUser.name) customerName = verifiedUser.name;
+      if (!customerEmail && verifiedUser.email) customerEmail = verifiedUser.email;
+    } else {
+      // Unauthenticated caller: reject attempts to link feedback to an account ID
+      if (customerId && typeof customerId === "string" && customerId.trim()) {
+        return NextResponse.json(
+          { error: "Authentication required to associate feedback with an account." },
+          { status: 401, headers: NO_CACHE_HEADERS }
+        );
+      }
+      // Genuinely anonymous feedback is preserved
+      finalCustomerId = null;
     }
 
     const feedback = await prisma.customerFeedback.create({
@@ -59,13 +79,13 @@ export async function POST(request: NextRequest) {
         message: "Thank you! Your feedback has been submitted.",
         feedback,
       },
-      { status: 201 }
+      { status: 201, headers: NO_CACHE_HEADERS }
     );
   } catch (error) {
     console.error("POST /api/feedback error:", error);
     return NextResponse.json(
       { error: "Failed to submit feedback. Please try again." },
-      { status: 500 }
+      { status: 500, headers: NO_CACHE_HEADERS }
     );
   }
 }

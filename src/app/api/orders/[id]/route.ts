@@ -1,31 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { Role } from "@prisma/client";
-import { createClient } from "@/lib/supabase/server";
+import { resolveVerifiedUser } from "@/lib/auth-verifier";
 
-// Resolve the requesting user from the verified Supabase session (SSR auth cookies).
-// The matching DB user is the authoritative source of identity and role. This never
-// trusts the client-writable rushd_user_role / rushd_user_email cookies or any
-// client-supplied identifier (query params, body, path id).
-async function resolveRequestUser() {
-  try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
 
-    const email = user?.email?.toLowerCase().trim();
-    if (!email) return null;
-
-    return await prisma.user.findUnique({
-      where: { email },
-      select: { id: true, email: true, role: true },
-    });
-  } catch (err) {
-    console.error("[GET_ORDER_BY_ID] Auth resolution error:", err);
-    return null;
-  }
-}
 
 export async function GET(
   request: NextRequest,
@@ -33,7 +11,7 @@ export async function GET(
 ) {
   try {
     // 1. Authentication: require a verified Supabase session (no anonymous access).
-    const user = await resolveRequestUser();
+    const user = await resolveVerifiedUser(request);
     if (!user) {
       return NextResponse.json(
         { error: "Authentication required." },

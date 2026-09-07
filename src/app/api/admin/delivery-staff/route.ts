@@ -15,53 +15,10 @@ export function normalizeRiderId(rider: { id: string; email?: string | null; nam
   return rider.id;
 }
 
-async function resolveAuthenticatedUser(request: NextRequest) {
-  try {
-    // 1. Check Supabase Auth Session
-    const supabase = await createClient();
-    const {
-      data: { user: authUser },
-    } = await supabase.auth.getUser();
-
-    if (authUser?.email) {
-      const dbUser = await prisma.user.findUnique({
-        where: { email: authUser.email.toLowerCase().trim() },
-      });
-      if (dbUser) return dbUser;
-    }
-
-    // 2. Cookie / Header fallback for SSR and hybrid role propagation
-    const emailCookie =
-      request.cookies.get("rushd_user_email")?.value ||
-      request.headers.get("x-user-email");
-
-    if (emailCookie) {
-      const dbUser = await prisma.user.findUnique({
-        where: { email: emailCookie.toLowerCase().trim() },
-      });
-      if (dbUser) return dbUser;
-    }
-
-    // 3. Fallback check for user role cookie if admin testing
-    const roleCookie =
-      request.cookies.get("rushd_user_role")?.value ||
-      request.headers.get("x-user-role");
-
-    if (roleCookie === "STORE_ADMIN") {
-      return { id: "admin-session", email: "admin@rushd.com", role: Role.STORE_ADMIN, name: "Store Admin" };
-    }
-
-    return null;
-  } catch (err) {
-    console.error("Error resolving authenticated user:", err);
-    return null;
-  }
-}
-
 export async function GET(request: NextRequest) {
   const startTime = performance.now();
   try {
-    const user = await resolveAuthenticatedUser(request);
+    const user = await resolveVerifiedUser(request);
 
     if (!user) {
       return NextResponse.json(
@@ -108,11 +65,15 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     // 1. Authorization Guard: STORE_ADMIN only
-    const roleCookie = request.cookies.get("rushd_user_role")?.value;
-    const authHeader = request.headers.get("x-user-role");
-    const userRole = roleCookie || authHeader;
+    const user = await resolveVerifiedUser(request);
+    if (!user) {
+      return NextResponse.json(
+        { error: "Authentication required. Please log in as an administrator." },
+        { status: 401 }
+      );
+    }
 
-    if (userRole !== "STORE_ADMIN") {
+    if (user.role !== Role.STORE_ADMIN) {
       return NextResponse.json(
         { error: "Unauthorized. Admin privileges required to onboard delivery staff." },
         { status: 403 }
@@ -242,18 +203,14 @@ export async function DELETE(request: NextRequest) {
     // 1. Authorization Guard: STORE_ADMIN only
     const user = await resolveVerifiedUser(request);
 
-    const roleCookie = request.cookies.get("rushd_user_role")?.value;
-    const authHeader = request.headers.get("x-user-role");
-    const userRole = user?.role || roleCookie || authHeader;
-
-    if (!userRole) {
+    if (!user) {
       return NextResponse.json(
         { error: "Authentication required. Please log in as an administrator." },
         { status: 401, headers: NO_CACHE_HEADERS }
       );
     }
 
-    if (userRole !== Role.STORE_ADMIN && userRole !== "STORE_ADMIN") {
+    if (user.role !== Role.STORE_ADMIN) {
       return NextResponse.json(
         { error: "Unauthorized. STORE_ADMIN privileges required to offboard delivery staff." },
         { status: 403, headers: NO_CACHE_HEADERS }

@@ -1,21 +1,42 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { validateIndianMobileNumber } from "@/lib/validation";
+import { resolveVerifiedUser } from "@/lib/auth-verifier";
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const userId = searchParams.get("userId");
-    const email = searchParams.get("email");
-
-    if (!userId && !email) {
-      return NextResponse.json({ error: "userId or email query parameter is required" }, { status: 400 });
+    const verifiedUser = await resolveVerifiedUser(request);
+    if (!verifiedUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const whereCondition = userId ? { id: userId } : { email: email as string };
+    const { searchParams } = new URL(request.url);
+    const queryUserId = searchParams.get("userId");
+    const queryEmail = searchParams.get("email");
 
-    const user = await prisma.user.findFirst({
-      where: whereCondition,
+    // Cross-user IDOR guard: If another user's ID or email is requested, block it
+    if (queryUserId && queryUserId !== verifiedUser.id) {
+      return NextResponse.json(
+        { error: "Forbidden: You cannot access another user's profile" },
+        { status: 403 }
+      );
+    }
+    if (
+      queryEmail &&
+      queryEmail.toLowerCase().trim() !== verifiedUser.email.toLowerCase().trim()
+    ) {
+      return NextResponse.json(
+        { error: "Forbidden: You cannot access another user's profile" },
+        { status: 403 }
+      );
+    }
+
+    // Always fetch profile of the cryptographically verified user
+    const cleanEmail = verifiedUser.email.toLowerCase().trim();
+    let user = await prisma.user.findFirst({
+      where: {
+        OR: [{ id: verifiedUser.id }, { email: cleanEmail }],
+      },
       select: {
         id: true,
         email: true,
@@ -28,7 +49,23 @@ export async function GET(request: NextRequest) {
     });
 
     if (!user) {
-      return NextResponse.json({ error: "User profile not found" }, { status: 404 });
+      user = await prisma.user.create({
+        data: {
+          id: verifiedUser.id,
+          email: cleanEmail,
+          name: verifiedUser.name || "RushD Customer",
+          role: verifiedUser.role,
+        },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          phone: true,
+          role: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
     }
 
     return NextResponse.json({ user });
@@ -43,13 +80,28 @@ export async function GET(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { userId, email, name, phone } = body;
+    const verifiedUser = await resolveVerifiedUser(request);
+    if (!verifiedUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-    if (!userId && !email) {
+    const body = await request.json();
+    const { userId: bodyUserId, email: bodyEmail, name, phone } = body;
+
+    // Cross-user BOLA/IDOR guard: Cannot target another user's profile
+    if (bodyUserId && bodyUserId !== verifiedUser.id) {
       return NextResponse.json(
-        { error: "userId or email is required to update profile" },
-        { status: 400 }
+        { error: "Forbidden: You cannot modify another user's profile" },
+        { status: 403 }
+      );
+    }
+    if (
+      bodyEmail &&
+      bodyEmail.toLowerCase().trim() !== verifiedUser.email.toLowerCase().trim()
+    ) {
+      return NextResponse.json(
+        { error: "Forbidden: You cannot modify another user's profile" },
+        { status: 403 }
       );
     }
 
@@ -64,39 +116,41 @@ export async function PATCH(request: NextRequest) {
       }
     }
 
-    const whereCondition = userId ? { id: userId } : { email: email as string };
-
+    const cleanEmail = verifiedUser.email.toLowerCase().trim();
     const existingUser = await prisma.user.findFirst({
-      where: whereCondition,
+      where: {
+        OR: [{ id: verifiedUser.id }, { email: cleanEmail }],
+      },
     });
 
     if (!existingUser) {
-      if (userId) {
-        const newUser = await prisma.user.create({
-          data: {
-            id: userId,
-            email: email || `student-${Date.now()}@vitbhopal.ac.in`,
-            name: name !== undefined ? String(name).trim() : "RushD Customer",
-            phone: phone !== undefined && phone !== null && phone !== "" ? String(phone).trim() : null,
-          },
-          select: {
-            id: true,
-            email: true,
-            name: true,
-            phone: true,
-            role: true,
-            createdAt: true,
-            updatedAt: true,
-          },
-        });
-        return NextResponse.json({ user: newUser });
-      }
-      return NextResponse.json({ error: "User profile not found" }, { status: 404 });
+      const cleanPhone = phone !== undefined && phone !== null && phone !== "" ? String(phone).trim() : null;
+      const newUser = await prisma.user.create({
+        data: {
+          id: verifiedUser.id,
+          email: cleanEmail,
+          name: name !== undefined ? String(name).trim() : verifiedUser.name || "RushD Customer",
+          phone: cleanPhone,
+          role: verifiedUser.role,
+        },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          phone: true,
+          role: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
+      return NextResponse.json({ user: newUser });
     }
 
     const updateData: Record<string, unknown> = {};
     if (name !== undefined) updateData.name = String(name).trim();
-    if (phone !== undefined) updateData.phone = String(phone).trim();
+    if (phone !== undefined) {
+      updateData.phone = phone && String(phone).trim() ? String(phone).trim() : null;
+    }
 
     const updatedUser = await prisma.user.update({
       where: { id: existingUser.id },

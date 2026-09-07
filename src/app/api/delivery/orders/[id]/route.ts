@@ -3,8 +3,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { OrderStatus, PaymentStatus, Role } from "@prisma/client";
 import { verifyDeliveryOtp } from "@/lib/otp";
-import { createClient } from "@/lib/supabase/server";
 import { normalizeRiderId } from "@/app/api/admin/delivery-staff/route";
+import {
+  getClientIp,
+  checkRateLimit,
+  resetRateLimitKey,
+  createRateLimitResponse,
+} from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -13,129 +18,6 @@ const NO_CACHE_HEADERS = {
   "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
 };
 
-// In-memory rate limiting map for failed OTP attempts per order
-// Maximum 5 failed attempts per order before locking for 5 minutes
-const failedOtpAttempts = new Map<string, { count: number; lockedUntil: number }>();
-
-async function getAuthUserFromToken(request: NextRequest) {
-  try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const anonKey =
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-
-    if (!supabaseUrl || !anonKey || supabaseUrl.includes("placeholder")) {
-      return null;
-    }
-
-    // 1. Try Authorization header first
-    let accessToken: string | null = null;
-    const authHeader = request.headers.get("authorization");
-    if (authHeader && authHeader.toLowerCase().startsWith("bearer ")) {
-      accessToken = authHeader.substring(7).trim();
-    }
-
-    // 2. Try Supabase SSR cookie if header is not present
-    if (!accessToken) {
-      const allCookies = request.cookies.getAll();
-      const authCookies = allCookies
-        .filter((c) => c.name.includes("auth-token"))
-        .sort((a, b) => a.name.localeCompare(b.name));
-
-      if (authCookies.length > 0) {
-        const combinedValue = authCookies.map((c) => c.value).join("");
-        let parsed: any;
-        try {
-          parsed = JSON.parse(combinedValue);
-        } catch {
-          try {
-            parsed = JSON.parse(Buffer.from(combinedValue, "base64").toString("utf-8"));
-          } catch {
-            parsed = null;
-          }
-        }
-        if (parsed?.access_token && typeof parsed.access_token === "string") {
-          accessToken = parsed.access_token;
-        } else if (typeof parsed === "string" && parsed.includes(".")) {
-          accessToken = parsed;
-        }
-      }
-    }
-
-    if (!accessToken) return null;
-
-    // 3. Cryptographically verify token directly with Supabase Auth GoTrue API
-    const res = await fetch(`${supabaseUrl}/auth/v1/user`, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        apikey: anonKey,
-      },
-      cache: "no-store",
-    });
-
-    if (res.ok) {
-      const user = await res.json();
-      if (user?.email) {
-        return user;
-      }
-    }
-  } catch (err) {
-    console.error("Fast Supabase Auth verification error:", err);
-  }
-  return null;
-}
-
-async function resolveAuthenticatedUser(request: NextRequest) {
-  try {
-    // 1. Fast 1-shot direct Supabase Auth token verification
-    const authUser = await getAuthUserFromToken(request);
-    if (authUser?.email) {
-      const dbUser = await prisma.user.findUnique({
-        where: { email: authUser.email.toLowerCase().trim() },
-      });
-      if (dbUser) return dbUser;
-    }
-
-    // 2. Fallback to @supabase/ssr createClient session if direct token fetch didn't resolve
-    const supabase = await createClient();
-    const {
-      data: { user: ssrUser },
-    } = await supabase.auth.getUser();
-
-    if (ssrUser?.email) {
-      const dbUser = await prisma.user.findUnique({
-        where: { email: ssrUser.email.toLowerCase().trim() },
-      });
-      if (dbUser) return dbUser;
-    }
-
-    // 3. Cookie / Header fallback for SSR and hybrid role propagation
-    const emailCookie =
-      request.cookies.get("rushd_user_email")?.value ||
-      request.headers.get("x-user-email");
-
-    if (emailCookie) {
-      const dbUser = await prisma.user.findUnique({
-        where: { email: emailCookie.toLowerCase().trim() },
-      });
-      if (dbUser) return dbUser;
-    }
-
-    // 4. Fallback check for user role cookie if admin testing
-    const roleCookie =
-      request.cookies.get("rushd_user_role")?.value ||
-      request.headers.get("x-user-role");
-
-    if (roleCookie === "STORE_ADMIN") {
-      return { id: "admin-session", email: "admin@rushd.com", role: Role.STORE_ADMIN, name: "Store Admin" };
-    }
-
-    return null;
-  } catch (err) {
-    console.error("Error resolving authenticated user:", err);
-    return null;
-  }
-}
 
 export async function PATCH(
   request: NextRequest,
@@ -245,14 +127,38 @@ export async function PATCH(
           );
         }
 
-        // 7. OTP Brute-Force Rate Limiting (in-memory)
-        const now = Date.now();
-        const attemptRecord = failedOtpAttempts.get(existingOrder.id);
-        if (attemptRecord && attemptRecord.lockedUntil > now) {
-          const remainingSec = Math.ceil((attemptRecord.lockedUntil - now) / 1000);
-          return NextResponse.json(
-            { error: `Too many incorrect OTP attempts. Please wait ${remainingSec} seconds before trying again.` },
-            { status: 429 }
+        // 7. Distributed OTP Brute-Force Protection
+        const clientIp = getClientIp(request);
+        const globalOtpIpKey = `rl:otp:ip:${clientIp}`;
+        const orderOtpKey = `rl:otp:order:${existingOrder.id}:ip:${clientIp}`;
+
+        // Pre-check global IP throttle (20 attempts per 5 mins per IP)
+        const globalCheck = await checkRateLimit({
+          key: globalOtpIpKey,
+          limit: 20,
+          windowMs: 5 * 60 * 1000,
+          increment: false,
+        });
+        if (!globalCheck.allowed || globalCheck.count >= 20) {
+          const retryAfter = globalCheck.retryAfterSeconds > 0 ? globalCheck.retryAfterSeconds : 300;
+          return createRateLimitResponse(
+            retryAfter,
+            "Too many OTP verification attempts from this network. Please try again later."
+          );
+        }
+
+        // Pre-check per-order OTP lock (5 failed attempts per 5 mins)
+        const orderCheck = await checkRateLimit({
+          key: orderOtpKey,
+          limit: 5,
+          windowMs: 5 * 60 * 1000,
+          increment: false,
+        });
+        if (!orderCheck.allowed || orderCheck.count >= 5) {
+          const retryAfter = orderCheck.retryAfterSeconds > 0 ? orderCheck.retryAfterSeconds : 300;
+          return createRateLimitResponse(
+            retryAfter,
+            "Too many incorrect OTP attempts. Delivery verification locked for 5 minutes."
           );
         }
 
@@ -264,25 +170,39 @@ export async function PATCH(
         );
 
         if (!isOtpValid) {
-          const currentAttempts = (attemptRecord?.count || 0) + 1;
-          const lockedUntil = currentAttempts >= 5 ? now + 5 * 60 * 1000 : 0;
-          failedOtpAttempts.set(existingOrder.id, { count: currentAttempts, lockedUntil });
+          // Increment global IP attempts
+          await checkRateLimit({
+            key: globalOtpIpKey,
+            limit: 20,
+            windowMs: 5 * 60 * 1000,
+            increment: true,
+          });
 
-          if (currentAttempts >= 5) {
-            return NextResponse.json(
-              { error: "Too many incorrect OTP attempts. Delivery verification locked for 5 minutes." },
-              { status: 429 }
+          // Increment order OTP failed attempts
+          const failResult = await checkRateLimit({
+            key: orderOtpKey,
+            limit: 5,
+            windowMs: 5 * 60 * 1000,
+            increment: true,
+          });
+
+          if (!failResult.allowed || failResult.count >= 5) {
+            const retryAfter = failResult.retryAfterSeconds > 0 ? failResult.retryAfterSeconds : 300;
+            return createRateLimitResponse(
+              retryAfter,
+              "Too many incorrect OTP attempts. Delivery verification locked for 5 minutes."
             );
           }
 
+          const remaining = Math.max(0, 5 - failResult.count);
           return NextResponse.json(
-            { error: `Incorrect OTP. ${5 - currentAttempts} attempt(s) remaining.` },
-            { status: 400 }
+            { error: `Incorrect OTP. ${remaining} attempt(s) remaining.` },
+            { status: 400, headers: NO_CACHE_HEADERS }
           );
         }
 
         // Reset failed attempts counter on successful verification
-        failedOtpAttempts.delete(existingOrder.id);
+        await resetRateLimitKey(orderOtpKey);
 
         updateData.status = OrderStatus.DELIVERED;
         updateData.paymentStatus = PaymentStatus.COMPLETED;

@@ -7,13 +7,49 @@ import {
   CONSENT_COOKIE_NAME,
 } from "@/config/privacy.config";
 
+/**
+ * Strict relative-path allowlist validator for OAuth/Auth redirect targets.
+ * Ensures the destination is a safe relative pathname on the same origin.
+ * Rejects external protocols (https:, http:, javascript:, data:), scheme-relative URLs (//),
+ * backslashes, and malformed inputs.
+ */
+export function sanitizeRedirectPath(rawPath: string | null | undefined): string {
+  if (!rawPath || typeof rawPath !== "string") {
+    return "/";
+  }
+
+  const trimmed = rawPath.trim();
+
+  // Must start with exactly one "/" and NOT "//" or "/\"
+  if (!trimmed.startsWith("/") || trimmed.startsWith("//") || trimmed.startsWith("/\\")) {
+    return "/";
+  }
+
+  // Must not contain backslashes
+  if (trimmed.includes("\\")) {
+    return "/";
+  }
+
+  try {
+    const dummyOrigin = "https://rushd.local";
+    const resolved = new URL(trimmed, dummyOrigin);
+    if (resolved.origin !== dummyOrigin) {
+      return "/";
+    }
+    return resolved.pathname + resolved.search + resolved.hash;
+  } catch {
+    return "/";
+  }
+}
+
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
   const tokenHash = requestUrl.searchParams.get("token_hash");
   const type = requestUrl.searchParams.get("type");
   const errorParam = requestUrl.searchParams.get("error");
-  const next = requestUrl.searchParams.get("next") || requestUrl.searchParams.get("redirect") || "/";
+  const rawNext = requestUrl.searchParams.get("next") || requestUrl.searchParams.get("redirect");
+  const next = sanitizeRedirectPath(rawNext);
   const origin = requestUrl.origin;
 
   const isRecovery = type === "recovery" || next === "/reset-password" || next.startsWith("/reset-password");
@@ -223,12 +259,12 @@ export async function GET(request: NextRequest) {
       // Determine destination without creating a new response object (preserves all Set-Cookie headers)
       let destination = "/";
       if (userRole === "STORE_ADMIN") {
-        destination = next && next.startsWith("/admin") ? next : "/admin";
+        destination = next.startsWith("/admin") ? next : "/admin";
       } else if (userRole === "DELIVERY_PARTNER") {
-        destination = next && next.startsWith("/delivery") ? next : "/delivery";
+        destination = next.startsWith("/delivery") ? next : "/delivery";
       } else {
         destination =
-          next && !next.startsWith("/admin") && !next.startsWith("/delivery") && !next.startsWith("/login")
+          !next.startsWith("/admin") && !next.startsWith("/delivery") && !next.startsWith("/login")
             ? next
             : "/";
       }

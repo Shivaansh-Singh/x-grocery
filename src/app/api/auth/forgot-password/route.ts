@@ -1,10 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import {
+  getClientIp,
+  normalizeIdentifier,
+  checkRateLimit,
+  createRateLimitResponse,
+} from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const email = typeof body.email === "string" ? body.email.toLowerCase().trim() : "";
+    const clientIp = getClientIp(request);
+    const body = await request.json().catch(() => ({}));
+    const rawEmail = typeof body.email === "string" ? body.email : "";
+    const email = normalizeIdentifier(rawEmail);
 
     // 1. Email format validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -15,6 +23,34 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 2. Global IP Rate Limiting (max 10 requests / 15 minutes per IP to block sweep attacks)
+    const globalIpKey = `rl:auth:forgot:ip:${clientIp}`;
+    const globalLimit = await checkRateLimit({
+      key: globalIpKey,
+      limit: 10,
+      windowMs: 15 * 60 * 1000,
+    });
+    if (!globalLimit.allowed) {
+      return createRateLimitResponse(
+        globalLimit.retryAfterSeconds,
+        "Too many password reset requests from this network. Please try again later."
+      );
+    }
+
+    // 3. Per-Account + IP Layered Rate Limiting (max 3 requests / 15 minutes per email+IP)
+    const accountKey = `rl:auth:forgot:${email}:${clientIp}`;
+    const accountLimit = await checkRateLimit({
+      key: accountKey,
+      limit: 3,
+      windowMs: 15 * 60 * 1000,
+    });
+    if (!accountLimit.allowed) {
+      return createRateLimitResponse(
+        accountLimit.retryAfterSeconds,
+        "Too many password reset attempts for this email. Please try again later."
+      );
+    }
+
     const origin = request.nextUrl.origin || "http://localhost:3000";
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey =
@@ -22,7 +58,10 @@ export async function POST(request: NextRequest) {
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
     if (supabaseUrl && supabaseKey && !supabaseUrl.includes("placeholder")) {
-      const supabase = createClient(supabaseUrl, supabaseKey);
+      const supabase = createClient(supabaseUrl, supabaseKey, {
+        auth: { persistSession: false },
+        realtime: { transport: class {} as any },
+      });
       await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${origin}/auth/callback?next=/reset-password`,
       });

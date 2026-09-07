@@ -8,7 +8,7 @@ import {
 import { OrderStatus, PaymentMethod, PaymentStatus, Role } from "@prisma/client";
 import { generateDeliveryOtp } from "@/lib/otp";
 import { calculateOrderPricing } from "@/lib/pricing";
-import { createClient } from "@/lib/supabase/server";
+import { validateItemQuantity, MAX_ITEM_QUANTITY } from "@/lib/validation";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -16,79 +16,6 @@ export const revalidate = 0;
 const NO_CACHE_HEADERS = {
   "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
 };
-
-// Fast 1-shot direct Supabase Auth token verification
-async function getAuthUserFromToken(request: NextRequest) {
-  try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const anonKey =
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-
-    if (!supabaseUrl || !anonKey || supabaseUrl.includes("placeholder")) {
-      return null;
-    }
-
-    let accessToken: string | null = null;
-    const authHeader = request.headers.get("authorization");
-    if (authHeader && authHeader.toLowerCase().startsWith("bearer ")) {
-      accessToken = authHeader.substring(7).trim();
-    }
-
-    if (!accessToken) return null;
-
-    const res = await fetch(`${supabaseUrl}/auth/v1/user`, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        apikey: anonKey,
-      },
-      cache: "no-store",
-    });
-
-    if (res.ok) {
-      const user = await res.json();
-      if (user?.email) {
-        return user;
-      }
-    }
-  } catch (err) {
-    console.error("Fast Supabase Auth verification error in /api/orders:", err);
-  }
-  return null;
-}
-
-// Resolve the requesting user from verified Supabase session or token.
-// The matching DB user is the authoritative source of identity and role.
-async function resolveRequestUser(request?: NextRequest) {
-  try {
-    if (request) {
-      const tokenUser = await getAuthUserFromToken(request);
-      if (tokenUser?.email) {
-        const dbUser = await prisma.user.findUnique({
-          where: { email: tokenUser.email.toLowerCase().trim() },
-          select: { id: true, email: true, role: true },
-        });
-        if (dbUser) return dbUser;
-      }
-    }
-
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    const email = user?.email?.toLowerCase().trim();
-    if (!email) return null;
-
-    return await prisma.user.findUnique({
-      where: { email },
-      select: { id: true, email: true, role: true },
-    });
-  } catch (err) {
-    console.error("[GET_ORDERS] Auth resolution error:", err);
-    return null;
-  }
-}
 
 export async function GET(request: NextRequest) {
   const startTime = performance.now();
@@ -172,6 +99,23 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const placeOrderStart = performance.now();
   try {
+    // Authentication Guard: Cryptographic identity verification required
+    const verifiedUser = await resolveVerifiedUser(request);
+    if (!verifiedUser) {
+      return NextResponse.json(
+        { error: "Authentication required to place an order." },
+        { status: 401, headers: NO_CACHE_HEADERS }
+      );
+    }
+
+    // Role check: Delivery partners are restricted from placing customer orders
+    if (verifiedUser.role === Role.DELIVERY_PARTNER) {
+      return NextResponse.json(
+        { error: "Delivery partners cannot place customer orders." },
+        { status: 403, headers: NO_CACHE_HEADERS }
+      );
+    }
+
     const body = await request.json();
     const {
       customerId,
@@ -181,11 +125,58 @@ export async function POST(request: NextRequest) {
       notes,
     } = body;
 
+    // Cross-user spoofing guard: Reject attempts to place orders for another customer
+    if (customerId && typeof customerId === "string" && customerId.trim() !== verifiedUser.id) {
+      return NextResponse.json(
+        { error: "Forbidden: customerId mismatch. You cannot place an order for another user." },
+        { status: 403, headers: NO_CACHE_HEADERS }
+      );
+    }
+
     if (!deliveryAddress || !items || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json(
         { error: "Invalid order payload. Required: deliveryAddress and non-empty items." },
         { status: 400 }
       );
+    }
+
+    // 0. Strict server-side validation of all order items and quantities (before any DB operations or pricing)
+    const seenProductIds = new Set<string>();
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (!item || typeof item !== "object") {
+        return NextResponse.json(
+          { error: `Invalid item format at index ${i}. Each item must be an object.` },
+          { status: 400 }
+        );
+      }
+
+      const productId = item.productId || item.product?.id;
+      if (!productId || typeof productId !== "string" || !productId.trim()) {
+        return NextResponse.json(
+          { error: `Item at index ${i} is missing a valid productId.` },
+          { status: 400 }
+        );
+      }
+
+      const itemLabel = item.productName || item.product?.name || `Item ${i + 1}`;
+      const qtyValidation = validateItemQuantity(item.quantity, itemLabel);
+      if (!qtyValidation.valid) {
+        return NextResponse.json(
+          { error: qtyValidation.error },
+          { status: 400 }
+        );
+      }
+
+      // Reject duplicate product line items to prevent stock/pricing bypass attempts
+      if (seenProductIds.has(productId)) {
+        return NextResponse.json(
+          { error: `Duplicate product in order items: "${itemLabel}". Each product must appear at most once in an order.` },
+          { status: 400 }
+        );
+      }
+      seenProductIds.add(productId);
     }
 
     // 1. Get Store X (select only id to minimize query payload)
@@ -201,18 +192,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 2. Ensure customer user exists
-    const targetCustomerId = customerId || "guest-user-session";
-    const customer = await prisma.user.upsert({
+    // 2. Ensure customer user exists in database
+    const targetCustomerId = verifiedUser.id;
+    let customer = await prisma.user.findUnique({
       where: { id: targetCustomerId },
-      update: {},
-      create: {
-        id: targetCustomerId,
-        email: `student-${Date.now()}@vitbhopal.ac.in`,
-        name: "Day Scholar Student",
-        phone: "+91 99999 88888",
-      },
     });
+
+    if (!customer) {
+      customer = await prisma.user.create({
+        data: {
+          id: targetCustomerId,
+          email: verifiedUser.email,
+          name: verifiedUser.name || verifiedUser.email.split("@")[0],
+          role: verifiedUser.role,
+        },
+      });
+    }
 
     // Privacy Policy Consent Guard: Customer must have accepted the current privacy policy version
     const userConsent = await prisma.userConsent.findFirst({
@@ -254,12 +249,10 @@ export async function POST(request: NextRequest) {
       productId?: string;
       product?: { id: string; name?: string };
       productName?: string;
-      quantity?: number;
+      quantity: number;
     }>;
 
-    const productIds = typedItems.map(
-      (item) => item.productId || item.product?.id
-    ).filter(Boolean) as string[];
+    const productIds = Array.from(seenProductIds);
 
     const liveProducts = await prisma.product.findMany({
       where: { id: { in: productIds } },
@@ -270,9 +263,9 @@ export async function POST(request: NextRequest) {
 
     // Validate each ordered item
     for (const item of typedItems) {
-      const productId = item.productId || item.product?.id;
-      const requestedQty = Number(item.quantity || 1);
-      const liveProduct = productId ? productMap.get(productId) : undefined;
+      const productId = (item.productId || item.product?.id)!;
+      const requestedQty = item.quantity;
+      const liveProduct = productMap.get(productId);
 
       if (!liveProduct) {
         return NextResponse.json(
@@ -317,10 +310,10 @@ export async function POST(request: NextRequest) {
     }[] = [];
 
     for (const item of typedItems) {
-      const productId = (item.productId || item.product?.id) ?? "";
+      const productId = (item.productId || item.product?.id)!;
       const liveProduct = productMap.get(productId)!;
       const unitPrice = liveProduct.price;
-      const quantity = Number(item.quantity || 1);
+      const quantity = item.quantity;
       const subtotal = unitPrice * quantity;
       calculatedSubtotal += subtotal;
 

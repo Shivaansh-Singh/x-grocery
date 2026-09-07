@@ -19,9 +19,15 @@ export async function PATCH(
   let dbUpdateTime = 0;
 
   try {
-    // 1. Authorization Guard
+    // 1. Authorization Guard: STORE_ADMIN only
     const user = await resolveVerifiedUser(request);
-    if (!user || user.role === Role.CUSTOMER) {
+    if (!user) {
+      return NextResponse.json(
+        { error: "Authentication required. Admin privileges required." },
+        { status: 401, headers: NO_CACHE_HEADERS }
+      );
+    }
+    if (user.role !== Role.STORE_ADMIN) {
       return NextResponse.json(
         { error: "Unauthorized. Admin privileges required." },
         { status: 403, headers: NO_CACHE_HEADERS }

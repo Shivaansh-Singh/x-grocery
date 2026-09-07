@@ -19,18 +19,14 @@ export async function DELETE(
     // 1. Authorization Guard: STORE_ADMIN only
     const user = await resolveVerifiedUser(request);
 
-    const roleCookie = request.cookies.get("rushd_user_role")?.value;
-    const authHeader = request.headers.get("x-user-role");
-    const userRole = user?.role || roleCookie || authHeader;
-
-    if (!userRole) {
+    if (!user) {
       return NextResponse.json(
         { error: "Authentication required. Please log in as an administrator." },
         { status: 401, headers: NO_CACHE_HEADERS }
       );
     }
 
-    if (userRole !== Role.STORE_ADMIN && userRole !== "STORE_ADMIN") {
+    if (user.role !== Role.STORE_ADMIN) {
       return NextResponse.json(
         { error: "Unauthorized. STORE_ADMIN privileges required to offboard delivery staff." },
         { status: 403, headers: NO_CACHE_HEADERS }

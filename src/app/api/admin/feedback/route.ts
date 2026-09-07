@@ -1,16 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { FeedbackStatus, FeedbackType } from "@prisma/client";
+import { FeedbackStatus, FeedbackType, Role } from "@prisma/client";
+import { resolveVerifiedUser } from "@/lib/auth-verifier";
 import { createAdminClient } from "@/lib/supabase/server";
 
 export async function GET(request: NextRequest) {
   try {
-    // Role guard: Only admin can view customer feedback
-    const roleCookie = request.cookies.get("rushd_user_role")?.value;
-    const authHeader = request.headers.get("x-user-role");
-    const userRole = roleCookie || authHeader;
-
-    if (userRole && userRole === "CUSTOMER") {
+    // Role guard: STORE_ADMIN only
+    const user = await resolveVerifiedUser(request);
+    if (!user) {
+      return NextResponse.json(
+        { error: "Authentication required. Admin privileges required." },
+        { status: 401 }
+      );
+    }
+    if (user.role !== Role.STORE_ADMIN) {
       return NextResponse.json(
         { error: "Unauthorized. Admin privileges required." },
         { status: 403 }
