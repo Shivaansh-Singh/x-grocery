@@ -85,6 +85,8 @@ export async function middleware(request: NextRequest) {
     pathname === "/forgot-password" ||
     pathname === "/reset-password" ||
     pathname === "/privacy-policy" ||
+    pathname === "/manifest.webmanifest" ||
+    pathname === "/manifest.json" ||
     pathname.startsWith("/auth/callback") ||
     pathname.startsWith("/api/auth");
 
@@ -153,6 +155,6 @@ export const config = {
      * - public assets (/brand/, .png, .jpg, .svg, etc.)
      * - API routes (/api/)
      */
-    "/((?!_next/static|_next/image|favicon.ico|brand|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$|api/).*)",
+    "/((?!_next/static|_next/image|favicon.ico|manifest\.webmanifest|manifest\.json|brand|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$|api/).*)",
   ],
 };
