@@ -82,6 +82,7 @@ export async function middleware(request: NextRequest) {
   // -------------------------------------------------------------
   const isPublicAuthRoute =
     pathname === "/login" ||
+    pathname === "/download" ||
     pathname === "/forgot-password" ||
     pathname === "/reset-password" ||
     pathname === "/privacy-policy" ||
